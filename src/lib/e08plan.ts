@@ -246,7 +246,12 @@ export function buildPlanFile(plan: BuilderPlan): PlanFileV1 {
       kind: 'training',
       competitionDate: null,
       startDate: plan.startDate,
-      mode: plan.mode,
+      // The app's Plan.mode only allows depth/pool/general; 'dry' is valid for
+      // SESSIONS but not at the plan level (a 'dry' plan mode would silently fall
+      // back to depth in the app's session editor). So we emit 'general' here while
+      // each dry session keeps its own mode:'dry' — which is what drives the
+      // correct (dry) session-type pills in the app.
+      mode: plan.mode === 'dry' ? 'general' : plan.mode,
       schemaVersion: 3,
       phases: [
         {
