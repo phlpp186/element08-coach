@@ -146,15 +146,24 @@ export function mondayOf(iso: string): string {
   return isoDate(d);
 }
 
+/** Day-of-week index for an ISO date: 0 = Mon … 6 = Sun (matches dayOfWeek). */
+export function dowOf(iso: string): number {
+  return (new Date(`${iso}T00:00:00Z`).getUTCDay() + 6) % 7;
+}
+
 export const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 // ── Build + validate + download ──────────────────────────────────────────────
 
-/** Map the editor state into a valid PlanFileV1. */
+/** Map the editor state into a valid PlanFileV1. The plan can begin on ANY day:
+ *  content.startDate is the raw chosen date, but each week's weekStart stays the
+ *  Monday of its calendar week (the app requires weekStart to be a Monday and
+ *  places sessions by dayOfWeek 0=Mon..6=Sun). Week 1 is therefore partial when
+ *  the plan starts mid-week. */
 export function buildPlanFile(plan: BuilderPlan): PlanFileV1 {
-  const start = mondayOf(plan.startDate);
+  const firstMonday = mondayOf(plan.startDate);
   const weeks: MicroCycle[] = plan.weeks.map((w, wi) => ({
-    weekStart: addDays(start, wi * 7),
+    weekStart: addDays(firstMonday, wi * 7),
     focus: w.focus.trim(),
     targetSessions: w.sessions.length,
     targetMix: {},
@@ -187,7 +196,7 @@ export function buildPlanFile(plan: BuilderPlan): PlanFileV1 {
       name: plan.name.trim(),
       kind: 'training',
       competitionDate: null,
-      startDate: start,
+      startDate: plan.startDate,
       mode: plan.mode,
       schemaVersion: 3,
       phases: [

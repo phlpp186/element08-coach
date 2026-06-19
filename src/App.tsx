@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import {
   DAY_LABELS,
   downloadPlanFile,
-  mondayOf,
+  dowOf,
   isoDate,
   planIssues,
   planStats,
@@ -36,7 +36,7 @@ function initialPlan(): BuilderPlan {
     coach: '',
     description: '',
     mode: 'depth',
-    startDate: mondayOf(isoDate(new Date())),
+    startDate: isoDate(new Date()),
     weeks: [emptyWeek()],
   };
 }
@@ -114,10 +114,11 @@ export function App() {
                 type="date"
                 className="field"
                 value={plan.startDate}
-                onChange={(e) => setMeta({ startDate: mondayOf(e.target.value) })}
+                onChange={(e) => setMeta({ startDate: e.target.value || plan.startDate })}
               />
               <span className="block text-xs text-textDim mt-1">
-                Plans run in Mon to Sun weeks, so this snaps to the start of that week.
+                Any day. Week 1 starts here; it runs to the following Sunday, then full
+                Mon to Sun weeks.
               </span>
             </Labeled>
             <Labeled label="Mode">
@@ -194,9 +195,15 @@ export function App() {
 
               <div className="space-y-2">
                 {DAY_LABELS.map((dayLabel, day) => {
+                  // Week 1 is partial when the plan starts mid-week: days before
+                  // the start day-of-week aren't part of the plan yet.
+                  const beforeStart = wi === 0 && day < dowOf(plan.startDate);
                   const daySessions = week.sessions.filter((s) => s.dayOfWeek === day);
                   return (
-                    <div key={day} className="flex gap-3 items-start">
+                    <div
+                      key={day}
+                      className={`flex gap-3 items-start ${beforeStart ? 'opacity-40' : ''}`}
+                    >
                       <div className="w-10 shrink-0 text-textDim text-sm pt-2 font-mono">
                         {dayLabel}
                       </div>
@@ -221,12 +228,16 @@ export function App() {
                             />
                           ),
                         )}
-                        <button
-                          onClick={() => addSession(wi, day)}
-                          className="text-xs text-textDim hover:text-accent"
-                        >
-                          + session
-                        </button>
+                        {beforeStart ? (
+                          <span className="text-xs text-textDim italic">before plan start</span>
+                        ) : (
+                          <button
+                            onClick={() => addSession(wi, day)}
+                            className="text-xs text-textDim hover:text-accent"
+                          >
+                            + session
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
