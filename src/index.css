@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme palette. Tokens are RGB triplets (no #, no commas) so Tailwind's
+ * `<alpha-value>` opacity modifiers work directly — see tailwind.config.js. */
+:root {
+  /* Dark — default. Matches the mobile app's chalk_dark feel. */
+  --c-deep: 8 8 8;
+  --c-abyss: 16 16 16;
+  --c-panel: 22 22 22;
+  --c-border: 38 38 38;
+  --c-text: 244 244 245;
+  --c-textDim: 154 154 158;
+  --c-accent: 79 195 247;
+  --c-highlight: 255 95 158;
+  --c-recover: 102 187 106;
+  --c-amber: 255 167 38;
+  --c-red: 239 83 80;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  background: rgb(var(--c-deep));
+  color: rgb(var(--c-text));
+  font-family: theme('fontFamily.body');
+  min-height: 100vh;
+  margin: 0;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  font-family: theme('fontFamily.heading');
+  letter-spacing: 0.04em;
+}
+
+/* Shared form-control look so inputs read on the dark surface. */
+.field {
+  width: 100%;
+  background: rgb(var(--c-abyss));
+  border: 1px solid rgb(var(--c-border));
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: rgb(var(--c-text));
+  font-size: 14px;
+}
+.field:focus {
+  outline: none;
+  border-color: rgb(var(--c-accent));
+}
+.field::placeholder {
+  color: rgb(var(--c-textDim));
+}
