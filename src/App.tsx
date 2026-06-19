@@ -27,7 +27,7 @@ function emptyWeek(): BuilderWeek {
 }
 
 function newSession(dayOfWeek: number, mode: PlanMode): BuilderSession {
-  return { id: uid('sess'), dayOfWeek, label: '', body: '', mode, sessionType: '' };
+  return { id: uid('sess'), dayOfWeek, label: '', body: '', exercises: [], mode, sessionType: '' };
 }
 
 function initialPlan(): BuilderPlan {
@@ -270,15 +270,15 @@ function Labeled({ label, children }: { label: string; children: ReactNode }) {
 }
 
 function SessionChip({ session, onEdit }: { session: BuilderSession; onEdit: () => void }) {
+  const exCount = session.exercises.filter((e) => e.description.trim()).length;
+  const hint = exCount > 0 ? `${exCount} exercise${exCount === 1 ? '' : 's'}` : session.body.trim();
   return (
     <button
       onClick={onEdit}
       className="w-full text-left rounded-lg border border-border bg-abyss px-3 py-2 hover:border-accent"
     >
       <div className="text-sm text-text">{session.label.trim() || 'Untitled session'}</div>
-      {session.body.trim() && (
-        <div className="text-xs text-textDim truncate mt-0.5">{session.body.trim()}</div>
-      )}
+      {hint && <div className="text-xs text-textDim truncate mt-0.5">{hint}</div>}
     </button>
   );
 }
@@ -294,20 +294,61 @@ function SessionEditor({
   onClose: () => void;
   onDelete: () => void;
 }) {
+  const addExercise = () =>
+    onChange({ exercises: [...session.exercises, { id: uid('ex'), description: '' }] });
+  const updateExercise = (id: string, description: string) =>
+    onChange({
+      exercises: session.exercises.map((e) => (e.id === id ? { ...e, description } : e)),
+    });
+  const removeExercise = (id: string) =>
+    onChange({ exercises: session.exercises.filter((e) => e.id !== id) });
+
   return (
-    <div className="rounded-lg border border-accent bg-abyss p-3 space-y-2">
+    <div className="rounded-lg border border-accent bg-abyss p-3 space-y-3">
       <input
         className="field"
         placeholder="Session title, e.g. Pool CO₂ table"
         value={session.label}
         onChange={(e) => onChange({ label: e.target.value })}
       />
-      <textarea
-        className="field min-h-24"
-        placeholder="Write the session in plain text — warm-up, main set, rest, cues, anything."
-        value={session.body}
-        onChange={(e) => onChange({ body: e.target.value })}
-      />
+
+      {/* Structured exercises (mode #2) */}
+      <div className="space-y-2">
+        <span className="block text-xs text-textDim uppercase tracking-wide">Exercises</span>
+        {session.exercises.map((ex, i) => (
+          <div key={ex.id} className="flex gap-2 items-center">
+            <span className="text-textDim text-xs font-mono w-4 shrink-0">{i + 1}</span>
+            <input
+              className="field flex-1"
+              placeholder="e.g. 3×25m bi-fins, 5 min rest"
+              value={ex.description}
+              onChange={(e) => updateExercise(ex.id, e.target.value)}
+            />
+            <button
+              onClick={() => removeExercise(ex.id)}
+              className="text-red text-sm px-1"
+              title="Remove exercise"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+        <button onClick={addExercise} className="text-xs text-accent hover:underline">
+          + exercise
+        </button>
+      </div>
+
+      {/* Free-text notes (mode #1) — use either or both */}
+      <div className="space-y-1">
+        <span className="block text-xs text-textDim uppercase tracking-wide">Notes / full text</span>
+        <textarea
+          className="field min-h-20"
+          placeholder="Or write the session in plain text — warm-up, cues, anything."
+          value={session.body}
+          onChange={(e) => onChange({ body: e.target.value })}
+        />
+      </div>
+
       <div className="flex gap-2">
         <select
           className="field w-auto"

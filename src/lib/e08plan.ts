@@ -83,11 +83,19 @@ export interface PlanFileV1 {
 
 // ── Builder model (the editor's working state) ───────────────────────────────
 
+export interface BuilderExercise {
+  id: string;
+  description: string;
+}
+
 export interface BuilderSession {
   id: string;
   dayOfWeek: number;
   label: string;
+  /** Free-text body (authoring mode #1). Maps to PlannedSession.sessionNotes. */
   body: string;
+  /** Structured exercise rows (authoring mode #2). Maps to PlannedSession.exercises. */
+  exercises: BuilderExercise[];
   mode: PlanMode | 'dry';
   sessionType: string;
 }
@@ -156,7 +164,9 @@ export function buildPlanFile(plan: BuilderPlan): PlanFileV1 {
       id: s.id,
       dayOfWeek: s.dayOfWeek,
       label: s.label.trim() || 'Session',
-      exercises: [],
+      exercises: s.exercises
+        .filter((e) => e.description.trim())
+        .map((e) => ({ id: e.id, description: e.description.trim() })),
       ...(s.mode ? { mode: s.mode } : {}),
       ...(s.sessionType.trim() ? { sessionType: s.sessionType.trim() } : {}),
       sessionNotes: s.body.trim(),

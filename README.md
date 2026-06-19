@@ -38,17 +38,21 @@ Push to `main` → GitHub Actions (`.github/workflows/deploy.yml`) builds and
 publishes to GitHub Pages. First run auto-enables Pages. Point the
 `coach.element08.io` DNS (CNAME) at GitHub Pages; `public/CNAME` is already set.
 
-## Status — Phase 1 (MVP)
+## Status
 
-Implemented: plan metadata, weeks, **full-text sessions** assigned to days, and
-`.e08plan` export. This covers authoring mode **#1 (full text)** from the design.
+Implemented:
+
+- Plan metadata, weeks, sessions assigned to days, `.e08plan` export.
+- **Mode #1 — full text**: a plain-text body per session (`sessionNotes`).
+- **Mode #2 — structured exercises**: an editable list of exercise rows per session
+  (`exercises[]`), plus session `mode` + `sessionType`. Use either or both per session.
 
 ### Roadmap (see app repo `appstore/TODO.md` T53/T54)
 
-- **Mode #2 — structured editor**: per-exercise rows with discipline / lung volume /
-  type, mirroring the app's plan editor. The wire model already supports it
-  (`PlannedSession.exercises`, `mode`, `sessionType`).
 - **Mode #3 — drag-and-drop** exercises from a palette onto days (`dnd-kit`).
+- **Per-exercise typed fields** (lung volume / discipline): the app's `PlannedExercise`
+  is currently `{ id, description }` only, so structured detail goes in the description
+  text. Richer per-exercise fields would need an app-side model change first.
 - **Share link / QR** for small plans (deep link into the app) alongside the file.
 - **Season plans** (`kind: 'season'`, multiple phases) — currently exports a single
   `training` phase.
