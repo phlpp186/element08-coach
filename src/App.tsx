@@ -234,7 +234,7 @@ export function App() {
                     key={st.id}
                     onClick={() => setMeta({ structure: st.id })}
                     className={`px-3 py-1.5 text-sm ${
-                      plan.structure === st.id ? 'bg-accent text-deep' : 'text-textDim'
+                      plan.structure === st.id ? 'bg-accent text-ink' : 'text-textDim'
                     }`}
                   >
                     {st.label}
@@ -387,7 +387,7 @@ export function App() {
           <button
             disabled={!ready}
             onClick={() => downloadPlanFile(plan)}
-            className="rounded-lg px-4 py-2 font-heading tracking-wide disabled:opacity-40 bg-accent text-deep"
+            className="rounded-lg px-4 py-2 font-heading tracking-wide disabled:opacity-40 bg-accent text-ink"
           >
             Download .e08plan
           </button>
@@ -587,7 +587,7 @@ function SessionEditor({
         </button>
         <button
           onClick={onClose}
-          className="text-sm bg-accent text-deep rounded-lg px-3 py-1.5 font-heading tracking-wide"
+          className="text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide"
         >
           Done
         </button>

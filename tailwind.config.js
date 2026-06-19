@@ -14,6 +14,7 @@ export default {
         border: 'rgb(var(--c-border) / <alpha-value>)',
         text: 'rgb(var(--c-text) / <alpha-value>)',
         textDim: 'rgb(var(--c-textDim) / <alpha-value>)',
+        ink: 'rgb(var(--c-ink) / <alpha-value>)',
         accent: 'rgb(var(--c-accent) / <alpha-value>)',
         highlight: 'rgb(var(--c-highlight) / <alpha-value>)',
         recover: 'rgb(var(--c-recover) / <alpha-value>)',

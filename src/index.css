@@ -17,7 +17,26 @@
   --c-recover: 102 187 106;
   --c-amber: 255 167 38;
   --c-red: 239 83 80;
+  /* Text on an accent fill — always dark (accent is a light cyan in both modes). */
+  --c-ink: 11 15 18;
   color-scheme: dark;
+}
+
+:root.light {
+  /* Chalk — warm off-white surfaces, ink-on-paper feel (matches the app). */
+  --c-deep: 247 245 240;
+  --c-abyss: 237 233 226;
+  --c-panel: 240 237 231;
+  --c-border: 213 208 200;
+  --c-text: 58 56 50;
+  --c-textDim: 123 118 112;
+  --c-accent: 27 175 224;
+  --c-highlight: 232 67 147;
+  --c-recover: 61 201 107;
+  --c-amber: 196 132 0;
+  --c-red: 198 40 40;
+  --c-ink: 11 15 18;
+  color-scheme: light;
 }
 
 html,
