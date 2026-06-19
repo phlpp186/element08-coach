@@ -107,14 +107,25 @@ export interface BuilderWeek {
   sessions: BuilderSession[];
 }
 
+/** A single numbered day in a day-based plan (Day 1 = startDate, Day 2 = +1, …). */
+export interface BuilderDay {
+  id: string;
+  sessions: BuilderSession[];
+}
+
+export type PlanStructure = 'weeks' | 'days';
+
 export interface BuilderPlan {
   name: string;
   coach: string;
   description: string;
   mode: PlanMode;
-  /** ISO date (YYYY-MM-DD). Snapped to Monday on export. */
+  /** ISO date (YYYY-MM-DD). Day 1 / week 1 begins here; any day is allowed. */
   startDate: string;
+  /** 'weeks' = Mon–Sun weeks; 'days' = a flat numbered day list (one-off block). */
+  structure: PlanStructure;
   weeks: BuilderWeek[];
+  days: BuilderDay[];
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -155,32 +166,70 @@ export const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 // ── Build + validate + download ──────────────────────────────────────────────
 
-/** Map the editor state into a valid PlanFileV1. The plan can begin on ANY day:
- *  content.startDate is the raw chosen date, but each week's weekStart stays the
- *  Monday of its calendar week (the app requires weekStart to be a Monday and
- *  places sessions by dayOfWeek 0=Mon..6=Sun). Week 1 is therefore partial when
- *  the plan starts mid-week. */
-export function buildPlanFile(plan: BuilderPlan): PlanFileV1 {
+/** One BuilderSession → one wire PlannedSession at the given dayOfWeek + label. */
+function toPlanned(s: BuilderSession, dayOfWeek: number, label: string): PlannedSession {
+  return {
+    id: s.id,
+    dayOfWeek,
+    label: label.trim() || 'Session',
+    exercises: s.exercises
+      .filter((e) => e.description.trim())
+      .map((e) => ({ id: e.id, description: e.description.trim() })),
+    ...(s.mode ? { mode: s.mode } : {}),
+    ...(s.sessionType.trim() ? { sessionType: s.sessionType.trim() } : {}),
+    sessionNotes: s.body.trim(),
+  };
+}
+
+/** Weeks-mode → MicroCycles. weekStart stays a Monday; week 1 may be partial. */
+function weeksToMicroCycles(plan: BuilderPlan): MicroCycle[] {
   const firstMonday = mondayOf(plan.startDate);
-  const weeks: MicroCycle[] = plan.weeks.map((w, wi) => ({
+  return plan.weeks.map((w, wi) => ({
     weekStart: addDays(firstMonday, wi * 7),
     focus: w.focus.trim(),
     targetSessions: w.sessions.length,
     targetMix: {},
     intensity: w.intensity,
     notes: w.notes.trim(),
-    plannedSessions: w.sessions.map((s) => ({
-      id: s.id,
-      dayOfWeek: s.dayOfWeek,
-      label: s.label.trim() || 'Session',
-      exercises: s.exercises
-        .filter((e) => e.description.trim())
-        .map((e) => ({ id: e.id, description: e.description.trim() })),
-      ...(s.mode ? { mode: s.mode } : {}),
-      ...(s.sessionType.trim() ? { sessionType: s.sessionType.trim() } : {}),
-      sessionNotes: s.body.trim(),
-    })),
+    plannedSessions: w.sessions.map((s) => toPlanned(s, s.dayOfWeek, s.label)),
   }));
+}
+
+/** Days-mode → MicroCycles. Each Day N maps to a real calendar date
+ *  (startDate + N-1); sessions are bucketed into the Monday-week that date falls
+ *  in, at that date's dayOfWeek, with "Day N:" baked into the title so the
+ *  athlete sees the day number (the app stores plans as weeks, not day cycles). */
+function daysToMicroCycles(plan: BuilderPlan): MicroCycle[] {
+  const buckets = new Map<string, PlannedSession[]>();
+  plan.days.forEach((d, di) => {
+    const date = addDays(plan.startDate, di);
+    const weekStart = mondayOf(date);
+    const dow = dowOf(date);
+    const arr = buckets.get(weekStart) ?? [];
+    d.sessions.forEach((s) =>
+      arr.push(toPlanned(s, dow, `Day ${di + 1}: ${s.label.trim() || 'Session'}`)),
+    );
+    buckets.set(weekStart, arr);
+  });
+  return [...buckets.keys()]
+    .sort()
+    .map((weekStart) => ({
+      weekStart,
+      focus: '',
+      targetSessions: buckets.get(weekStart)!.length,
+      targetMix: {},
+      intensity: 'medium' as Intensity,
+      notes: '',
+      plannedSessions: buckets.get(weekStart)!,
+    }));
+}
+
+/** Map the editor state into a valid PlanFileV1. The plan can begin on ANY day:
+ *  content.startDate is the raw chosen date, but each week's weekStart stays the
+ *  Monday of its calendar week (the app requires weekStart to be a Monday and
+ *  places sessions by dayOfWeek 0=Mon..6=Sun). */
+export function buildPlanFile(plan: BuilderPlan): PlanFileV1 {
+  const weeks = plan.structure === 'days' ? daysToMicroCycles(plan) : weeksToMicroCycles(plan);
 
   return {
     format: PLAN_FILE_FORMAT,
@@ -213,20 +262,26 @@ export function buildPlanFile(plan: BuilderPlan): PlanFileV1 {
 
 /** Human-readable blockers that stop a valid export (mirrors the app's hard
  *  errors so the coach sees problems before downloading). Empty = ready. */
+function countSessions(plan: BuilderPlan): number {
+  const containers = plan.structure === 'days' ? plan.days : plan.weeks;
+  return containers.reduce((n, c) => n + c.sessions.length, 0);
+}
+
 export function planIssues(plan: BuilderPlan): string[] {
   const issues: string[] = [];
   if (!plan.name.trim()) issues.push('Add a plan name.');
   if (!plan.coach.trim()) issues.push('Add your coach name (shown to the athlete as the author).');
   if (!plan.startDate) issues.push('Pick a start date.');
-  const sessions = plan.weeks.reduce((n, w) => n + w.sessions.length, 0);
-  if (sessions === 0) issues.push('Add at least one session.');
+  if (countSessions(plan) === 0) issues.push('Add at least one session.');
   return issues;
 }
 
-export function planStats(plan: BuilderPlan): { weeks: number; sessions: number } {
+export function planStats(plan: BuilderPlan): { units: number; unitLabel: string; sessions: number } {
+  const units = plan.structure === 'days' ? plan.days.length : plan.weeks.length;
   return {
-    weeks: plan.weeks.length,
-    sessions: plan.weeks.reduce((n, w) => n + w.sessions.length, 0),
+    units,
+    unitLabel: plan.structure === 'days' ? 'day' : 'week',
+    sessions: countSessions(plan),
   };
 }
 

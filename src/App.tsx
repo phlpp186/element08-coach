@@ -1,17 +1,20 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import {
   DAY_LABELS,
+  addDays,
   downloadPlanFile,
   dowOf,
   isoDate,
   planIssues,
   planStats,
   uid,
+  type BuilderDay,
   type BuilderPlan,
   type BuilderSession,
   type BuilderWeek,
   type Intensity,
   type PlanMode,
+  type PlanStructure,
 } from './lib/e08plan';
 
 const INTENSITIES: Intensity[] = ['recovery', 'low', 'medium', 'high', 'max'];
@@ -22,12 +25,31 @@ const MODES: { id: PlanMode; label: string }[] = [
 ];
 const SESSION_MODES: BuilderSession['mode'][] = ['depth', 'pool', 'dry', 'general'];
 
+const STRUCTURES: { id: PlanStructure; label: string }[] = [
+  { id: 'weeks', label: 'Weeks' },
+  { id: 'days', label: 'Days' },
+];
+
 function emptyWeek(): BuilderWeek {
   return { focus: '', intensity: 'medium', notes: '', sessions: [] };
 }
 
+function emptyDay(): BuilderDay {
+  return { id: uid('day'), sessions: [] };
+}
+
 function newSession(dayOfWeek: number, mode: PlanMode): BuilderSession {
   return { id: uid('sess'), dayOfWeek, label: '', body: '', exercises: [], mode, sessionType: '' };
+}
+
+const WEEKDAY_FMT = new Intl.DateTimeFormat(undefined, {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+});
+/** Human label for the Nth day of a day-based plan, e.g. "Wed 24 Jun". */
+function dayDateLabel(startDate: string, di: number): string {
+  return WEEKDAY_FMT.format(new Date(`${addDays(startDate, di)}T00:00:00Z`));
 }
 
 function initialPlan(): BuilderPlan {
@@ -37,7 +59,9 @@ function initialPlan(): BuilderPlan {
     description: '',
     mode: 'depth',
     startDate: isoDate(new Date()),
+    structure: 'weeks',
     weeks: [emptyWeek()],
+    days: [emptyDay()],
   };
 }
 
@@ -73,6 +97,35 @@ export function App() {
     });
   const removeSession = (wi: number, id: string) =>
     updateWeek(wi, { sessions: plan.weeks[wi].sessions.filter((s) => s.id !== id) });
+
+  // ── day-mode updaters (sessions live in days; dayOfWeek is derived at export) ──
+  const updateDay = (di: number, patch: Partial<BuilderDay>) =>
+    setPlan((p) => ({ ...p, days: p.days.map((d, i) => (i === di ? { ...d, ...patch } : d)) }));
+  const addDay = () => setPlan((p) => ({ ...p, days: [...p.days, emptyDay()] }));
+  const removeDay = (di: number) =>
+    setPlan((p) => ({ ...p, days: p.days.filter((_, i) => i !== di) }));
+  // Duration control: grow with empty days or trim from the end.
+  const setDayCount = (n: number) =>
+    setPlan((p) => {
+      const target = Math.max(1, Math.min(366, Math.floor(n) || 1));
+      if (target === p.days.length) return p;
+      const days =
+        target > p.days.length
+          ? [...p.days, ...Array.from({ length: target - p.days.length }, emptyDay)]
+          : p.days.slice(0, target);
+      return { ...p, days };
+    });
+  const addDaySession = (di: number) => {
+    const s = newSession(0, plan.mode);
+    updateDay(di, { sessions: [...plan.days[di].sessions, s] });
+    setEditing(s.id);
+  };
+  const updateDaySession = (di: number, id: string, patch: Partial<BuilderSession>) =>
+    updateDay(di, {
+      sessions: plan.days[di].sessions.map((s) => (s.id === id ? { ...s, ...patch } : s)),
+    });
+  const removeDaySession = (di: number, id: string) =>
+    updateDay(di, { sessions: plan.days[di].sessions.filter((s) => s.id !== id) });
 
   return (
     <div className="min-h-screen pb-28">
@@ -147,111 +200,155 @@ export function App() {
           </div>
         </section>
 
-        {/* Weeks */}
+        {/* Schedule: weeks or days */}
         <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg">Weeks</h2>
-            <button
-              onClick={addWeek}
-              className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent"
-            >
-              + Add week
-            </button>
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg">Schedule</h2>
+              <div className="flex rounded-lg border border-border overflow-hidden">
+                {STRUCTURES.map((st) => (
+                  <button
+                    key={st.id}
+                    onClick={() => setMeta({ structure: st.id })}
+                    className={`px-3 py-1.5 text-sm ${
+                      plan.structure === st.id ? 'bg-accent text-deep' : 'text-textDim'
+                    }`}
+                  >
+                    {st.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {plan.structure === 'weeks' ? (
+              <button
+                onClick={addWeek}
+                className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent"
+              >
+                + Add week
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-textDim">
+                <span>Duration</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={366}
+                  value={plan.days.length}
+                  onChange={(e) => setDayCount(Number(e.target.value))}
+                  className="field w-20 text-center"
+                />
+                <span>days</span>
+              </div>
+            )}
           </div>
 
-          {plan.weeks.map((week, wi) => (
-            <div key={wi} className="rounded-xl border border-border bg-panel p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <span className="font-heading text-accent whitespace-nowrap shrink-0">
-                  WEEK {wi + 1}
-                </span>
-                <select
-                  className="field w-auto ml-auto"
-                  value={week.intensity}
-                  onChange={(e) => updateWeek(wi, { intensity: e.target.value as Intensity })}
-                >
-                  {INTENSITIES.map((i) => (
-                    <option key={i} value={i}>
-                      {i}
-                    </option>
-                  ))}
-                </select>
-                {plan.weeks.length > 1 && (
-                  <button
-                    onClick={() => removeWeek(wi)}
-                    className="text-red text-sm px-2 shrink-0"
-                    title="Remove week"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-              <input
-                className="field"
-                placeholder="Week focus (optional), e.g. CO₂ capacity"
-                value={week.focus}
-                onChange={(e) => updateWeek(wi, { focus: e.target.value })}
-              />
-
-              <div className="space-y-2">
-                {DAY_LABELS.map((dayLabel, day) => {
-                  // Week 1 is partial when the plan starts mid-week: days before
-                  // the start day-of-week aren't part of the plan yet.
-                  const beforeStart = wi === 0 && day < dowOf(plan.startDate);
-                  const daySessions = week.sessions.filter((s) => s.dayOfWeek === day);
-                  return (
-                    <div
-                      key={day}
-                      className={`flex gap-3 items-start ${beforeStart ? 'opacity-40' : ''}`}
+          {plan.structure === 'weeks'
+            ? plan.weeks.map((week, wi) => (
+                <div key={wi} className="rounded-xl border border-border bg-panel p-4 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="font-heading text-accent whitespace-nowrap shrink-0">
+                      WEEK {wi + 1}
+                    </span>
+                    <select
+                      className="field w-auto ml-auto"
+                      value={week.intensity}
+                      onChange={(e) => updateWeek(wi, { intensity: e.target.value as Intensity })}
                     >
-                      <div className="w-10 shrink-0 text-textDim text-sm pt-2 font-mono">
-                        {dayLabel}
-                      </div>
-                      <div className="flex-1 space-y-2">
-                        {daySessions.map((s) =>
-                          editing === s.id ? (
-                            <SessionEditor
-                              key={s.id}
-                              session={s}
-                              onChange={(patch) => updateSession(wi, s.id, patch)}
-                              onClose={() => setEditing(null)}
-                              onDelete={() => {
-                                removeSession(wi, s.id);
-                                setEditing(null);
-                              }}
-                            />
-                          ) : (
-                            <SessionChip
-                              key={s.id}
-                              session={s}
-                              onEdit={() => setEditing(s.id)}
-                            />
-                          ),
-                        )}
-                        {beforeStart ? (
-                          <span className="text-xs text-textDim italic">before plan start</span>
-                        ) : (
-                          <button
-                            onClick={() => addSession(wi, day)}
-                            className="text-xs text-textDim hover:text-accent"
-                          >
-                            + session
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                      {INTENSITIES.map((i) => (
+                        <option key={i} value={i}>
+                          {i}
+                        </option>
+                      ))}
+                    </select>
+                    {plan.weeks.length > 1 && (
+                      <button
+                        onClick={() => removeWeek(wi)}
+                        className="text-red text-sm px-2 shrink-0"
+                        title="Remove week"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    className="field"
+                    placeholder="Week focus (optional), e.g. CO₂ capacity"
+                    value={week.focus}
+                    onChange={(e) => updateWeek(wi, { focus: e.target.value })}
+                  />
 
-              <input
-                className="field"
-                placeholder="Week notes (optional)"
-                value={week.notes}
-                onChange={(e) => updateWeek(wi, { notes: e.target.value })}
-              />
-            </div>
-          ))}
+                  <div className="space-y-2">
+                    {DAY_LABELS.map((dayLabel, day) => {
+                      const beforeStart = wi === 0 && day < dowOf(plan.startDate);
+                      const daySessions = week.sessions.filter((s) => s.dayOfWeek === day);
+                      return (
+                        <div
+                          key={day}
+                          className={`flex gap-3 items-start ${beforeStart ? 'opacity-40' : ''}`}
+                        >
+                          <div className="w-10 shrink-0 text-textDim text-sm pt-2 font-mono">
+                            {dayLabel}
+                          </div>
+                          <SessionList
+                            sessions={daySessions}
+                            editing={editing}
+                            setEditing={setEditing}
+                            onAdd={() => addSession(wi, day)}
+                            onChange={(id, patch) => updateSession(wi, id, patch)}
+                            onRemove={(id) => removeSession(wi, id)}
+                            disabledText={beforeStart ? 'before plan start' : undefined}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <input
+                    className="field"
+                    placeholder="Week notes (optional)"
+                    value={week.notes}
+                    onChange={(e) => updateWeek(wi, { notes: e.target.value })}
+                  />
+                </div>
+              ))
+            : plan.days.map((day, di) => (
+                <div
+                  key={day.id}
+                  className="rounded-xl border border-border bg-panel p-4 space-y-3"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="font-heading text-accent whitespace-nowrap shrink-0">
+                      DAY {di + 1}
+                    </span>
+                    <span className="text-textDim text-sm">{dayDateLabel(plan.startDate, di)}</span>
+                    {plan.days.length > 1 && (
+                      <button
+                        onClick={() => removeDay(di)}
+                        className="text-red text-sm px-2 shrink-0 ml-auto"
+                        title="Remove day"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                  <SessionList
+                    sessions={day.sessions}
+                    editing={editing}
+                    setEditing={setEditing}
+                    onAdd={() => addDaySession(di)}
+                    onChange={(id, patch) => updateDaySession(di, id, patch)}
+                    onRemove={(id) => removeDaySession(di, id)}
+                  />
+                </div>
+              ))}
+          {plan.structure === 'days' && (
+            <button
+              onClick={addDay}
+              className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent"
+            >
+              + Add day
+            </button>
+          )}
         </section>
       </main>
 
@@ -259,7 +356,8 @@ export function App() {
       <div className="fixed bottom-0 inset-x-0 border-t border-border bg-abyss/95 backdrop-blur px-5 py-3">
         <div className="mx-auto max-w-4xl flex items-center gap-4">
           <div className="text-sm text-textDim flex-1">
-            {stats.weeks} week{stats.weeks === 1 ? '' : 's'} · {stats.sessions} session
+            {stats.units} {stats.unitLabel}
+            {stats.units === 1 ? '' : 's'} · {stats.sessions} session
             {stats.sessions === 1 ? '' : 's'}
             {!ready && <span className="text-amber ml-2">· {issues[0]}</span>}
           </div>
@@ -272,6 +370,53 @@ export function App() {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SessionList({
+  sessions,
+  editing,
+  setEditing,
+  onAdd,
+  onChange,
+  onRemove,
+  disabledText,
+}: {
+  sessions: BuilderSession[];
+  editing: string | null;
+  setEditing: (id: string | null) => void;
+  onAdd: () => void;
+  onChange: (id: string, patch: Partial<BuilderSession>) => void;
+  onRemove: (id: string) => void;
+  /** When set, the "+ session" button is replaced by this dim note. */
+  disabledText?: string;
+}) {
+  return (
+    <div className="flex-1 space-y-2">
+      {sessions.map((s) =>
+        editing === s.id ? (
+          <SessionEditor
+            key={s.id}
+            session={s}
+            onChange={(patch) => onChange(s.id, patch)}
+            onClose={() => setEditing(null)}
+            onDelete={() => {
+              onRemove(s.id);
+              setEditing(null);
+            }}
+          />
+        ) : (
+          <SessionChip key={s.id} session={s} onEdit={() => setEditing(s.id)} />
+        ),
+      )}
+      {disabledText ? (
+        <span className="text-xs text-textDim italic">{disabledText}</span>
+      ) : (
+        <button onClick={onAdd} className="text-xs text-textDim hover:text-accent">
+          + session
+        </button>
+      )}
     </div>
   );
 }
