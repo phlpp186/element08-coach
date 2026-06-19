@@ -93,7 +93,7 @@ export function App() {
         <section className="space-y-4">
           <h2 className="text-lg">Plan details</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Labeled label="Plan name">
+            <Labeled label="Plan name" required>
               <input
                 className="field"
                 placeholder="e.g. 12-Week Depth Progression"
@@ -101,7 +101,7 @@ export function App() {
                 onChange={(e) => setMeta({ name: e.target.value })}
               />
             </Labeled>
-            <Labeled label="Coach name (shown as author)">
+            <Labeled label="Coach name (shown as author)" required>
               <input
                 className="field"
                 placeholder="Your name"
@@ -109,13 +109,16 @@ export function App() {
                 onChange={(e) => setMeta({ coach: e.target.value })}
               />
             </Labeled>
-            <Labeled label="Start date (Monday)">
+            <Labeled label="Start date">
               <input
                 type="date"
                 className="field"
                 value={plan.startDate}
                 onChange={(e) => setMeta({ startDate: mondayOf(e.target.value) })}
               />
+              <span className="block text-xs text-textDim mt-1">
+                Plans run in Mon to Sun weeks, so this snaps to the start of that week.
+              </span>
             </Labeled>
             <Labeled label="Mode">
               <select
@@ -158,15 +161,11 @@ export function App() {
           {plan.weeks.map((week, wi) => (
             <div key={wi} className="rounded-xl border border-border bg-panel p-4 space-y-3">
               <div className="flex items-center gap-3">
-                <span className="font-heading text-accent">WEEK {wi + 1}</span>
-                <input
-                  className="field flex-1"
-                  placeholder="Focus, e.g. CO₂ capacity"
-                  value={week.focus}
-                  onChange={(e) => updateWeek(wi, { focus: e.target.value })}
-                />
+                <span className="font-heading text-accent whitespace-nowrap shrink-0">
+                  WEEK {wi + 1}
+                </span>
                 <select
-                  className="field w-auto"
+                  className="field w-auto ml-auto"
                   value={week.intensity}
                   onChange={(e) => updateWeek(wi, { intensity: e.target.value as Intensity })}
                 >
@@ -179,13 +178,19 @@ export function App() {
                 {plan.weeks.length > 1 && (
                   <button
                     onClick={() => removeWeek(wi)}
-                    className="text-red text-sm px-2"
+                    className="text-red text-sm px-2 shrink-0"
                     title="Remove week"
                   >
                     ✕
                   </button>
                 )}
               </div>
+              <input
+                className="field"
+                placeholder="Week focus (optional), e.g. CO₂ capacity"
+                value={week.focus}
+                onChange={(e) => updateWeek(wi, { focus: e.target.value })}
+              />
 
               <div className="space-y-2">
                 {DAY_LABELS.map((dayLabel, day) => {
@@ -260,10 +265,21 @@ export function App() {
   );
 }
 
-function Labeled({ label, children }: { label: string; children: ReactNode }) {
+function Labeled({
+  label,
+  required,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  children: ReactNode;
+}) {
   return (
     <label className="block">
-      <span className="block text-xs text-textDim uppercase tracking-wide mb-1.5">{label}</span>
+      <span className="block text-xs text-textDim uppercase tracking-wide mb-1.5">
+        {label}
+        {required && <span className="text-red"> *</span>}
+      </span>
       {children}
     </label>
   );
@@ -314,7 +330,9 @@ function SessionEditor({
 
       {/* Structured exercises (mode #2) */}
       <div className="space-y-2">
-        <span className="block text-xs text-textDim uppercase tracking-wide">Exercises</span>
+        <span className="block text-xs text-textDim uppercase tracking-wide">
+          Exercises (optional)
+        </span>
         {session.exercises.map((ex, i) => (
           <div key={ex.id} className="flex gap-2 items-center">
             <span className="text-textDim text-xs font-mono w-4 shrink-0">{i + 1}</span>
@@ -338,12 +356,12 @@ function SessionEditor({
         </button>
       </div>
 
-      {/* Free-text notes (mode #1) — use either or both */}
+      {/* Free-text notes (mode #1), use either or both */}
       <div className="space-y-1">
         <span className="block text-xs text-textDim uppercase tracking-wide">Notes / full text</span>
         <textarea
           className="field min-h-20"
-          placeholder="Or write the session in plain text — warm-up, cues, anything."
+          placeholder="Or write the session in plain text: warm-up, cues, anything."
           value={session.body}
           onChange={(e) => onChange({ body: e.target.value })}
         />

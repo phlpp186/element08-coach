@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 /* Theme palette. Tokens are RGB triplets (no #, no commas) so Tailwind's
- * `<alpha-value>` opacity modifiers work directly — see tailwind.config.js. */
+ * `<alpha-value>` opacity modifiers work directly, see tailwind.config.js. */
 :root {
-  /* Dark — default. Matches the mobile app's chalk_dark feel. */
+  /* Dark, default. Matches the mobile app's chalk_dark feel. */
   --c-deep: 8 8 8;
   --c-abyss: 16 16 16;
   --c-panel: 22 22 22;

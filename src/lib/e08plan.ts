@@ -1,5 +1,5 @@
 /**
- * .e08plan wire format — must stay byte-compatible with the mobile app's
+ * .e08plan wire format: must stay byte-compatible with the mobile app's
  * importer (Deeptimerapp/src/lib/planSharing/{schema,PlanValidator}.ts).
  *
  * Hard requirements the app's validatePlanFile() enforces (we satisfy all):
