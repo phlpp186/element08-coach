@@ -17,6 +17,7 @@ import {
   type PlanStructure,
 } from './lib/e08plan';
 import { ExercisePalette } from './components/ExercisePalette';
+import { ExerciseInput } from './components/ExerciseInput';
 
 const INTENSITIES: Intensity[] = ['recovery', 'low', 'medium', 'high', 'max'];
 const MODES: { id: PlanMode; label: string }[] = [
@@ -531,11 +532,10 @@ function SessionEditor({
         {session.exercises.map((ex, i) => (
           <div key={ex.id} className="flex gap-2 items-center">
             <span className="text-textDim text-xs font-mono w-4 shrink-0">{i + 1}</span>
-            <input
-              className="field flex-1"
-              placeholder="e.g. 3×25m bi-fins, 5 min rest"
+            <ExerciseInput
               value={ex.description}
-              onChange={(e) => updateExercise(ex.id, e.target.value)}
+              placeholder="e.g. 3×25m bi-fins, 5 min rest"
+              onChange={(v) => updateExercise(ex.id, v)}
             />
             <button
               onClick={() => removeExercise(ex.id)}
