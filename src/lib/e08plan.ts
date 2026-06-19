@@ -15,7 +15,7 @@
 export const PLAN_FILE_FORMAT = 'e08plan';
 export const PLAN_FILE_VERSION = 1;
 
-export type PlanMode = 'depth' | 'pool' | 'general';
+export type PlanMode = 'depth' | 'pool' | 'dry' | 'general';
 export type Intensity = 'recovery' | 'low' | 'medium' | 'high' | 'max';
 export type MesoType = 'base' | 'build' | 'specific' | 'taper' | 'competition' | 'transition';
 
@@ -32,7 +32,7 @@ export interface PlannedSession {
   dayOfWeek: number;
   label: string;
   exercises: PlannedExercise[];
-  mode?: PlanMode | 'dry';
+  mode?: PlanMode;
   sessionType?: string;
   /** Free-text body for the session (the coach's full-text plan). */
   sessionNotes?: string;
@@ -96,7 +96,7 @@ export interface BuilderSession {
   body: string;
   /** Structured exercise rows (authoring mode #2). Maps to PlannedSession.exercises. */
   exercises: BuilderExercise[];
-  mode: PlanMode | 'dry';
+  mode: PlanMode;
   sessionType: string;
 }
 

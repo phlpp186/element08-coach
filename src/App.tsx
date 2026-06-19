@@ -16,11 +16,13 @@ import {
   type PlanMode,
   type PlanStructure,
 } from './lib/e08plan';
+import { ExercisePalette } from './components/ExercisePalette';
 
 const INTENSITIES: Intensity[] = ['recovery', 'low', 'medium', 'high', 'max'];
 const MODES: { id: PlanMode; label: string }[] = [
   { id: 'depth', label: 'Depth' },
   { id: 'pool', label: 'Pool' },
+  { id: 'dry', label: 'Dry' },
   { id: 'general', label: 'General' },
 ];
 const SESSION_MODES: BuilderSession['mode'][] = ['depth', 'pool', 'dry', 'general'];
@@ -127,6 +129,20 @@ export function App() {
   const removeDaySession = (di: number, id: string) =>
     updateDay(di, { sessions: plan.days[di].sessions.filter((s) => s.id !== id) });
 
+  // Append a library exercise to a session by id, wherever it lives (week or day).
+  const appendExerciseToSession = (sessionId: string, description: string) => {
+    const ex = { id: uid('ex'), description };
+    const mapSessions = (sessions: BuilderSession[]) =>
+      sessions.map((s) =>
+        s.id === sessionId ? { ...s, exercises: [...s.exercises, ex] } : s,
+      );
+    setPlan((p) => ({
+      ...p,
+      weeks: p.weeks.map((w) => ({ ...w, sessions: mapSessions(w.sessions) })),
+      days: p.days.map((d) => ({ ...d, sessions: mapSessions(d.sessions) })),
+    }));
+  };
+
   return (
     <div className="min-h-screen pb-28">
       <header className="border-b border-border px-5 py-4">
@@ -199,6 +215,12 @@ export function App() {
             </div>
           </div>
         </section>
+
+        <ExercisePalette
+          onUse={(desc) => {
+            if (editing) appendExerciseToSession(editing, desc);
+          }}
+        />
 
         {/* Schedule: weeks or days */}
         <section className="space-y-4">
@@ -466,6 +488,7 @@ function SessionEditor({
   onClose: () => void;
   onDelete: () => void;
 }) {
+  const [dropping, setDropping] = useState(false);
   const addExercise = () =>
     onChange({ exercises: [...session.exercises, { id: uid('ex'), description: '' }] });
   const updateExercise = (id: string, description: string) =>
@@ -484,10 +507,26 @@ function SessionEditor({
         onChange={(e) => onChange({ label: e.target.value })}
       />
 
-      {/* Structured exercises (mode #2) */}
-      <div className="space-y-2">
+      {/* Structured exercises (mode #2). Drop target for library chips. */}
+      <div
+        className={`space-y-2 rounded-lg p-1 transition-colors ${
+          dropping ? 'outline outline-1 outline-accent bg-accent/5' : ''
+        }`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'copy';
+          setDropping(true);
+        }}
+        onDragLeave={() => setDropping(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDropping(false);
+          const d = e.dataTransfer.getData('text/plain');
+          if (d) onChange({ exercises: [...session.exercises, { id: uid('ex'), description: d }] });
+        }}
+      >
         <span className="block text-xs text-textDim uppercase tracking-wide">
-          Exercises (optional)
+          Exercises (optional) · drag from your library
         </span>
         {session.exercises.map((ex, i) => (
           <div key={ex.id} className="flex gap-2 items-center">

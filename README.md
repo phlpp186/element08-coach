@@ -47,12 +47,22 @@ Implemented:
 - **Mode #2 — structured exercises**: an editable list of exercise rows per session
   (`exercises[]`), plus session `mode` + `sessionType`. Use either or both per session.
 
+- **Mode #3 — drag-and-drop**: a localStorage exercise **library** (the palette) with
+  **.csv / .xlsx import** (SheetJS lazy-loaded from a CDN, first column → exercises) and
+  CSV export. Drag a chip into a session's exercise list, or click it to add to the open
+  session.
+- **Day-based plans**: a Weeks/Days structure toggle; day mode is a one-off Day 1..N block
+  (each day → its calendar date, "Day N:" baked into the title).
+
 ### Roadmap (see app repo `appstore/TODO.md` T53/T54)
 
-- **Mode #3 — drag-and-drop** exercises from a palette onto days (`dnd-kit`).
 - **Per-exercise typed fields** (lung volume / discipline): the app's `PlannedExercise`
   is currently `{ id, description }` only, so structured detail goes in the description
   text. Richer per-exercise fields would need an app-side model change first.
+- **Repeating day cycles** (currently a one-off block) and **season plans** (multi-phase).
+- Note: plan-level **Dry** mode is emitted as `content.mode: 'dry'`; the app's `Plan.mode`
+  type is `depth | pool | general`, so a dry plan imports (validator doesn't check it) but
+  the app may want a small type update to fully recognise it.
 - **Share link / QR** for small plans (deep link into the app) alongside the file.
 - **Season plans** (`kind: 'season'`, multiple phases) — currently exports a single
   `training` phase.
