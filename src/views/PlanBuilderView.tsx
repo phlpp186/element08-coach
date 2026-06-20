@@ -1,0 +1,586 @@
+import { useMemo, useState } from 'react';
+import { daysBetween } from '../lib/planHelpers';
+import {
+  addDays,
+  downloadPlanFile,
+  dowOf,
+  emptyDay,
+  emptyPhase,
+  generateSeasonSkeleton,
+  initialPlan,
+  mondayOf,
+  normalizePlan,
+  planIssues,
+  planStats,
+  type BuilderDay,
+  type BuilderPhase,
+  type BuilderPlan,
+  type BuilderWeek,
+  type PlanKind,
+  type PlanMode,
+  type PlanStructure,
+} from '../lib/e08plan';
+import { ExercisePalette } from '../components/ExercisePalette';
+import { Labeled, SessionList } from '../components/sessions';
+import { WeekCard } from '../components/WeekCard';
+import { PhaseCard } from '../components/PhaseCard';
+import { navigate } from '../hooks/useHashRoute';
+import {
+  newPlanId,
+  upsertPlan,
+  useAthletes,
+  useSavedPlan,
+} from '../lib/store';
+import type { Athlete } from '../lib/types';
+
+const MODES: { id: PlanMode; label: string }[] = [
+  { id: 'depth', label: 'Depth' },
+  { id: 'pool', label: 'Pool' },
+  { id: 'dry', label: 'Dry' },
+  { id: 'general', label: 'General' },
+];
+const KINDS: { id: PlanKind; label: string }[] = [
+  { id: 'training', label: 'Training plan' },
+  { id: 'season', label: 'Season plan' },
+];
+const STRUCTURES: { id: PlanStructure; label: string }[] = [
+  { id: 'weeks', label: 'Weeks' },
+  { id: 'days', label: 'Days' },
+];
+
+const WEEKDAY_FMT = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+function dayDateLabel(startDate: string, di: number): string {
+  return WEEKDAY_FMT.format(new Date(`${addDays(startDate, di)}T00:00:00Z`));
+}
+
+/** Build the initial working plan for this mount: load a saved plan, or start a
+ *  fresh one (optionally pre-filled for an athlete + their next competition). */
+function makeInitial(saved: BuilderPlan | undefined, athlete: Athlete | undefined): BuilderPlan {
+  if (saved) return normalizePlan(saved);
+  const p = initialPlan();
+  if (!athlete) return p;
+  p.name = `${athlete.name.trim() || 'Athlete'} — plan`;
+  const nextComp = [...athlete.competitions]
+    .filter((c) => c.date && c.date >= p.startDate)
+    .sort((a, b) => a.date.localeCompare(b.date))[0];
+  if (nextComp) {
+    const weeks = Math.max(1, Math.ceil(daysBetween(p.startDate, nextComp.date) / 7));
+    p.kind = 'season';
+    p.competitionDate = nextComp.date;
+    p.phases = generateSeasonSkeleton(weeks);
+  }
+  return p;
+}
+
+export function PlanBuilderView({
+  planId,
+  presetAthleteId,
+}: {
+  planId: string | null;
+  presetAthleteId: string | null;
+}) {
+  const athletes = useAthletes();
+  const saved = useSavedPlan(planId);
+  const presetAthlete = athletes.find((a) => a.id === presetAthleteId);
+
+  const [plan, setPlan] = useState<BuilderPlan>(() => makeInitial(saved?.plan, presetAthlete));
+  const [recordId, setRecordId] = useState<string | null>(saved?.id ?? null);
+  const [athleteId, setAthleteId] = useState<string | null>(saved?.athleteId ?? presetAthleteId);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [openPhase, setOpenPhase] = useState<string | null>(plan.phases[0]?.id ?? null);
+  const [dirty, setDirty] = useState(false);
+  const [savedTick, setSavedTick] = useState(false);
+
+  const issues = useMemo(() => planIssues(plan), [plan]);
+  const stats = useMemo(() => planStats(plan), [plan]);
+  const ready = issues.length === 0;
+
+  // ── updaters ──
+  const mutate = (fn: (p: BuilderPlan) => BuilderPlan) => {
+    setPlan(fn);
+    setDirty(true);
+    setSavedTick(false);
+  };
+  const setMeta = (patch: Partial<BuilderPlan>) => mutate((p) => ({ ...p, ...patch }));
+
+  // weeks (training)
+  const updateWeek = (wi: number, patch: Partial<BuilderWeek>) =>
+    mutate((p) => ({ ...p, weeks: p.weeks.map((w, i) => (i === wi ? { ...w, ...patch } : w)) }));
+  const addWeek = () => mutate((p) => ({ ...p, weeks: [...p.weeks, { focus: '', intensity: 'medium', notes: '', sessions: [] }] }));
+  const removeWeek = (wi: number) => mutate((p) => ({ ...p, weeks: p.weeks.filter((_, i) => i !== wi) }));
+
+  // days (training)
+  const updateDay = (di: number, patch: Partial<BuilderDay>) =>
+    mutate((p) => ({ ...p, days: p.days.map((d, i) => (i === di ? { ...d, ...patch } : d)) }));
+  const addDay = () => mutate((p) => ({ ...p, days: [...p.days, emptyDay()] }));
+  const removeDay = (di: number) => mutate((p) => ({ ...p, days: p.days.filter((_, i) => i !== di) }));
+  const setDayCount = (n: number) =>
+    mutate((p) => {
+      const target = Math.max(1, Math.min(366, Math.floor(n) || 1));
+      if (target === p.days.length) return p;
+      const days =
+        target > p.days.length
+          ? [...p.days, ...Array.from({ length: target - p.days.length }, emptyDay)]
+          : p.days.slice(0, target);
+      return { ...p, days };
+    });
+
+  // phases (season)
+  const updatePhase = (pi: number, patch: Partial<BuilderPhase>) =>
+    mutate((p) => ({ ...p, phases: p.phases.map((ph, i) => (i === pi ? { ...ph, ...patch } : ph)) }));
+  const addPhase = () => {
+    const ph = emptyPhase('build');
+    mutate((p) => ({ ...p, phases: [...p.phases, ph] }));
+    setOpenPhase(ph.id);
+  };
+  const removePhase = (pi: number) => mutate((p) => ({ ...p, phases: p.phases.filter((_, i) => i !== pi) }));
+  const [genWeeks, setGenWeeks] = useState(12);
+  const regenerate = () => {
+    const phases = generateSeasonSkeleton(genWeeks);
+    mutate((p) => ({ ...p, kind: 'season', phases }));
+    setOpenPhase(phases[0]?.id ?? null);
+  };
+
+  // append a library exercise to the open session, wherever it lives
+  const appendExerciseToSession = (sessionId: string, description: string) => {
+    const ex = { id: `ex-${Date.now().toString(36)}-${Math.round(performance.now())}`, description };
+    const mapSessions = (ss: BuilderWeek['sessions']) =>
+      ss.map((s) => (s.id === sessionId ? { ...s, exercises: [...s.exercises, ex] } : s));
+    mutate((p) => ({
+      ...p,
+      weeks: p.weeks.map((w) => ({ ...w, sessions: mapSessions(w.sessions) })),
+      days: p.days.map((d) => ({ ...d, sessions: mapSessions(d.sessions) })),
+      phases: p.phases.map((ph) => ({ ...ph, weeks: ph.weeks.map((w) => ({ ...w, sessions: mapSessions(w.sessions) })) })),
+    }));
+  };
+
+  const doSave = (): string => {
+    const id = recordId ?? newPlanId();
+    upsertPlan({ id, athleteId, plan, updatedAt: '' });
+    setRecordId(id);
+    setDirty(false);
+    setSavedTick(true);
+    return id;
+  };
+  const doDownload = () => {
+    doSave();
+    downloadPlanFile(plan);
+  };
+
+  // Season layout helpers (phase week offsets + the partial first week).
+  const firstMonday = mondayOf(plan.startDate);
+  const startDow = dowOf(plan.startDate);
+  const phaseOffsets = useMemo(() => {
+    let g = 0;
+    return plan.phases.map((ph) => {
+      const off = g;
+      g += ph.weeks.length;
+      return off;
+    });
+  }, [plan.phases]);
+
+  const attachedAthlete = athletes.find((a) => a.id === athleteId);
+
+  return (
+    <main className="mx-auto max-w-4xl px-5 py-6 space-y-8">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg">{recordId ? 'Edit plan' : 'New plan'}</h2>
+        {attachedAthlete && (
+          <button
+            onClick={() => navigate(`/athletes/${attachedAthlete.id}`)}
+            className="text-sm text-accent hover:underline"
+          >
+            ← {attachedAthlete.name || 'athlete'}
+          </button>
+        )}
+      </div>
+
+      {/* Plan details */}
+      <section className="space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Labeled label="Plan name" required>
+            <input
+              className="field"
+              placeholder="e.g. 12-Week Depth Progression"
+              value={plan.name}
+              onChange={(e) => setMeta({ name: e.target.value })}
+            />
+          </Labeled>
+          <Labeled label="Coach name (shown as author)" required>
+            <input
+              className="field"
+              placeholder="Your name"
+              value={plan.coach}
+              onChange={(e) => setMeta({ coach: e.target.value })}
+            />
+          </Labeled>
+          <Labeled label="Athlete (optional)">
+            <select
+              className="field"
+              value={athleteId ?? ''}
+              onChange={(e) => {
+                setAthleteId(e.target.value || null);
+                setDirty(true);
+                setSavedTick(false);
+              }}
+            >
+              <option value="">— Not linked —</option>
+              {athletes.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name || 'Unnamed athlete'}
+                </option>
+              ))}
+            </select>
+          </Labeled>
+          <Labeled label="Start date">
+            <input
+              type="date"
+              className="field"
+              value={plan.startDate}
+              onChange={(e) => setMeta({ startDate: e.target.value || plan.startDate })}
+            />
+          </Labeled>
+          <Labeled label="Mode">
+            <select className="field" value={plan.mode} onChange={(e) => setMeta({ mode: e.target.value as PlanMode })}>
+              {MODES.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.label}
+                </option>
+              ))}
+            </select>
+          </Labeled>
+          <Labeled label="Plan type">
+            <div className="flex rounded-lg border border-border overflow-hidden">
+              {KINDS.map((k) => (
+                <button
+                  key={k.id}
+                  onClick={() => setMeta({ kind: k.id })}
+                  className={`flex-1 px-3 py-2 text-sm ${plan.kind === k.id ? 'bg-accent text-ink' : 'text-textDim'}`}
+                >
+                  {k.label}
+                </button>
+              ))}
+            </div>
+          </Labeled>
+          <div className="sm:col-span-2">
+            <Labeled label="Description (optional)">
+              <input
+                className="field"
+                placeholder="One line the athlete sees on import"
+                value={plan.description}
+                onChange={(e) => setMeta({ description: e.target.value })}
+              />
+            </Labeled>
+          </div>
+        </div>
+        <p className="text-xs text-textDim">
+          {plan.kind === 'season'
+            ? 'A season periodizes weeks into phases (Base → Build → Specific → Taper → Peak) toward a competition.'
+            : 'Week 1 starts on your start date and runs to that Sunday, then full Mon–Sun weeks.'}
+        </p>
+      </section>
+
+      <ExercisePalette
+        onUse={(desc) => {
+          if (editing) appendExerciseToSession(editing, desc);
+        }}
+      />
+
+      {plan.kind === 'season' ? (
+        <SeasonSchedule
+          plan={plan}
+          openPhase={openPhase}
+          setOpenPhase={setOpenPhase}
+          phaseOffsets={phaseOffsets}
+          firstMonday={firstMonday}
+          startDow={startDow}
+          editing={editing}
+          setEditing={setEditing}
+          genWeeks={genWeeks}
+          setGenWeeks={setGenWeeks}
+          regenerate={regenerate}
+          updatePhase={updatePhase}
+          addPhase={addPhase}
+          removePhase={removePhase}
+          setMeta={setMeta}
+        />
+      ) : (
+        <TrainingSchedule
+          plan={plan}
+          editing={editing}
+          setEditing={setEditing}
+          setMeta={setMeta}
+          updateWeek={updateWeek}
+          addWeek={addWeek}
+          removeWeek={removeWeek}
+          updateDay={updateDay}
+          addDay={addDay}
+          removeDay={removeDay}
+          setDayCount={setDayCount}
+          dayDateLabel={dayDateLabel}
+        />
+      )}
+
+      {/* Export bar */}
+      <div className="fixed bottom-0 inset-x-0 border-t border-border bg-abyss/95 backdrop-blur px-5 py-3">
+        <div className="mx-auto max-w-4xl flex items-center gap-4">
+          <div className="text-sm text-textDim flex-1">
+            {stats.units} {stats.unitLabel}
+            {stats.units === 1 ? '' : 's'} · {stats.sessions} session
+            {stats.sessions === 1 ? '' : 's'}
+            {!ready && <span className="text-amber ml-2">· {issues[0]}</span>}
+            {ready && savedTick && <span className="text-recover ml-2">· Saved ✓</span>}
+            {ready && dirty && !savedTick && <span className="text-textDim ml-2">· Unsaved changes</span>}
+          </div>
+          <button
+            onClick={doSave}
+            className="rounded-lg px-4 py-2 font-heading tracking-wide border border-border text-text hover:border-accent"
+          >
+            Save
+          </button>
+          <button
+            disabled={!ready}
+            onClick={doDownload}
+            className="rounded-lg px-4 py-2 font-heading tracking-wide disabled:opacity-40 bg-accent text-ink"
+          >
+            Download .e08plan
+          </button>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+// ── Training schedule (weeks or days) ─────────────────────────────────────────
+
+function TrainingSchedule(props: {
+  plan: BuilderPlan;
+  editing: string | null;
+  setEditing: (id: string | null) => void;
+  setMeta: (patch: Partial<BuilderPlan>) => void;
+  updateWeek: (wi: number, patch: Partial<BuilderWeek>) => void;
+  addWeek: () => void;
+  removeWeek: (wi: number) => void;
+  updateDay: (di: number, patch: Partial<BuilderDay>) => void;
+  addDay: () => void;
+  removeDay: (di: number) => void;
+  setDayCount: (n: number) => void;
+  dayDateLabel: (startDate: string, di: number) => string;
+}) {
+  const { plan, editing, setEditing, setMeta } = props;
+  const newSess = (dayOfWeek: number) => ({
+    id: `sess-${Date.now().toString(36)}-${Math.round(performance.now())}`,
+    dayOfWeek,
+    label: '',
+    body: '',
+    exercises: [],
+    mode: plan.mode,
+    sessionType: '',
+  });
+
+  return (
+    <section className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg">Schedule</h2>
+          <div className="flex rounded-lg border border-border overflow-hidden">
+            {STRUCTURES.map((st) => (
+              <button
+                key={st.id}
+                onClick={() => setMeta({ structure: st.id })}
+                className={`px-3 py-1.5 text-sm ${plan.structure === st.id ? 'bg-accent text-ink' : 'text-textDim'}`}
+              >
+                {st.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {plan.structure === 'weeks' ? (
+          <button
+            onClick={props.addWeek}
+            className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent"
+          >
+            + Add week
+          </button>
+        ) : (
+          <div className="flex items-center gap-2 text-sm text-textDim">
+            <span>Duration</span>
+            <input
+              type="number"
+              min={1}
+              max={366}
+              value={plan.days.length}
+              onChange={(e) => props.setDayCount(Number(e.target.value))}
+              className="field w-20 text-center"
+            />
+            <span>days</span>
+          </div>
+        )}
+      </div>
+
+      {plan.structure === 'weeks'
+        ? plan.weeks.map((week, wi) => (
+            <WeekCard
+              key={wi}
+              week={week}
+              label={`WEEK ${wi + 1}`}
+              mode={plan.mode}
+              editing={editing}
+              setEditing={setEditing}
+              onChange={(patch) => props.updateWeek(wi, patch)}
+              onRemove={plan.weeks.length > 1 ? () => props.removeWeek(wi) : undefined}
+              partialBeforeDow={wi === 0 ? dowOf(plan.startDate) : undefined}
+            />
+          ))
+        : plan.days.map((day, di) => (
+            <div key={day.id} className="rounded-xl border border-border bg-panel p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="font-heading text-accent whitespace-nowrap shrink-0">DAY {di + 1}</span>
+                <span className="text-textDim text-sm">{props.dayDateLabel(plan.startDate, di)}</span>
+                {plan.days.length > 1 && (
+                  <button onClick={() => props.removeDay(di)} className="text-red text-sm px-2 shrink-0 ml-auto" title="Remove day">
+                    ✕
+                  </button>
+                )}
+              </div>
+              <DaySessions
+                day={day}
+                editing={editing}
+                setEditing={setEditing}
+                onChange={(patch) => props.updateDay(di, patch)}
+                newSess={newSess}
+              />
+            </div>
+          ))}
+      {plan.structure === 'days' && (
+        <button onClick={props.addDay} className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent">
+          + Add day
+        </button>
+      )}
+    </section>
+  );
+}
+
+function DaySessions({
+  day,
+  editing,
+  setEditing,
+  onChange,
+  newSess,
+}: {
+  day: BuilderDay;
+  editing: string | null;
+  setEditing: (id: string | null) => void;
+  onChange: (patch: Partial<BuilderDay>) => void;
+  newSess: (dayOfWeek: number) => BuilderDay['sessions'][number];
+}) {
+  const add = () => {
+    const s = newSess(0);
+    onChange({ sessions: [...day.sessions, s] });
+    setEditing(s.id);
+  };
+  return (
+    <SessionList
+      sessions={day.sessions}
+      editing={editing}
+      setEditing={setEditing}
+      onAdd={add}
+      onChange={(id, patch) => onChange({ sessions: day.sessions.map((s) => (s.id === id ? { ...s, ...patch } : s)) })}
+      onRemove={(id) => onChange({ sessions: day.sessions.filter((s) => s.id !== id) })}
+    />
+  );
+}
+
+// ── Season schedule (phases) ──────────────────────────────────────────────────
+
+function SeasonSchedule(props: {
+  plan: BuilderPlan;
+  openPhase: string | null;
+  setOpenPhase: (id: string | null) => void;
+  phaseOffsets: number[];
+  firstMonday: string;
+  startDow: number;
+  editing: string | null;
+  setEditing: (id: string | null) => void;
+  genWeeks: number;
+  setGenWeeks: (n: number) => void;
+  regenerate: () => void;
+  updatePhase: (pi: number, patch: Partial<BuilderPhase>) => void;
+  addPhase: () => void;
+  removePhase: (pi: number) => void;
+  setMeta: (patch: Partial<BuilderPlan>) => void;
+}) {
+  const { plan } = props;
+  const compWeeks = plan.competitionDate
+    ? Math.max(1, Math.ceil(daysBetween(plan.startDate, plan.competitionDate) / 7))
+    : null;
+
+  return (
+    <section className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Labeled label="Target competition date">
+          <input
+            type="date"
+            className="field"
+            value={plan.competitionDate}
+            min={plan.startDate}
+            onChange={(e) => {
+              props.setMeta({ competitionDate: e.target.value });
+              if (e.target.value) {
+                props.setGenWeeks(Math.max(1, Math.ceil(daysBetween(plan.startDate, e.target.value) / 7)));
+              }
+            }}
+          />
+          {compWeeks != null && (
+            <span className="block text-xs text-textDim mt-1">{compWeeks} weeks out.</span>
+          )}
+        </Labeled>
+        <Labeled label="Auto-build periodization">
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={1}
+              max={52}
+              value={props.genWeeks}
+              onChange={(e) => props.setGenWeeks(Math.max(1, Math.min(52, Number(e.target.value) || 1)))}
+              className="field w-20 text-center"
+            />
+            <span className="text-sm text-textDim">weeks</span>
+            <button
+              onClick={props.regenerate}
+              className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent whitespace-nowrap"
+            >
+              Generate phases
+            </button>
+          </div>
+          <span className="block text-xs text-textDim mt-1">Replaces the phases below with a Base→Peak skeleton you then edit.</span>
+        </Labeled>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg">Phases</h2>
+        <button onClick={props.addPhase} className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent">
+          + Add phase
+        </button>
+      </div>
+
+      {plan.phases.map((ph, pi) => (
+        <PhaseCard
+          key={ph.id}
+          phase={ph}
+          index={pi}
+          mode={plan.mode}
+          open={props.openPhase === ph.id}
+          onToggle={() => props.setOpenPhase(props.openPhase === ph.id ? null : ph.id)}
+          weekOffset={props.phaseOffsets[pi]}
+          firstMonday={props.firstMonday}
+          startDow={props.startDow}
+          editing={props.editing}
+          setEditing={props.setEditing}
+          onChange={(patch) => props.updatePhase(pi, patch)}
+          onRemove={plan.phases.length > 1 ? () => props.removePhase(pi) : undefined}
+        />
+      ))}
+    </section>
+  );
+}

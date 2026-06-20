@@ -53,18 +53,35 @@ Implemented:
   session.
 - **Day-based plans**: a Weeks/Days structure toggle; day mode is a one-off Day 1..N block
   (each day → its calendar date, "Day N:" baked into the title).
+- **Season plans** (`type: season_plan`, `content.kind: 'season'`): a Training/Season toggle.
+  Season mode adds a target competition date and reorganises the schedule into collapsible
+  **phase** cards (mesocycles, typed Base / Build / Specific / Taper / Peak), each a block of
+  weeks that reuses the same week editor. **Auto-build periodization** generates a Base→Peak
+  skeleton sized to the season length, which the coach edits. Phases run back-to-back from
+  week 1's Monday; the export maps them to `content.phases[]` MesoCycles. Cross-validated
+  against the app's real `validatePlanFile` (training + season, zero errors/warnings).
+
+### Athlete management (roster)
+
+A second top-level view (hash-routed: `#/athletes`, `#/athletes/:id`, `#/plan/:id`) for
+managing students. **No backend** — the roster lives in localStorage and is backed up via an
+**Export / Import** `.e08coach` file (athletes + saved plans). Per athlete: profile + coaching
+window, **personal bests** (per app discipline — depth/pool metres, STA time — dated history
+with a progress sparkline), **goals**, **competitions** (drives a countdown + seeds a season
+plan's comp date), a dated **progress log**, and **attached plans**. Plans are now **persisted**
+(survive a refresh) and can be linked to an athlete; **Build a plan for [athlete]** pre-fills the
+author + name and, if they have an upcoming competition, starts a season sized to it.
 
 ### Roadmap (see app repo `appstore/TODO.md` T53/T54)
 
 - **Per-exercise typed fields** (lung volume / discipline): the app's `PlannedExercise`
   is currently `{ id, description }` only, so structured detail goes in the description
   text. Richer per-exercise fields would need an app-side model change first.
-- **Repeating day cycles** (currently a one-off block) and **season plans** (multi-phase).
+- **Repeating day cycles** (currently a one-off block).
 - Note: plan-level **Dry** mode is emitted as `content.mode: 'dry'`; the app's `Plan.mode`
   type is `depth | pool | general`, so a dry plan imports (validator doesn't check it) but
   the app may want a small type update to fully recognise it.
 - **Share link / QR** for small plans (deep link into the app) alongside the file.
-- **Season plans** (`kind: 'season'`, multiple phases) — currently exports a single
-  `training` phase.
 - Share the exercise catalog (`Deeptimerapp/src/lib/planTemplates`) so structured
   mode never drifts from the app's vocabulary.
+- **Goal vs PB visualisation** on the athlete page (current → target gap bars).

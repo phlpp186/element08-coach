@@ -114,19 +114,53 @@ export interface BuilderDay {
 }
 
 export type PlanStructure = 'weeks' | 'days';
+export type PlanKind = 'training' | 'season';
+
+/** A mesocycle in a season plan: a named, typed block of weeks (Base, Build,
+ *  Specific, Taper, Competition…). Reuses the same week editor as training weeks. */
+export interface BuilderPhase {
+  id: string;
+  name: string;
+  type: MesoType;
+  weeks: BuilderWeek[];
+}
 
 export interface BuilderPlan {
   name: string;
   coach: string;
   description: string;
   mode: PlanMode;
+  /** 'training' = one block (weeks or days). 'season' = periodized phases toward a comp. */
+  kind: PlanKind;
   /** ISO date (YYYY-MM-DD). Day 1 / week 1 begins here; any day is allowed. */
   startDate: string;
+  /** ISO date of the target competition (season plans). '' = none. */
+  competitionDate: string;
   /** 'weeks' = Mon–Sun weeks; 'days' = a flat numbered day list (one-off block). */
   structure: PlanStructure;
   weeks: BuilderWeek[];
   days: BuilderDay[];
+  /** Season-mode phases (used when kind === 'season'). */
+  phases: BuilderPhase[];
 }
+
+export const MESO_TYPES: MesoType[] = [
+  'base',
+  'build',
+  'specific',
+  'taper',
+  'competition',
+  'transition',
+];
+
+export const MESO_LABEL: Record<MesoType, string> = {
+  base: 'Base',
+  build: 'Build',
+  specific: 'Specific',
+  taper: 'Taper',
+  competition: 'Peak / Comp',
+  transition: 'Transition',
+};
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -181,18 +215,23 @@ function toPlanned(s: BuilderSession, dayOfWeek: number, label: string): Planned
   };
 }
 
-/** Weeks-mode → MicroCycles. weekStart stays a Monday; week 1 may be partial. */
-function weeksToMicroCycles(plan: BuilderPlan): MicroCycle[] {
-  const firstMonday = mondayOf(plan.startDate);
-  return plan.weeks.map((w, wi) => ({
-    weekStart: addDays(firstMonday, wi * 7),
+/** One BuilderWeek → one MicroCycle anchored at the given Monday. */
+function weekToMicro(w: BuilderWeek, weekStart: string): MicroCycle {
+  return {
+    weekStart,
     focus: w.focus.trim(),
     targetSessions: w.sessions.length,
     targetMix: {},
     intensity: w.intensity,
     notes: w.notes.trim(),
     plannedSessions: w.sessions.map((s) => toPlanned(s, s.dayOfWeek, s.label)),
-  }));
+  };
+}
+
+/** Weeks-mode → MicroCycles. weekStart stays a Monday; week 1 may be partial. */
+function weeksToMicroCycles(plan: BuilderPlan): MicroCycle[] {
+  const firstMonday = mondayOf(plan.startDate);
+  return plan.weeks.map((w, wi) => weekToMicro(w, addDays(firstMonday, wi * 7)));
 }
 
 /** Days-mode → MicroCycles. Each Day N maps to a real calendar date
@@ -224,17 +263,41 @@ function daysToMicroCycles(plan: BuilderPlan): MicroCycle[] {
     }));
 }
 
+/** Season-mode → MesoCycles. Phases run back-to-back from week 1's Monday; the
+ *  global week index drives each week's weekStart so the whole season lays out as
+ *  one continuous Mon–Sun calendar (the app requires Monday weekStarts). */
+function seasonToPhases(plan: BuilderPlan): MesoCycle[] {
+  const firstMonday = mondayOf(plan.startDate);
+  let g = 0; // running week index across all phases
+  return plan.phases.map((ph) => ({
+    id: ph.id,
+    name: ph.name.trim() || MESO_LABEL[ph.type],
+    type: ph.type,
+    weeks: ph.weeks.map((w) => weekToMicro(w, addDays(firstMonday, g++ * 7))),
+  }));
+}
+
 /** Map the editor state into a valid PlanFileV1. The plan can begin on ANY day:
  *  content.startDate is the raw chosen date, but each week's weekStart stays the
  *  Monday of its calendar week (the app requires weekStart to be a Monday and
  *  places sessions by dayOfWeek 0=Mon..6=Sun). */
 export function buildPlanFile(plan: BuilderPlan): PlanFileV1 {
-  const weeks = plan.structure === 'days' ? daysToMicroCycles(plan) : weeksToMicroCycles(plan);
+  const season = plan.kind === 'season';
+  const phases: MesoCycle[] = season
+    ? seasonToPhases(plan)
+    : [
+        {
+          id: uid('phase'),
+          name: 'Training',
+          type: 'base',
+          weeks: plan.structure === 'days' ? daysToMicroCycles(plan) : weeksToMicroCycles(plan),
+        },
+      ];
 
   return {
     format: PLAN_FILE_FORMAT,
     version: 1,
-    type: 'training_plan',
+    type: season ? 'season_plan' : 'training_plan',
     metadata: {
       title: plan.name.trim(),
       author: plan.coach.trim(),
@@ -243,8 +306,8 @@ export function buildPlanFile(plan: BuilderPlan): PlanFileV1 {
     },
     content: {
       name: plan.name.trim(),
-      kind: 'training',
-      competitionDate: null,
+      kind: season ? 'season' : 'training',
+      competitionDate: season && plan.competitionDate ? plan.competitionDate : null,
       startDate: plan.startDate,
       // The app's Plan.mode only allows depth/pool/general; 'dry' is valid for
       // SESSIONS but not at the plan level (a 'dry' plan mode would silently fall
@@ -253,14 +316,7 @@ export function buildPlanFile(plan: BuilderPlan): PlanFileV1 {
       // correct (dry) session-type pills in the app.
       mode: plan.mode === 'dry' ? 'general' : plan.mode,
       schemaVersion: 3,
-      phases: [
-        {
-          id: uid('phase'),
-          name: 'Training',
-          type: 'base',
-          weeks,
-        },
-      ],
+      phases,
     },
   };
 }
@@ -268,6 +324,12 @@ export function buildPlanFile(plan: BuilderPlan): PlanFileV1 {
 /** Human-readable blockers that stop a valid export (mirrors the app's hard
  *  errors so the coach sees problems before downloading). Empty = ready. */
 function countSessions(plan: BuilderPlan): number {
+  if (plan.kind === 'season') {
+    return plan.phases.reduce(
+      (n, ph) => n + ph.weeks.reduce((m, w) => m + w.sessions.length, 0),
+      0,
+    );
+  }
   const containers = plan.structure === 'days' ? plan.days : plan.weeks;
   return containers.reduce((n, c) => n + c.sessions.length, 0);
 }
@@ -277,11 +339,16 @@ export function planIssues(plan: BuilderPlan): string[] {
   if (!plan.name.trim()) issues.push('Add a plan name.');
   if (!plan.coach.trim()) issues.push('Add your coach name (shown to the athlete as the author).');
   if (!plan.startDate) issues.push('Pick a start date.');
+  if (plan.kind === 'season' && plan.phases.length === 0) issues.push('Add at least one phase.');
   if (countSessions(plan) === 0) issues.push('Add at least one session.');
   return issues;
 }
 
 export function planStats(plan: BuilderPlan): { units: number; unitLabel: string; sessions: number } {
+  if (plan.kind === 'season') {
+    const weeks = plan.phases.reduce((n, ph) => n + ph.weeks.length, 0);
+    return { units: weeks, unitLabel: 'week', sessions: countSessions(plan) };
+  }
   const units = plan.structure === 'days' ? plan.days.length : plan.weeks.length;
   return {
     units,
@@ -303,4 +370,85 @@ export function downloadPlanFile(plan: BuilderPlan): void {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+// ── Builder-state factories ───────────────────────────────────────────────────
+
+export function emptyWeek(): BuilderWeek {
+  return { focus: '', intensity: 'medium', notes: '', sessions: [] };
+}
+
+export function emptyDay(): BuilderDay {
+  return { id: uid('day'), sessions: [] };
+}
+
+export function newSession(dayOfWeek: number, mode: PlanMode): BuilderSession {
+  return { id: uid('sess'), dayOfWeek, label: '', body: '', exercises: [], mode, sessionType: '' };
+}
+
+export function emptyPhase(type: MesoType, weeks = 1): BuilderPhase {
+  return {
+    id: uid('phase'),
+    name: MESO_LABEL[type],
+    type,
+    weeks: Array.from({ length: Math.max(1, weeks) }, emptyWeek),
+  };
+}
+
+export function initialPlan(): BuilderPlan {
+  return {
+    name: '',
+    coach: '',
+    description: '',
+    mode: 'depth',
+    kind: 'training',
+    startDate: isoDate(new Date()),
+    competitionDate: '',
+    structure: 'weeks',
+    weeks: [emptyWeek()],
+    days: [emptyDay()],
+    phases: [emptyPhase('base')],
+  };
+}
+
+/** Round-trip a saved/imported plan through the current shape so older saves
+ *  gain any newly-added fields with sane defaults. */
+export function normalizePlan(p: Partial<BuilderPlan> | undefined | null): BuilderPlan {
+  const base = initialPlan();
+  if (!p) return base;
+  return {
+    ...base,
+    ...p,
+    weeks: p.weeks?.length ? p.weeks : base.weeks,
+    days: p.days?.length ? p.days : base.days,
+    phases: p.phases?.length ? p.phases : base.phases,
+  };
+}
+
+// ── Periodization skeleton ────────────────────────────────────────────────────
+
+/** Suggest a back-to-back phase breakdown for a season of `totalWeeks`, ending in
+ *  a Peak/Comp week. Classic freediving periodization weighted Base→Build→Specific
+ *  →Taper→Peak; phase widths scale with the season length. The coach edits from
+ *  here (rename, resize, drop a phase) rather than facing a blank calendar. */
+export function generateSeasonSkeleton(totalWeeks: number): BuilderPhase[] {
+  const n = Math.max(1, Math.min(52, Math.floor(totalWeeks) || 1));
+  // Very short seasons: a couple of phases, then peak.
+  if (n <= 2) return [emptyPhase('specific', n - 1 > 0 ? n - 1 : 1), emptyPhase('competition', 1)].slice(n <= 1 ? 1 : 0);
+  if (n <= 4) {
+    const build = Math.max(1, n - 2);
+    return [emptyPhase('build', build), emptyPhase('taper', 1), emptyPhase('competition', 1)];
+  }
+  // Distribute the body across base/build/specific, reserve taper(1) + peak(1).
+  const body = n - 2;
+  const base = Math.max(1, Math.round(body * 0.4));
+  const build = Math.max(1, Math.round(body * 0.35));
+  const specific = Math.max(1, body - base - build);
+  return [
+    emptyPhase('base', base),
+    emptyPhase('build', build),
+    emptyPhase('specific', specific),
+    emptyPhase('taper', 1),
+    emptyPhase('competition', 1),
+  ];
 }
