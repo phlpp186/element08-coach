@@ -1,6 +1,7 @@
 import { navigate, useRoute } from './hooks/useHashRoute';
 import { AthletesView } from './views/AthletesView';
 import { AthleteDetailView } from './views/AthleteDetailView';
+import { ConnectedAthleteView } from './views/ConnectedAthleteView';
 import { PlanBuilderView } from './views/PlanBuilderView';
 import { AuthBar } from './components/AuthBar';
 
@@ -62,6 +63,11 @@ function Outlet() {
         presetAthleteId={presetAthleteId}
       />
     );
+  }
+
+  // Cloud (paired) athlete — distinct from the local notebook detail below.
+  if (top === 'connected' && second) {
+    return <ConnectedAthleteView key={second} studentId={second} />;
   }
 
   if (top === 'athletes' && second) {

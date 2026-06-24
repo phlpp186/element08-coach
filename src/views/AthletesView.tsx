@@ -9,10 +9,14 @@ import {
 import { headlinePBs, nextCompetition, relativeDays } from '../lib/athleteStats';
 import { navigate } from '../hooks/useHashRoute';
 import type { Athlete } from '../lib/types';
+import { ConnectedAthletes } from '../components/ConnectedAthletes';
+import { useAuth } from '../lib/supabase/AuthProvider';
 
 export function AthletesView() {
   const athletes = useAthletes();
   const plans = useSavedPlans();
+  const { session, isCoach } = useAuth();
+  const showLocalHeading = !!session && isCoach;
   const fileRef = useRef<HTMLInputElement>(null);
 
   const onImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,6 +65,15 @@ export function AthletesView() {
           </button>
         </div>
       </div>
+
+      <ConnectedAthletes />
+
+      {showLocalHeading && (
+        <div className="pt-2">
+          <h3 className="font-heading tracking-wide text-text">YOUR NOTES</h3>
+          <p className="text-textDim text-xs">Local to this browser — for prospects or athletes not on the app.</p>
+        </div>
+      )}
 
       {athletes.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-10 text-center text-textDim">
