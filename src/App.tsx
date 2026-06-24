@@ -2,6 +2,7 @@ import { navigate, useRoute } from './hooks/useHashRoute';
 import { AthletesView } from './views/AthletesView';
 import { AthleteDetailView } from './views/AthleteDetailView';
 import { PlanBuilderView } from './views/PlanBuilderView';
+import { AuthBar } from './components/AuthBar';
 
 const NAV: { id: string; label: string; to: string }[] = [
   { id: 'athletes', label: 'Athletes', to: '/athletes' },
@@ -22,17 +23,20 @@ export function App() {
               <span className="text-textDim font-body text-base align-middle">Coach</span>
             </h1>
           </button>
-          <nav className="flex rounded-lg border border-border overflow-hidden">
-            {NAV.map((n) => (
-              <button
-                key={n.id}
-                onClick={() => navigate(n.to)}
-                className={`px-4 py-1.5 text-sm ${top === n.id ? 'bg-accent text-ink' : 'text-textDim hover:text-text'}`}
-              >
-                {n.label}
-              </button>
-            ))}
-          </nav>
+          <div className="flex items-center gap-4">
+            <nav className="flex rounded-lg border border-border overflow-hidden">
+              {NAV.map((n) => (
+                <button
+                  key={n.id}
+                  onClick={() => navigate(n.to)}
+                  className={`px-4 py-1.5 text-sm ${top === n.id ? 'bg-accent text-ink' : 'text-textDim hover:text-text'}`}
+                >
+                  {n.label}
+                </button>
+              ))}
+            </nav>
+            <AuthBar />
+          </div>
         </div>
       </header>
 
