@@ -17,7 +17,8 @@ export function App() {
   return (
     <div className="min-h-screen pb-28">
       <header className="border-b border-border px-5 py-4">
-        <div className="mx-auto max-w-4xl flex items-center justify-between gap-4">
+        {/* pr clears the fixed theme toggle (right-4 + w-9) at narrow widths. */}
+        <div className="mx-auto max-w-4xl flex items-center justify-between gap-4 pr-12 sm:pr-14">
           <button onClick={() => navigate('/athletes')} className="text-left">
             <h1 className="text-2xl font-heading tracking-wider">
               E<span className="text-red">|</span>08{' '}

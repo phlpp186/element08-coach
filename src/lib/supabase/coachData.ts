@@ -5,6 +5,7 @@
  * this in lockstep with the app's dataAccess.ts (same discipline as the existing
  * .e08plan schema-mirroring). Query logic lives here; views consume via hooks.
  */
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './client';
 
 export type Json = string | number | boolean | null | { [k: string]: Json } | Json[];
@@ -247,4 +248,24 @@ export async function getAthleteProfile(studentId: string): Promise<AthleteProfi
     .maybeSingle();
   if (error) throw new Error(error.message);
   return data;
+}
+
+// ─── Realtime (live updates; RLS scopes events to what the coach can see) ────
+
+let _chanSeq = 0;
+
+/** Fire `cb` on any change to the given tables. One channel, multiple table
+ *  listeners. RLS applies to Realtime, so a coach only receives events for rows
+ *  they can read (their students' completions, their links, etc.). */
+export function subscribeToTables(tables: string[], cb: () => void): RealtimeChannel {
+  _chanSeq += 1;
+  let chan = supabase.channel(`portal-${_chanSeq}`);
+  for (const table of tables) {
+    chan = chan.on('postgres_changes', { event: '*', schema: 'public', table }, () => cb());
+  }
+  return chan.subscribe();
+}
+
+export function unsubscribeChannel(ch: RealtimeChannel): void {
+  void supabase.removeChannel(ch);
 }

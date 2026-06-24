@@ -4,13 +4,15 @@
  * many sessions are done. Distinct from the local AthleteDetailView (which edits
  * a coach-authored notebook entry); this data is student-owned, coach-readable.
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { navigate } from '../hooks/useHashRoute';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import {
   getAthleteProfile,
   listMyStudents,
   listCoachAssignments,
+  subscribeToTables,
+  unsubscribeChannel,
   type CoachAssignment,
 } from '../lib/supabase/coachData';
 import {
@@ -30,26 +32,38 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const load = useCallback(async () => {
+    if (!session) return;
+    setError(null);
+    try {
+      const [students, profile, allAssignments] = await Promise.all([
+        listMyStudents(),
+        getAthleteProfile(studentId),
+        listCoachAssignments(),
+      ]);
+      const me = students.find((s) => s.student.id === studentId);
+      setName(me?.student.display_name?.trim() || 'Athlete');
+      setPbs(parsePBs(profile?.pbs));
+      setGoals(parseGoals(profile?.goals));
+      setAssignments(allAssignments.filter((a) => a.studentId === studentId));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [studentId, session]);
+
+  useEffect(() => {
+    setLoading(true);
+    load();
+  }, [load]);
+
+  // Live: the athlete updating PBs/goals or completing a session reflects here.
   useEffect(() => {
     if (!session) return;
-    let alive = true;
-    setLoading(true);
-    setError(null);
-    Promise.all([listMyStudents(), getAthleteProfile(studentId), listCoachAssignments()])
-      .then(([students, profile, allAssignments]) => {
-        if (!alive) return;
-        const me = students.find((s) => s.student.id === studentId);
-        setName(me?.student.display_name?.trim() || 'Athlete');
-        setPbs(parsePBs(profile?.pbs));
-        setGoals(parseGoals(profile?.goals));
-        setAssignments(allAssignments.filter((a) => a.studentId === studentId));
-      })
-      .catch((e) => alive && setError((e as Error).message))
-      .finally(() => alive && setLoading(false));
-    return () => {
-      alive = false;
-    };
-  }, [studentId, session]);
+    const ch = subscribeToTables(['completions', 'athlete_profiles'], () => load());
+    return () => unsubscribeChannel(ch);
+  }, [session, load]);
 
   if (!session) {
     return (

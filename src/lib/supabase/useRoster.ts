@@ -5,7 +5,13 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from './AuthProvider';
-import { listMyStudents, listCoachAssignments, type ProfileRow } from './coachData';
+import {
+  listMyStudents,
+  listCoachAssignments,
+  subscribeToTables,
+  unsubscribeChannel,
+  type ProfileRow,
+} from './coachData';
 
 export interface ConnectedAthlete {
   /** coach_student link id (for disconnect). */
@@ -59,6 +65,14 @@ export function useRoster() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  // Live: a student pairing (coach_student) or marking a session done
+  // (completions) updates the roster + counts without a manual refresh.
+  useEffect(() => {
+    if (!session) return;
+    const ch = subscribeToTables(['coach_student', 'completions'], () => refresh());
+    return () => unsubscribeChannel(ch);
+  }, [session, refresh]);
 
   return { athletes, loading, error, refresh };
 }
