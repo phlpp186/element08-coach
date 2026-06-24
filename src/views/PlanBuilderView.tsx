@@ -32,6 +32,7 @@ import {
   useSavedPlan,
 } from '../lib/store';
 import type { Athlete } from '../lib/types';
+import { AssignToConnectedButton } from '../components/AssignToConnectedButton';
 
 const MODES: { id: PlanMode; label: string }[] = [
   { id: 'depth', label: 'Depth' },
@@ -338,6 +339,7 @@ export function PlanBuilderView({
           >
             Save
           </button>
+          <AssignToConnectedButton plan={plan} ready={ready} ensureSaved={doSave} />
           <button
             disabled={!ready}
             onClick={doDownload}
