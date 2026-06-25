@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark light" />
     <script>
-      // Apply the saved theme before first paint so the page doesn't flash dark
-      // before flipping to a chosen light theme.
+      // Apply the saved theme before first paint so the page doesn't flash the
+      // default dark theme before flipping to a chosen light/neon theme.
       (function () {
         try {
-          if (localStorage.getItem('element08.theme') === 'light') {
-            document.documentElement.classList.add('light');
-          }
+          var t = localStorage.getItem('element08.theme');
+          if (t === 'light') document.documentElement.classList.add('light');
+          else if (t === 'neon') document.documentElement.classList.add('neon');
         } catch (e) {
           /* localStorage blocked — stay on the default */
         }

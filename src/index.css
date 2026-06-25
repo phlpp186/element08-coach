@@ -49,6 +49,27 @@
   color-scheme: light;
 }
 
+:root.neon {
+  /* Neon — a dark theme with an electric-green accent and a violet highlight,
+   * echoing the "unify your data" dashboard look. Dark-family like the default
+   * but with a faint green cast to the surfaces. */
+  --c-deep: 8 11 9;
+  --c-abyss: 18 25 20;
+  --c-panel: 25 34 28;
+  --c-border: 54 70 58;
+  --c-text: 238 245 240;
+  --c-textDim: 150 170 156;
+  --c-accent: 132 240 104; /* electric green */
+  --c-highlight: 167 139 250; /* violet */
+  --c-recover: 102 220 130;
+  --c-amber: 255 190 70;
+  --c-red: 248 113 113;
+  --c-ink: 8 16 8; /* dark text on the green accent fill */
+  --glow-1: 132 240 104; /* green, top */
+  --glow-2: 167 139 250; /* violet, lower */
+  color-scheme: dark;
+}
+
 html,
 body,
 #root {
@@ -75,6 +96,11 @@ body::before {
   background:
     radial-gradient(60% 50% at 15% -5%, rgb(var(--glow-1) / 0.12), transparent 70%),
     radial-gradient(55% 45% at 100% 8%, rgb(var(--glow-2) / 0.08), transparent 70%);
+}
+:root.neon body::before {
+  background:
+    radial-gradient(58% 48% at 12% -5%, rgb(var(--glow-1) / 0.14), transparent 70%),
+    radial-gradient(55% 45% at 100% 6%, rgb(var(--glow-2) / 0.12), transparent 70%);
 }
 /* Keep app content above the glow layer. */
 #root {
@@ -142,4 +168,24 @@ h3 {
 .glow-accent:disabled {
   box-shadow: none;
   filter: none;
+}
+
+/* Frosted-glass card — translucent panel + backdrop blur + a hairline top
+ * highlight, so prominent cards float and the ambient glow bleeds through.
+ * Owns its own background + border, so use INSTEAD of `bg-panel border
+ * border-border` (not alongside). hover:border-accent utilities still win. */
+.glass-card {
+  background: rgb(var(--c-panel) / 0.62);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+  backdrop-filter: blur(12px) saturate(1.1);
+  border: 1px solid rgb(var(--c-border) / 0.85);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.06),
+    0 10px 30px -16px rgb(0 0 0 / 0.55);
+}
+:root.light .glass-card {
+  background: rgb(var(--c-panel) / 0.7);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.7),
+    0 10px 26px -16px rgb(0 0 0 / 0.18);
 }

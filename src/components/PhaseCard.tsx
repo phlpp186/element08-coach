@@ -59,7 +59,7 @@ export function PhaseCard({
   const removeWeek = (wi: number) => onChange({ weeks: phase.weeks.filter((_, i) => i !== wi) });
 
   return (
-    <div className="rounded-xl border border-border bg-panel">
+    <div className="glass-card rounded-xl">
       <div className="flex items-center gap-3 p-4">
         <button onClick={onToggle} className="text-textDim text-sm shrink-0" aria-label="Toggle phase">
           {open ? '▾' : '▸'}

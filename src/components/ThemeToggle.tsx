@@ -2,35 +2,69 @@ import { useEffect, useState } from 'react';
 
 const KEY = 'element08.theme';
 
-/** Floating dark/light switch. Toggles the `light` class on <html> and persists
- *  the choice; index.html applies it before first paint to avoid a flash. */
+type Theme = 'dark' | 'light' | 'neon';
+const ORDER: Theme[] = ['dark', 'light', 'neon'];
+const LABEL: Record<Theme, string> = { dark: 'Dark', light: 'Light', neon: 'Neon' };
+
+function readTheme(): Theme {
+  try {
+    const v = localStorage.getItem(KEY);
+    return v === 'light' || v === 'neon' ? v : 'dark';
+  } catch {
+    return 'dark';
+  }
+}
+
+function applyTheme(t: Theme) {
+  const root = document.documentElement;
+  root.classList.toggle('light', t === 'light');
+  root.classList.toggle('neon', t === 'neon');
+}
+
+/** Floating theme switch that cycles Dark → Light → Neon. Toggles the matching
+ *  class on <html> and persists the choice; index.html applies it before first
+ *  paint to avoid a flash. */
 export function ThemeToggle() {
-  const [light, setLight] = useState(() => {
-    try {
-      return localStorage.getItem(KEY) === 'light';
-    } catch {
-      return false;
-    }
-  });
+  const [theme, setTheme] = useState<Theme>(readTheme);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('light', light);
+    applyTheme(theme);
     try {
-      localStorage.setItem(KEY, light ? 'light' : 'dark');
+      localStorage.setItem(KEY, theme);
     } catch {
       /* storage blocked — theme still applies for this session */
     }
-  }, [light]);
+  }, [theme]);
+
+  const next = ORDER[(ORDER.indexOf(theme) + 1) % ORDER.length];
 
   return (
     <button
-      onClick={() => setLight((l) => !l)}
-      aria-label={light ? 'Switch to dark theme' : 'Switch to light theme'}
-      title={light ? 'Dark theme' : 'Light theme'}
+      onClick={() => setTheme(next)}
+      aria-label={`Theme: ${LABEL[theme]}. Switch to ${LABEL[next]}.`}
+      title={`Theme: ${LABEL[theme]} — switch to ${LABEL[next]}`}
       className="fixed right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-panel/80 text-textDim backdrop-blur transition-colors hover:border-accent hover:text-accent"
     >
-      {light ? <MoonIcon /> : <SunIcon />}
+      {theme === 'light' ? <SunIcon /> : theme === 'neon' ? <BoltIcon /> : <MoonIcon />}
     </button>
+  );
+}
+
+function BoltIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z" />
+    </svg>
   );
 }
 

@@ -30,7 +30,7 @@ export function ExercisePalette({ onUse }: { onUse: (description: string) => voi
   };
 
   return (
-    <section className="rounded-xl border border-border bg-panel p-4 space-y-3">
+    <section className="glass-card rounded-xl p-4 space-y-3">
       <div className="flex items-center gap-3">
         <button onClick={() => setOpen((o) => !o)} className="text-lg flex items-center gap-2">
           <span className="text-textDim text-sm">{open ? '▾' : '▸'}</span> My exercises

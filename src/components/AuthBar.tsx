@@ -73,7 +73,7 @@ export function AuthBar() {
         Sign in
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-72 rounded-lg border border-border bg-panel p-4 shadow-xl z-20">
+        <div className="absolute right-0 mt-2 w-72 glass-card rounded-lg p-4 z-20">
           <div className="flex gap-1 mb-3 rounded-md border border-border overflow-hidden text-sm">
             {(['in', 'up'] as const).map((m) => (
               <button

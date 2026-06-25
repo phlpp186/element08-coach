@@ -74,7 +74,7 @@ export function ConnectedAthletes() {
             <button
               key={a.studentId}
               onClick={() => navigate(`/connected/${a.studentId}`)}
-              className="text-left rounded-xl border border-border bg-panel p-4 space-y-2 hover:border-accent"
+              className="text-left glass-card rounded-xl p-4 space-y-2 hover:border-accent"
             >
               <div className="flex items-center gap-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent font-heading">

@@ -49,7 +49,7 @@ export function WeekCard({
 
   return (
     <div
-      className={`rounded-xl border border-border p-4 space-y-3 ${compact ? 'bg-abyss' : 'bg-panel'}`}
+      className={`rounded-xl p-4 space-y-3 ${compact ? 'border border-border bg-abyss' : 'glass-card'}`}
     >
       <div className="flex items-center gap-3">
         <span className="font-heading text-accent whitespace-nowrap shrink-0">{label}</span>

@@ -435,7 +435,7 @@ function TrainingSchedule(props: {
             />
           ))
         : plan.days.map((day, di) => (
-            <div key={day.id} className="rounded-xl border border-border bg-panel p-4 space-y-3">
+            <div key={day.id} className="glass-card rounded-xl p-4 space-y-3">
               <div className="flex items-center gap-3">
                 <span className="font-heading text-accent whitespace-nowrap shrink-0">DAY {di + 1}</span>
                 <span className="text-textDim text-sm">{props.dayDateLabel(plan.startDate, di)}</span>
