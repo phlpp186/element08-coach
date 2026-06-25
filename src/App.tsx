@@ -31,7 +31,7 @@ export function App() {
                 <button
                   key={n.id}
                   onClick={() => navigate(n.to)}
-                  className={`px-4 py-1.5 text-sm ${top === n.id ? 'bg-accent text-ink' : 'text-textDim hover:text-text'}`}
+                  className={`px-4 py-1.5 text-sm ${top === n.id ? 'glow-accent bg-accent text-ink' : 'text-textDim hover:text-text'}`}
                 >
                   {n.label}
                 </button>

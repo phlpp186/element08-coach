@@ -6,7 +6,7 @@ import {
   useAthletes,
   useSavedPlans,
 } from '../lib/store';
-import { headlinePBs, nextCompetition, relativeDays } from '../lib/athleteStats';
+import { compColorClass, headlinePBs, nextCompetition, relativeDays } from '../lib/athleteStats';
 import { navigate } from '../hooks/useHashRoute';
 import type { Athlete } from '../lib/types';
 import { ConnectedAthletes } from '../components/ConnectedAthletes';
@@ -60,7 +60,7 @@ export function AthletesView() {
               Export
             </button>
           )}
-          <button onClick={addAthlete} className="text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide">
+          <button onClick={addAthlete} className="glow-accent text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide">
             + Add athlete
           </button>
         </div>
@@ -124,7 +124,7 @@ function AthleteCard({ athlete, planCount }: { athlete: Athlete; planCount: numb
       <div className="flex items-center justify-between text-xs text-textDim">
         <span>{planCount} plan{planCount === 1 ? '' : 's'}</span>
         {comp ? (
-          <span className="text-accent">
+          <span className={compColorClass(comp.date)}>
             {comp.name || 'Comp'} {relativeDays(comp.date)}
           </span>
         ) : (

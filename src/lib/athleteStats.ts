@@ -58,3 +58,14 @@ export function relativeDays(dateIso: string, ref = today()): string {
 export function disciplineLabel(id: string): string {
   return disciplineById(id)?.label ?? id;
 }
+
+/** Tailwind text-colour class for a competition date, by how close it is.
+ *  amber = imminent (≤14d, taper window) · accent = on the horizon (≤45d) ·
+ *  dim = far off or already past. Keeps countdowns scannable at a glance. */
+export function compColorClass(dateIso: string, ref = today()): string {
+  const d = daysUntil(dateIso, ref);
+  if (d < 0) return 'text-textDim';
+  if (d <= 14) return 'text-amber';
+  if (d <= 45) return 'text-accent';
+  return 'text-textDim';
+}

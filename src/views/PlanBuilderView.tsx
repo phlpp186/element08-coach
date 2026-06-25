@@ -343,7 +343,7 @@ export function PlanBuilderView({
           <button
             disabled={!ready}
             onClick={doDownload}
-            className="rounded-lg px-4 py-2 font-heading tracking-wide disabled:opacity-40 bg-accent text-ink"
+            className="glow-accent rounded-lg px-4 py-2 font-heading tracking-wide disabled:opacity-40 bg-accent text-ink"
           >
             Download .e08plan
           </button>

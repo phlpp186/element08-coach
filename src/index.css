@@ -119,3 +119,27 @@ h3 {
 .field::placeholder {
   color: rgb(var(--c-textDim));
 }
+
+/* Accent CTA glow — a soft halo on primary action buttons so they read as the
+ * one thing to click, echoing the app's neon accent. Pair with bg-accent. */
+.glow-accent {
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.14) inset,
+    0 0 18px -4px rgb(var(--c-accent) / 0.6),
+    0 4px 14px -6px rgb(var(--c-accent) / 0.5);
+  transition: box-shadow 0.18s ease, filter 0.18s ease, transform 0.05s ease;
+}
+.glow-accent:hover {
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.18) inset,
+    0 0 26px -2px rgb(var(--c-accent) / 0.85),
+    0 6px 18px -6px rgb(var(--c-accent) / 0.6);
+  filter: brightness(1.04);
+}
+.glow-accent:active {
+  transform: translateY(0.5px);
+}
+.glow-accent:disabled {
+  box-shadow: none;
+  filter: none;
+}

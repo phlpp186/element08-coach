@@ -116,7 +116,7 @@ export function AuthBar() {
           <button
             onClick={submit}
             disabled={busy || !email || !password}
-            className="w-full rounded bg-accent text-ink py-2 text-sm disabled:opacity-50"
+            className="glow-accent w-full rounded bg-accent text-ink py-2 text-sm disabled:opacity-50"
           >
             {busy ? '…' : mode === 'in' ? 'Sign in' : 'Create account'}
           </button>

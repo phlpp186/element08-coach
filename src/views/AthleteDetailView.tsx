@@ -11,6 +11,7 @@ import {
 import { uid, downloadPlanFile } from '../lib/e08plan';
 import {
   bestEntry,
+  compColorClass,
   pbHistory,
   relativeDays,
   today,
@@ -111,7 +112,7 @@ export function AthleteDetailView({ athleteId }: { athleteId: string }) {
           <h3 className="text-base">Plans</h3>
           <button
             onClick={() => navigate(`/plan/new?athlete=${athlete.id}`)}
-            className="text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide"
+            className="glow-accent text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide"
           >
             + Build a plan
           </button>
@@ -394,7 +395,7 @@ function CompetitionSection({ athlete, patch }: { athlete: Athlete; patch: (p: P
               <input type="date" className="field w-auto" value={c.date} onChange={(e) => update(c.id, { date: e.target.value })} />
               <input className="field w-32" placeholder="Location" value={c.location ?? ''} onChange={(e) => update(c.id, { location: e.target.value })} />
               <input className="field w-32" placeholder="Target, e.g. CWT 60m" value={c.target ?? ''} onChange={(e) => update(c.id, { target: e.target.value })} />
-              {c.date && <span className="text-xs text-accent">{relativeDays(c.date)}</span>}
+              {c.date && <span className={`text-xs ${compColorClass(c.date)}`}>{relativeDays(c.date)}</span>}
               <button onClick={() => remove(c.id)} className="text-red text-sm" title="Remove">
                 ✕
               </button>
