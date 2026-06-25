@@ -7,6 +7,7 @@ import {
   useSavedPlans,
 } from '../lib/store';
 import { compColorClass, headlinePBs, nextCompetition, relativeDays } from '../lib/athleteStats';
+import { groupStyle } from '../lib/disciplines';
 import { navigate } from '../hooks/useHashRoute';
 import type { Athlete } from '../lib/types';
 import { ConnectedAthletes } from '../components/ConnectedAthletes';
@@ -113,11 +114,15 @@ function AthleteCard({ athlete, planCount }: { athlete: Athlete; planCount: numb
 
       {pbs.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          {pbs.map((p) => (
-            <span key={p.discipline.id} className="rounded-md bg-abyss border border-border px-2 py-0.5 text-xs">
-              <span className="text-textDim">{p.discipline.label}</span> <span className="text-text">{p.text}</span>
-            </span>
-          ))}
+          {pbs.map((p) => {
+            const g = groupStyle(p.discipline.group);
+            return (
+              <span key={p.discipline.id} className={`rounded-md border px-2 py-0.5 text-xs ${g.chip}`}>
+                <span className={`font-medium ${g.label}`}>{p.discipline.label}</span>{' '}
+                <span className="text-text">{p.text}</span>
+              </span>
+            );
+          })}
         </div>
       )}
 

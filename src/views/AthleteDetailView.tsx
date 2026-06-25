@@ -4,6 +4,7 @@ import {
   DISCIPLINE_GROUPS,
   disciplineById,
   formatValue,
+  groupStyle,
   parseValue,
   valueHint,
   type Discipline,
@@ -257,7 +258,7 @@ function PBRow({
     <div className="rounded-lg border border-border bg-panel">
       <button onClick={onToggle} className="flex w-full items-center gap-3 px-3 py-2 text-left">
         <span className="text-textDim text-xs">{open ? '▾' : '▸'}</span>
-        <span className="font-mono text-sm w-14 shrink-0 text-textDim">{discipline.label}</span>
+        <span className={`font-mono text-sm w-14 shrink-0 ${groupStyle(discipline.group).label}`}>{discipline.label}</span>
         <span className="text-text">{formatValue(discipline, best.value)}</span>
         <span className="ml-auto flex items-center gap-3">
           {history.length > 1 && <Sparkline values={values} />}

@@ -35,6 +35,27 @@ export function disciplineById(id: string): Discipline | undefined {
   return DISCIPLINES.find((d) => d.id === id);
 }
 
+/** Accent classes per discipline group so depth / pool / static read as colour
+ *  families at a glance: depth = cyan (accent), pool = green (recover), static =
+ *  amber. `label` tints the discipline code; `chip` is a faint matching
+ *  background + border for a pill. Literal class strings so Tailwind's JIT keeps
+ *  them. Falls back to depth/cyan for an unknown group. */
+export function groupStyle(group: string): { label: string; chip: string } {
+  switch (group) {
+    case 'Pool':
+      return { label: 'text-recover', chip: 'bg-recover/10 border-recover/30' };
+    case 'Static':
+      return { label: 'text-amber', chip: 'bg-amber/10 border-amber/30' };
+    default: // Depth
+      return { label: 'text-accent', chip: 'bg-accent/10 border-accent/30' };
+  }
+}
+
+/** Group accent for a discipline id (resolves the discipline first). */
+export function groupStyleById(id: string): { label: string; chip: string } {
+  return groupStyle(disciplineById(id)?.group ?? 'Depth');
+}
+
 // ── Value formatting / parsing ────────────────────────────────────────────────
 // All PB values are stored as a single number: metres for depth/distance,
 // seconds for time. The helpers below convert to/from what the coach types.

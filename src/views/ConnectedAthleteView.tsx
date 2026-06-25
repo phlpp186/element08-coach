@@ -6,6 +6,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { navigate } from '../hooks/useHashRoute';
+import { groupStyleById } from '../lib/disciplines';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import {
   getAthleteProfile,
@@ -100,12 +101,15 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
               <p className="text-textDim text-sm">No PBs published yet (the athlete sets these in the app).</p>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {pbs.map((pb) => (
-                  <span key={pb.discipline} className="rounded-lg border border-border bg-panel px-3 py-1.5 text-center">
-                    <span className="block text-xs text-textDim tracking-wide">{pb.discipline}</span>
-                    <span className="block font-heading text-text">{formatPB(pb)}</span>
-                  </span>
-                ))}
+                {pbs.map((pb) => {
+                  const g = groupStyleById(pb.discipline);
+                  return (
+                    <span key={pb.discipline} className={`rounded-lg border px-3 py-1.5 text-center ${g.chip}`}>
+                      <span className={`block text-xs tracking-wide ${g.label}`}>{pb.discipline}</span>
+                      <span className="block font-heading text-text">{formatPB(pb)}</span>
+                    </span>
+                  );
+                })}
               </div>
             )}
           </section>
