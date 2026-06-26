@@ -4,6 +4,7 @@ import { AthleteDetailView } from './views/AthleteDetailView';
 import { ConnectedAthleteView } from './views/ConnectedAthleteView';
 import { PlanBuilderView } from './views/PlanBuilderView';
 import { AuthBar } from './components/AuthBar';
+import { AppFooter } from './components/AppFooter';
 
 const NAV: { id: string; label: string; to: string }[] = [
   { id: 'athletes', label: 'Athletes', to: '/athletes' },
@@ -43,6 +44,7 @@ export function App() {
       </header>
 
       <Outlet />
+      <AppFooter />
     </div>
   );
 }
