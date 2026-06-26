@@ -42,7 +42,7 @@ export function ThemeToggle() {
     <button
       onClick={() => setTheme(next)}
       aria-label={`Theme: ${LABEL[theme]}. Switch to ${LABEL[next]}.`}
-      title={`Theme: ${LABEL[theme]} — switch to ${LABEL[next]}`}
+      title={`Theme: ${LABEL[theme]}, switch to ${LABEL[next]}`}
       className="fixed right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-panel/80 text-textDim backdrop-blur transition-colors hover:border-accent hover:text-accent"
     >
       {theme === 'light' ? <SunIcon /> : theme === 'neon' ? <BoltIcon /> : <MoonIcon />}
