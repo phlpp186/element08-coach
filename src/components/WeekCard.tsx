@@ -6,6 +6,7 @@ import {
   type PlanMode,
 } from '../lib/e08plan';
 import { SessionList } from './sessions';
+import { useT } from '../i18n';
 
 const INTENSITIES: Intensity[] = ['recovery', 'low', 'medium', 'high', 'max'];
 
@@ -37,6 +38,7 @@ export function WeekCard({
   /** Slightly lighter chrome for nesting inside a phase card. */
   compact?: boolean;
 }) {
+  const t = useT();
   const addSession = (dayOfWeek: number) => {
     const s = newSession(dayOfWeek, mode);
     onChange({ sessions: [...week.sessions, s] });
@@ -60,19 +62,19 @@ export function WeekCard({
         >
           {INTENSITIES.map((i) => (
             <option key={i} value={i}>
-              {i}
+              {t(i)}
             </option>
           ))}
         </select>
         {onRemove && (
-          <button onClick={onRemove} className="text-red text-sm px-2 shrink-0" title="Remove week">
+          <button onClick={onRemove} className="text-red text-sm px-2 shrink-0" title={t('Remove week')}>
             ✕
           </button>
         )}
       </div>
       <input
         className="field"
-        placeholder="Week focus (optional), e.g. CO₂ capacity"
+        placeholder={t('Week focus (optional), e.g. CO₂ capacity')}
         value={week.focus}
         onChange={(e) => onChange({ focus: e.target.value })}
       />
@@ -83,7 +85,7 @@ export function WeekCard({
           const daySessions = week.sessions.filter((s) => s.dayOfWeek === day);
           return (
             <div key={day} className={`flex gap-3 items-start ${beforeStart ? 'opacity-40' : ''}`}>
-              <div className="w-10 shrink-0 text-textDim text-sm pt-2 font-mono">{dayLabel}</div>
+              <div className="w-10 shrink-0 text-textDim text-sm pt-2 font-mono">{t(dayLabel)}</div>
               <SessionList
                 sessions={daySessions}
                 editing={editing}
@@ -91,7 +93,7 @@ export function WeekCard({
                 onAdd={() => addSession(day)}
                 onChange={updateSession}
                 onRemove={removeSession}
-                disabledText={beforeStart ? 'before plan start' : undefined}
+                disabledText={beforeStart ? t('before plan start') : undefined}
               />
             </div>
           );
@@ -100,7 +102,7 @@ export function WeekCard({
 
       <input
         className="field"
-        placeholder="Week notes (optional)"
+        placeholder={t('Week notes (optional)')}
         value={week.notes}
         onChange={(e) => onChange({ notes: e.target.value })}
       />

@@ -9,8 +9,10 @@ import { useAuth } from '../lib/supabase/AuthProvider';
 import { useRoster } from '../lib/supabase/useRoster';
 import { createInvite } from '../lib/supabase/coachData';
 import { navigate } from '../hooks/useHashRoute';
+import { useT } from '../i18n';
 
 export function ConnectedAthletes() {
+  const t = useT();
   const { session, isCoach, loading: authLoading } = useAuth();
   const { athletes, loading, error, refresh } = useRoster();
   const [code, setCode] = useState<string | null>(null);
@@ -37,25 +39,25 @@ export function ConnectedAthletes() {
     <section className="space-y-3">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h3 className="font-heading tracking-wide text-text">CONNECTED ATHLETES</h3>
-          <p className="text-textDim text-xs">Synced with the app — live PBs, plans, and progress.</p>
+          <h3 className="font-heading tracking-wide text-text">{t('CONNECTED ATHLETES')}</h3>
+          <p className="text-textDim text-xs">{t('Synced with the app — live PBs, plans, and progress.')}</p>
         </div>
         <button
           onClick={invite}
           disabled={inviting}
           className="glow-accent text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide disabled:opacity-50"
         >
-          {inviting ? '…' : '+ Invite an athlete'}
+          {inviting ? '…' : `+ ${t('Invite an athlete')}`}
         </button>
       </div>
 
       {code && (
         <div className="rounded-lg border border-accent bg-accent/10 p-3 text-sm">
-          Share this code with your athlete — they enter it in the app under{' '}
-          <span className="text-textDim">Settings › Account › Connect with a coach</span>:
+          {t('Share this code with your athlete — they enter it in the app under')}{' '}
+          <span className="text-textDim">{t('Settings › Account › Connect with a coach')}</span>:
           <div className="mt-2 font-mono text-2xl tracking-[0.3em] text-accent">{code}</div>
           <button onClick={refresh} className="mt-2 text-xs text-textDim hover:text-text underline">
-            Refresh once they've connected
+            {t("Refresh once they've connected")}
           </button>
         </div>
       )}
@@ -63,10 +65,10 @@ export function ConnectedAthletes() {
       {error && <p className="text-xs text-red">{error}</p>}
 
       {loading ? (
-        <p className="text-textDim text-sm">Loading…</p>
+        <p className="text-textDim text-sm">{t('Loading…')}</p>
       ) : athletes.length === 0 ? (
         <p className="text-textDim text-sm rounded-xl border border-dashed border-border p-4">
-          No connected athletes yet. Invite one with a code above.
+          {t('No connected athletes yet. Invite one with a code above.')}
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -82,12 +84,12 @@ export function ConnectedAthletes() {
                 </span>
                 <div className="min-w-0">
                   <div className="text-text truncate">{a.name}</div>
-                  <div className="text-xs text-accent">✓ paired</div>
+                  <div className="text-xs text-accent">✓ {t('paired')}</div>
                 </div>
               </div>
               <div className="text-xs text-textDim">
-                {a.planCount} plan{a.planCount === 1 ? '' : 's'} · {a.doneCount} session
-                {a.doneCount === 1 ? '' : 's'} done
+                {a.planCount} {a.planCount === 1 ? t('plan') : t('plans')} · {a.doneCount}{' '}
+                {a.doneCount === 1 ? t('session') : t('sessions')} {t('done')}
               </div>
             </button>
           ))}

@@ -9,6 +9,7 @@ import {
   type PlanMode,
 } from '../lib/e08plan';
 import { WeekCard } from './WeekCard';
+import { useT } from '../i18n';
 
 const RANGE_FMT = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
 function fmt(iso: string): string {
@@ -49,6 +50,7 @@ export function PhaseCard({
   onChange: (patch: Partial<BuilderPhase>) => void;
   onRemove?: () => void;
 }) {
+  const t = useT();
   const len = phase.weeks.length;
   const start = addDays(firstMonday, weekOffset * 7);
   const end = addDays(firstMonday, (weekOffset + Math.max(1, len)) * 7 - 1);
@@ -61,13 +63,13 @@ export function PhaseCard({
   return (
     <div className="glass-card rounded-xl">
       <div className="flex items-center gap-3 p-4">
-        <button onClick={onToggle} className="text-textDim text-sm shrink-0" aria-label="Toggle phase">
+        <button onClick={onToggle} className="text-textDim text-sm shrink-0" aria-label={t('Toggle phase')}>
           {open ? '▾' : '▸'}
         </button>
-        <span className="font-heading text-accent shrink-0">PHASE {index + 1}</span>
+        <span className="font-heading text-accent shrink-0">{t('PHASE')} {index + 1}</span>
         <input
           className="field flex-1 min-w-0"
-          placeholder={MESO_LABEL[phase.type]}
+          placeholder={t(MESO_LABEL[phase.type])}
           value={phase.name}
           onChange={(e) => onChange({ name: e.target.value })}
         />
@@ -76,21 +78,21 @@ export function PhaseCard({
           value={phase.type}
           onChange={(e) => onChange({ type: e.target.value as MesoType })}
         >
-          {MESO_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {MESO_LABEL[t]}
+          {MESO_TYPES.map((mt) => (
+            <option key={mt} value={mt}>
+              {t(MESO_LABEL[mt])}
             </option>
           ))}
         </select>
         {onRemove && (
-          <button onClick={onRemove} className="text-red text-sm px-1 shrink-0" title="Remove phase">
+          <button onClick={onRemove} className="text-red text-sm px-1 shrink-0" title={t('Remove phase')}>
             ✕
           </button>
         )}
       </div>
 
       <div className="px-4 pb-2 -mt-2 text-xs text-textDim">
-        {len} week{len === 1 ? '' : 's'} · {fmt(start)} – {fmt(end)}
+        {len} {t('week')}{len === 1 ? '' : 's'} · {fmt(start)} – {fmt(end)}
       </div>
 
       {open && (
@@ -101,7 +103,7 @@ export function PhaseCard({
               <WeekCard
                 key={wi}
                 week={week}
-                label={`WEEK ${globalIndex + 1}`}
+                label={`${t('WEEK')} ${globalIndex + 1}`}
                 mode={mode}
                 editing={editing}
                 setEditing={setEditing}
@@ -116,7 +118,7 @@ export function PhaseCard({
             onClick={addWeek}
             className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent"
           >
-            + Add week
+            + {t('Add week')}
           </button>
         </div>
       )}

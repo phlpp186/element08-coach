@@ -12,8 +12,10 @@ import { navigate } from '../hooks/useHashRoute';
 import type { Athlete } from '../lib/types';
 import { ConnectedAthletes } from '../components/ConnectedAthletes';
 import { useAuth } from '../lib/supabase/AuthProvider';
+import { useT } from '../i18n';
 
 export function AthletesView() {
+  const t = useT();
   const athletes = useAthletes();
   const plans = useSavedPlans();
   const { session, isCoach } = useAuth();
@@ -24,12 +26,12 @@ export function AthletesView() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (athletes.length && !confirm('Importing replaces your current roster. Continue?')) return;
+    if (athletes.length && !confirm(t('Importing replaces your current roster. Continue?'))) return;
     try {
       const { athletes: a, plans: p } = await importRoster(file);
-      alert(`Imported ${a} athlete${a === 1 ? '' : 's'} and ${p} plan${p === 1 ? '' : 's'}.`);
+      alert(`${t('Imported')} ${a} ${a === 1 ? t('athlete') : t('athletes')} ${t('and')} ${p} ${p === 1 ? t('plan') : t('plans')}.`);
     } catch {
-      alert('Could not read that file. Use an ELEMENT | 08 roster (.e08coach) export.');
+      alert(t('Could not read that file. Use an ELEMENT | 08 roster (.e08coach) export.'));
     }
   };
 
@@ -42,8 +44,8 @@ export function AthletesView() {
     <main className="mx-auto max-w-4xl px-5 py-6 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-lg">Athletes</h2>
-          <p className="text-textDim text-sm">Your roster lives in this browser. Export it to back up or move devices.</p>
+          <h2 className="text-lg">{t('Athletes')}</h2>
+          <p className="text-textDim text-sm">{t('Your roster lives in this browser. Export it to back up or move devices.')}</p>
         </div>
         <div className="flex items-center gap-2">
           <input ref={fileRef} type="file" accept=".e08coach,application/json" onChange={onImport} className="hidden" />
@@ -51,18 +53,18 @@ export function AthletesView() {
             onClick={() => fileRef.current?.click()}
             className="text-sm text-textDim border border-border rounded-lg px-3 py-1.5 hover:border-accent"
           >
-            Import
+            {t('Import')}
           </button>
           {athletes.length > 0 && (
             <button
               onClick={exportRoster}
               className="text-sm text-textDim border border-border rounded-lg px-3 py-1.5 hover:border-accent"
             >
-              Export
+              {t('Export')}
             </button>
           )}
           <button onClick={addAthlete} className="glow-accent text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide">
-            + Add athlete
+            + {t('Add athlete')}
           </button>
         </div>
       </div>
@@ -71,16 +73,16 @@ export function AthletesView() {
 
       {showLocalHeading && (
         <div className="pt-2">
-          <h3 className="font-heading tracking-wide text-text">YOUR NOTES</h3>
-          <p className="text-textDim text-xs">Local to this browser — for prospects or athletes not on the app.</p>
+          <h3 className="font-heading tracking-wide text-text">{t('YOUR NOTES')}</h3>
+          <p className="text-textDim text-xs">{t('Local to this browser — for prospects or athletes not on the app.')}</p>
         </div>
       )}
 
       {athletes.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-10 text-center text-textDim">
-          <p className="mb-3">No athletes yet.</p>
+          <p className="mb-3">{t('No athletes yet.')}</p>
           <button onClick={addAthlete} className="text-accent hover:underline">
-            Add your first athlete
+            {t('Add your first athlete')}
           </button>
         </div>
       ) : (
@@ -95,6 +97,7 @@ export function AthletesView() {
 }
 
 function AthleteCard({ athlete, planCount }: { athlete: Athlete; planCount: number }) {
+  const t = useT();
   const pbs = headlinePBs(athlete, 3);
   const comp = nextCompetition(athlete);
   return (
@@ -107,7 +110,7 @@ function AthleteCard({ athlete, planCount }: { athlete: Athlete; planCount: numb
           {(athlete.name.trim()[0] ?? '?').toUpperCase()}
         </span>
         <div className="min-w-0">
-          <div className="text-text truncate">{athlete.name.trim() || 'Unnamed athlete'}</div>
+          <div className="text-text truncate">{athlete.name.trim() || t('Unnamed athlete')}</div>
           {athlete.location && <div className="text-xs text-textDim truncate">{athlete.location}</div>}
         </div>
       </div>
@@ -127,13 +130,13 @@ function AthleteCard({ athlete, planCount }: { athlete: Athlete; planCount: numb
       )}
 
       <div className="flex items-center justify-between text-xs text-textDim">
-        <span>{planCount} plan{planCount === 1 ? '' : 's'}</span>
+        <span>{planCount} {planCount === 1 ? t('plan') : t('plans')}</span>
         {comp ? (
           <span className={compColorClass(comp.date)}>
-            {comp.name || 'Comp'} {relativeDays(comp.date)}
+            {comp.name || t('Comp')} {relativeDays(comp.date)}
           </span>
         ) : (
-          <span>No upcoming comp</span>
+          <span>{t('No upcoming comp')}</span>
         )}
       </div>
     </button>

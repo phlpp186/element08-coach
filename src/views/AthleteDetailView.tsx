@@ -27,6 +27,7 @@ import {
 import { Sparkline } from '../components/Sparkline';
 import { Labeled } from '../components/sessions';
 import { navigate } from '../hooks/useHashRoute';
+import { useT } from '../i18n';
 import type {
   Athlete,
   Competition,
@@ -36,15 +37,16 @@ import type {
 } from '../lib/types';
 
 export function AthleteDetailView({ athleteId }: { athleteId: string }) {
+  const t = useT();
   const athlete = useAthlete(athleteId);
   const plans = useSavedPlans().filter((p) => p.athleteId === athleteId);
 
   if (!athlete) {
     return (
       <main className="mx-auto max-w-4xl px-5 py-10 text-center text-textDim">
-        <p className="mb-3">That athlete no longer exists.</p>
+        <p className="mb-3">{t('That athlete no longer exists.')}</p>
         <button onClick={() => navigate('/athletes')} className="text-accent hover:underline">
-          Back to roster
+          {t('Back to roster')}
         </button>
       </main>
     );
@@ -53,7 +55,7 @@ export function AthleteDetailView({ athleteId }: { athleteId: string }) {
   const patch = (p: Partial<Athlete>) => updateAthlete(athlete.id, p);
 
   const remove = () => {
-    if (confirm(`Delete ${athlete.name || 'this athlete'}? Their attached plans are kept but unlinked.`)) {
+    if (confirm(`${t('Delete')} ${athlete.name || t('this athlete')}? ${t('Their attached plans are kept but unlinked.')}`)) {
       deleteAthlete(athlete.id);
       navigate('/athletes');
     }
@@ -63,38 +65,38 @@ export function AthleteDetailView({ athleteId }: { athleteId: string }) {
     <main className="mx-auto max-w-4xl px-5 py-6 space-y-8">
       <div className="flex items-center gap-3">
         <button onClick={() => navigate('/athletes')} className="text-sm text-accent hover:underline shrink-0">
-          ← Roster
+          ← {t('Roster')}
         </button>
         <input
           className="field text-lg flex-1"
-          placeholder="Athlete name"
+          placeholder={t('Athlete name')}
           value={athlete.name}
           onChange={(e) => patch({ name: e.target.value })}
         />
         <button onClick={remove} className="text-red text-sm shrink-0 hover:underline">
-          Delete
+          {t('Delete')}
         </button>
       </div>
 
       {/* Profile */}
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Labeled label="Contact (optional)">
-          <input className="field" placeholder="email / handle" value={athlete.contact ?? ''} onChange={(e) => patch({ contact: e.target.value })} />
+        <Labeled label={t('Contact (optional)')}>
+          <input className="field" placeholder={t('email / handle')} value={athlete.contact ?? ''} onChange={(e) => patch({ contact: e.target.value })} />
         </Labeled>
-        <Labeled label="Location (optional)">
-          <input className="field" placeholder="e.g. Dahab" value={athlete.location ?? ''} onChange={(e) => patch({ location: e.target.value })} />
+        <Labeled label={t('Location (optional)')}>
+          <input className="field" placeholder={t('e.g. Dahab')} value={athlete.location ?? ''} onChange={(e) => patch({ location: e.target.value })} />
         </Labeled>
-        <Labeled label="Coaching from">
+        <Labeled label={t('Coaching from')}>
           <input type="date" className="field" value={athlete.coachingFrom ?? ''} onChange={(e) => patch({ coachingFrom: e.target.value })} />
         </Labeled>
-        <Labeled label="Coaching to">
+        <Labeled label={t('Coaching to')}>
           <input type="date" className="field" value={athlete.coachingTo ?? ''} onChange={(e) => patch({ coachingTo: e.target.value })} />
         </Labeled>
         <div className="sm:col-span-2">
-          <Labeled label="Notes (optional)">
+          <Labeled label={t('Notes (optional)')}>
             <textarea
               className="field min-h-16"
-              placeholder="Background, strengths, things to watch, equalisation notes…"
+              placeholder={t('Background, strengths, things to watch, equalisation notes…')}
               value={athlete.notes ?? ''}
               onChange={(e) => patch({ notes: e.target.value })}
             />
@@ -110,36 +112,36 @@ export function AthleteDetailView({ athleteId }: { athleteId: string }) {
       {/* Plans */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-base">Plans</h3>
+          <h3 className="text-base">{t('Plans')}</h3>
           <button
             onClick={() => navigate(`/plan/new?athlete=${athlete.id}`)}
             className="glow-accent text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide"
           >
-            + Build a plan
+            + {t('Build a plan')}
           </button>
         </div>
         {plans.length === 0 ? (
-          <p className="text-textDim text-sm">No plans yet. Build one — the athlete's next competition pre-fills a season.</p>
+          <p className="text-textDim text-sm">{t("No plans yet. Build one — the athlete's next competition pre-fills a season.")}</p>
         ) : (
           <div className="space-y-2">
             {plans.map((sp) => (
               <div key={sp.id} className="flex items-center gap-3 rounded-lg border border-border bg-panel px-3 py-2">
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm text-text truncate">{sp.plan.name || 'Untitled plan'}</div>
+                  <div className="text-sm text-text truncate">{sp.plan.name || t('Untitled plan')}</div>
                   <div className="text-xs text-textDim">
-                    {sp.plan.kind === 'season' ? 'Season' : 'Training'} · updated {sp.updatedAt.slice(0, 10)}
+                    {sp.plan.kind === 'season' ? t('Season') : t('Training')} · {t('updated')} {sp.updatedAt.slice(0, 10)}
                   </div>
                 </div>
                 <button onClick={() => navigate(`/plan/${sp.id}`)} className="text-sm text-accent hover:underline shrink-0">
-                  Edit
+                  {t('Edit')}
                 </button>
                 <button onClick={() => downloadPlanFile(sp.plan)} className="text-sm text-textDim hover:text-accent shrink-0">
-                  Download
+                  {t('Download')}
                 </button>
                 <button
-                  onClick={() => confirm('Delete this saved plan?') && deletePlan(sp.id)}
+                  onClick={() => confirm(t('Delete this saved plan?')) && deletePlan(sp.id)}
                   className="text-red text-sm shrink-0"
-                  title="Delete plan"
+                  title={t('Delete plan')}
                 >
                   ✕
                 </button>
@@ -155,6 +157,7 @@ export function AthleteDetailView({ athleteId }: { athleteId: string }) {
 // ── Personal bests ────────────────────────────────────────────────────────────
 
 function PBSection({ athlete, patch }: { athlete: Athlete; patch: (p: Partial<Athlete>) => void }) {
+  const t = useT();
   const [disc, setDisc] = useState<string>(DISCIPLINES[0].id);
   const [val, setVal] = useState('');
   const [date, setDate] = useState(today());
@@ -165,7 +168,7 @@ function PBSection({ athlete, patch }: { athlete: Athlete; patch: (p: Partial<At
     if (!d) return;
     const v = parseValue(d, val);
     if (v == null) {
-      alert(`Enter a valid value (${valueHint(d)}).`);
+      alert(`${t('Enter a valid value')} (${valueHint(d)}).`);
       return;
     }
     const entry: PBEntry = { id: uid('pb'), value: v, date: date || today() };
@@ -183,17 +186,17 @@ function PBSection({ athlete, patch }: { athlete: Athlete; patch: (p: Partial<At
 
   return (
     <section className="space-y-3">
-      <h3 className="text-base">Personal bests</h3>
+      <h3 className="text-base">{t('Personal bests')}</h3>
 
       <div className="flex flex-wrap items-end gap-2 rounded-lg border border-border bg-panel p-3">
         <label className="text-xs text-textDim">
-          <span className="block mb-1 uppercase tracking-wide">Discipline</span>
+          <span className="block mb-1 uppercase tracking-wide">{t('Discipline')}</span>
           <select className="field w-auto" value={disc} onChange={(e) => setDisc(e.target.value)}>
             {DISCIPLINE_GROUPS.map((g) => (
-              <optgroup key={g} label={g}>
+              <optgroup key={g} label={t(g)}>
                 {DISCIPLINES.filter((d) => d.group === g).map((d) => (
                   <option key={d.id} value={d.id}>
-                    {d.label} — {d.full}
+                    {d.label} — {t(d.full)}
                   </option>
                 ))}
               </optgroup>
@@ -201,7 +204,7 @@ function PBSection({ athlete, patch }: { athlete: Athlete; patch: (p: Partial<At
           </select>
         </label>
         <label className="text-xs text-textDim">
-          <span className="block mb-1 uppercase tracking-wide">Mark</span>
+          <span className="block mb-1 uppercase tracking-wide">{t('Mark')}</span>
           <input
             className="field w-28"
             placeholder={valueHint(selected)}
@@ -211,16 +214,16 @@ function PBSection({ athlete, patch }: { athlete: Athlete; patch: (p: Partial<At
           />
         </label>
         <label className="text-xs text-textDim">
-          <span className="block mb-1 uppercase tracking-wide">Date</span>
+          <span className="block mb-1 uppercase tracking-wide">{t('Date')}</span>
           <input type="date" className="field w-auto" value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
         <button onClick={addPB} className="text-sm text-accent border border-border rounded-lg px-3 py-2 hover:border-accent">
-          Log PB
+          {t('Log PB')}
         </button>
       </div>
 
       {withData.length === 0 ? (
-        <p className="text-textDim text-sm">No PBs logged yet.</p>
+        <p className="text-textDim text-sm">{t('No PBs logged yet.')}</p>
       ) : (
         <div className="space-y-1">
           {withData.map((d) => (
@@ -252,6 +255,7 @@ function PBRow({
   onToggle: () => void;
   onRemove: (entryId: string) => void;
 }) {
+  const t = useT();
   const best = bestEntry(history)!;
   const values = history.map((e) => e.value);
   return (
@@ -262,7 +266,7 @@ function PBRow({
         <span className="text-text">{formatValue(discipline, best.value)}</span>
         <span className="ml-auto flex items-center gap-3">
           {history.length > 1 && <Sparkline values={values} />}
-          <span className="text-xs text-textDim">{history.length} mark{history.length === 1 ? '' : 's'}</span>
+          <span className="text-xs text-textDim">{history.length} {history.length === 1 ? t('mark') : t('marks')}</span>
         </span>
       </button>
       {open && (
@@ -272,7 +276,7 @@ function PBRow({
               <span className="text-text w-20">{formatValue(discipline, e.value)}</span>
               <span className="text-textDim text-xs">{e.date}</span>
               {e === best && <span className="text-accent text-xs">PB</span>}
-              <button onClick={() => onRemove(e.id)} className="ml-auto text-red text-xs" title="Remove">
+              <button onClick={() => onRemove(e.id)} className="ml-auto text-red text-xs" title={t('Remove')}>
                 ✕
               </button>
             </div>
@@ -286,6 +290,7 @@ function PBRow({
 // ── Goals ─────────────────────────────────────────────────────────────────────
 
 function GoalSection({ athlete, patch }: { athlete: Athlete; patch: (p: Partial<Athlete>) => void }) {
+  const t = useT();
   const add = () => {
     const goal: GoalEntry = { id: uid('goal'), discipline: DISCIPLINES[0].id, target: 0 };
     patch({ goals: [...athlete.goals, goal] });
@@ -297,13 +302,13 @@ function GoalSection({ athlete, patch }: { athlete: Athlete; patch: (p: Partial<
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-base">Goals</h3>
+        <h3 className="text-base">{t('Goals')}</h3>
         <button onClick={add} className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent">
-          + Add goal
+          + {t('Add goal')}
         </button>
       </div>
       {athlete.goals.length === 0 ? (
-        <p className="text-textDim text-sm">No goals set.</p>
+        <p className="text-textDim text-sm">{t('No goals set.')}</p>
       ) : (
         <div className="space-y-2">
           {athlete.goals.map((g) => (
@@ -316,6 +321,7 @@ function GoalSection({ athlete, patch }: { athlete: Athlete; patch: (p: Partial<
 }
 
 function GoalRow({ goal, onChange, onRemove }: { goal: GoalEntry; onChange: (p: Partial<GoalEntry>) => void; onRemove: () => void }) {
+  const t = useT();
   const d = disciplineById(goal.discipline)!;
   const [text, setText] = useState(goal.target ? formatValue(d, goal.target).replace(' m', '') : '');
   const commit = (raw: string) => {
@@ -350,15 +356,15 @@ function GoalRow({ goal, onChange, onRemove }: { goal: GoalEntry; onChange: (p: 
         className="field w-auto"
         value={goal.targetDate ?? ''}
         onChange={(e) => onChange({ targetDate: e.target.value })}
-        title="Target date (optional)"
+        title={t('Target date (optional)')}
       />
       <input
         className="field flex-1 min-w-32"
-        placeholder="Note (optional)"
+        placeholder={t('Note (optional)')}
         value={goal.note ?? ''}
         onChange={(e) => onChange({ note: e.target.value })}
       />
-      <button onClick={onRemove} className="text-red text-sm" title="Remove goal">
+      <button onClick={onRemove} className="text-red text-sm" title={t('Remove goal')}>
         ✕
       </button>
     </div>
@@ -368,6 +374,7 @@ function GoalRow({ goal, onChange, onRemove }: { goal: GoalEntry; onChange: (p: 
 // ── Competitions ──────────────────────────────────────────────────────────────
 
 function CompetitionSection({ athlete, patch }: { athlete: Athlete; patch: (p: Partial<Athlete>) => void }) {
+  const t = useT();
   const add = () => {
     const c: Competition = { id: uid('comp'), name: '', date: today() };
     patch({ competitions: [...athlete.competitions, c] });
@@ -381,23 +388,23 @@ function CompetitionSection({ athlete, patch }: { athlete: Athlete; patch: (p: P
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between">
-        <h3 className="text-base">Competitions</h3>
+        <h3 className="text-base">{t('Competitions')}</h3>
         <button onClick={add} className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent">
-          + Add competition
+          + {t('Add competition')}
         </button>
       </div>
       {sorted.length === 0 ? (
-        <p className="text-textDim text-sm">No competitions logged.</p>
+        <p className="text-textDim text-sm">{t('No competitions logged.')}</p>
       ) : (
         <div className="space-y-2">
           {sorted.map((c) => (
             <div key={c.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-panel px-3 py-2">
-              <input className="field flex-1 min-w-40" placeholder="Competition name" value={c.name} onChange={(e) => update(c.id, { name: e.target.value })} />
+              <input className="field flex-1 min-w-40" placeholder={t('Competition name')} value={c.name} onChange={(e) => update(c.id, { name: e.target.value })} />
               <input type="date" className="field w-auto" value={c.date} onChange={(e) => update(c.id, { date: e.target.value })} />
-              <input className="field w-32" placeholder="Location" value={c.location ?? ''} onChange={(e) => update(c.id, { location: e.target.value })} />
-              <input className="field w-32" placeholder="Target, e.g. CWT 60m" value={c.target ?? ''} onChange={(e) => update(c.id, { target: e.target.value })} />
+              <input className="field w-32" placeholder={t('Location')} value={c.location ?? ''} onChange={(e) => update(c.id, { location: e.target.value })} />
+              <input className="field w-32" placeholder={t('Target, e.g. CWT 60m')} value={c.target ?? ''} onChange={(e) => update(c.id, { target: e.target.value })} />
               {c.date && <span className={`text-xs ${compColorClass(c.date)}`}>{relativeDays(c.date)}</span>}
-              <button onClick={() => remove(c.id)} className="text-red text-sm" title="Remove">
+              <button onClick={() => remove(c.id)} className="text-red text-sm" title={t('Remove')}>
                 ✕
               </button>
             </div>
@@ -411,6 +418,7 @@ function CompetitionSection({ athlete, patch }: { athlete: Athlete; patch: (p: P
 // ── Progress notes ────────────────────────────────────────────────────────────
 
 function ProgressSection({ athlete, patch }: { athlete: Athlete; patch: (p: Partial<Athlete>) => void }) {
+  const t = useT();
   const [text, setText] = useState('');
   const [date, setDate] = useState(today());
 
@@ -426,17 +434,17 @@ function ProgressSection({ athlete, patch }: { athlete: Athlete; patch: (p: Part
 
   return (
     <section className="space-y-3">
-      <h3 className="text-base">Progress log</h3>
+      <h3 className="text-base">{t('Progress log')}</h3>
       <div className="flex flex-wrap items-start gap-2 rounded-lg border border-border bg-panel p-3">
         <input type="date" className="field w-auto" value={date} onChange={(e) => setDate(e.target.value)} />
         <textarea
           className="field flex-1 min-w-48 min-h-10"
-          placeholder="Session feedback, milestone, observation…"
+          placeholder={t('Session feedback, milestone, observation…')}
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
         <button onClick={add} className="text-sm text-accent border border-border rounded-lg px-3 py-2 hover:border-accent">
-          Add
+          {t('Add')}
         </button>
       </div>
       {sorted.length > 0 && (
@@ -445,7 +453,7 @@ function ProgressSection({ athlete, patch }: { athlete: Athlete; patch: (p: Part
             <div key={n.id} className="flex gap-3 rounded-lg border border-border bg-panel px-3 py-2">
               <span className="text-xs text-textDim font-mono shrink-0 pt-0.5">{n.date}</span>
               <p className="text-sm text-text flex-1 whitespace-pre-wrap">{n.text}</p>
-              <button onClick={() => remove(n.id)} className="text-red text-xs shrink-0" title="Remove">
+              <button onClick={() => remove(n.id)} className="text-red text-xs shrink-0" title={t('Remove')}>
                 ✕
               </button>
             </div>

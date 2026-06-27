@@ -33,6 +33,7 @@ import {
 } from '../lib/store';
 import type { Athlete } from '../lib/types';
 import { AssignToConnectedButton } from '../components/AssignToConnectedButton';
+import { useT } from '../i18n';
 
 const MODES: { id: PlanMode; label: string }[] = [
   { id: 'depth', label: 'Depth' },
@@ -80,6 +81,7 @@ export function PlanBuilderView({
   planId: string | null;
   presetAthleteId: string | null;
 }) {
+  const t = useT();
   const athletes = useAthletes();
   const saved = useSavedPlan(planId);
   const presetAthlete = athletes.find((a) => a.id === presetAthleteId);
@@ -185,13 +187,13 @@ export function PlanBuilderView({
   return (
     <main className="mx-auto max-w-4xl px-5 py-6 space-y-8">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-lg">{recordId ? 'Edit plan' : 'New plan'}</h2>
+        <h2 className="text-lg">{recordId ? t('Edit plan') : t('New plan')}</h2>
         {attachedAthlete && (
           <button
             onClick={() => navigate(`/athletes/${attachedAthlete.id}`)}
             className="text-sm text-accent hover:underline"
           >
-            ← {attachedAthlete.name || 'athlete'}
+            ← {attachedAthlete.name || t('athlete')}
           </button>
         )}
       </div>
@@ -199,23 +201,23 @@ export function PlanBuilderView({
       {/* Plan details */}
       <section className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Labeled label="Plan name" required>
+          <Labeled label={t('Plan name')} required>
             <input
               className="field"
-              placeholder="e.g. 12-Week Depth Progression"
+              placeholder={t('e.g. 12-Week Depth Progression')}
               value={plan.name}
               onChange={(e) => setMeta({ name: e.target.value })}
             />
           </Labeled>
-          <Labeled label="Coach name (shown as author)" required>
+          <Labeled label={t('Coach name (shown as author)')} required>
             <input
               className="field"
-              placeholder="Your name"
+              placeholder={t('Your name')}
               value={plan.coach}
               onChange={(e) => setMeta({ coach: e.target.value })}
             />
           </Labeled>
-          <Labeled label="Athlete (optional)">
+          <Labeled label={t('Athlete (optional)')}>
             <select
               className="field"
               value={athleteId ?? ''}
@@ -225,15 +227,15 @@ export function PlanBuilderView({
                 setSavedTick(false);
               }}
             >
-              <option value="">— Not linked —</option>
+              <option value="">{t('— Not linked —')}</option>
               {athletes.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.name || 'Unnamed athlete'}
+                  {a.name || t('Unnamed athlete')}
                 </option>
               ))}
             </select>
           </Labeled>
-          <Labeled label="Start date">
+          <Labeled label={t('Start date')}>
             <input
               type="date"
               className="field"
@@ -241,16 +243,16 @@ export function PlanBuilderView({
               onChange={(e) => setMeta({ startDate: e.target.value || plan.startDate })}
             />
           </Labeled>
-          <Labeled label="Mode">
+          <Labeled label={t('Mode')}>
             <select className="field" value={plan.mode} onChange={(e) => setMeta({ mode: e.target.value as PlanMode })}>
               {MODES.map((m) => (
                 <option key={m.id} value={m.id}>
-                  {m.label}
+                  {t(m.label)}
                 </option>
               ))}
             </select>
           </Labeled>
-          <Labeled label="Plan type">
+          <Labeled label={t('Plan type')}>
             <div className="flex rounded-lg border border-border overflow-hidden">
               {KINDS.map((k) => (
                 <button
@@ -258,16 +260,16 @@ export function PlanBuilderView({
                   onClick={() => setMeta({ kind: k.id })}
                   className={`flex-1 px-3 py-2 text-sm ${plan.kind === k.id ? 'bg-accent text-ink' : 'text-textDim'}`}
                 >
-                  {k.label}
+                  {t(k.label)}
                 </button>
               ))}
             </div>
           </Labeled>
           <div className="sm:col-span-2">
-            <Labeled label="Description (optional)">
+            <Labeled label={t('Description (optional)')}>
               <input
                 className="field"
-                placeholder="One line the athlete sees on import"
+                placeholder={t('One line the athlete sees on import')}
                 value={plan.description}
                 onChange={(e) => setMeta({ description: e.target.value })}
               />
@@ -276,8 +278,8 @@ export function PlanBuilderView({
         </div>
         <p className="text-xs text-textDim">
           {plan.kind === 'season'
-            ? 'A season periodizes weeks into phases (Base → Build → Specific → Taper → Peak) toward a competition.'
-            : 'Week 1 starts on your start date and runs to that Sunday, then full Mon–Sun weeks.'}
+            ? t('A season periodizes weeks into phases (Base → Build → Specific → Taper → Peak) toward a competition.')
+            : t('Week 1 starts on your start date and runs to that Sunday, then full Mon–Sun weeks.')}
         </p>
       </section>
 
@@ -326,18 +328,17 @@ export function PlanBuilderView({
       <div className="fixed bottom-0 inset-x-0 border-t border-border bg-abyss/95 backdrop-blur px-5 py-3">
         <div className="mx-auto max-w-4xl flex items-center gap-4">
           <div className="text-sm text-textDim flex-1">
-            {stats.units} {stats.unitLabel}
-            {stats.units === 1 ? '' : 's'} · {stats.sessions} session
-            {stats.sessions === 1 ? '' : 's'}
-            {!ready && <span className="text-amber ml-2">· {issues[0]}</span>}
-            {ready && savedTick && <span className="text-recover ml-2">· Saved ✓</span>}
-            {ready && dirty && !savedTick && <span className="text-textDim ml-2">· Unsaved changes</span>}
+            {stats.units} {t(stats.units === 1 ? stats.unitLabel : stats.unitLabel + 's')} ·{' '}
+            {stats.sessions} {t(stats.sessions === 1 ? 'session' : 'sessions')}
+            {!ready && <span className="text-amber ml-2">· {t(issues[0])}</span>}
+            {ready && savedTick && <span className="text-recover ml-2">· {t('Saved')} ✓</span>}
+            {ready && dirty && !savedTick && <span className="text-textDim ml-2">· {t('Unsaved changes')}</span>}
           </div>
           <button
             onClick={doSave}
             className="rounded-lg px-4 py-2 font-heading tracking-wide border border-border text-text hover:border-accent"
           >
-            Save
+            {t('Save')}
           </button>
           <AssignToConnectedButton plan={plan} ready={ready} ensureSaved={doSave} />
           <button
@@ -345,7 +346,7 @@ export function PlanBuilderView({
             onClick={doDownload}
             className="glow-accent rounded-lg px-4 py-2 font-heading tracking-wide disabled:opacity-40 bg-accent text-ink"
           >
-            Download .e08plan
+            {t('Download')} .e08plan
           </button>
         </div>
       </div>
@@ -369,6 +370,7 @@ function TrainingSchedule(props: {
   setDayCount: (n: number) => void;
   dayDateLabel: (startDate: string, di: number) => string;
 }) {
+  const t = useT();
   const { plan, editing, setEditing, setMeta } = props;
   const newSess = (dayOfWeek: number) => ({
     id: `sess-${Date.now().toString(36)}-${Math.round(performance.now())}`,
@@ -384,7 +386,7 @@ function TrainingSchedule(props: {
     <section className="space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-lg">Schedule</h2>
+          <h2 className="text-lg">{t('Schedule')}</h2>
           <div className="flex rounded-lg border border-border overflow-hidden">
             {STRUCTURES.map((st) => (
               <button
@@ -392,7 +394,7 @@ function TrainingSchedule(props: {
                 onClick={() => setMeta({ structure: st.id })}
                 className={`px-3 py-1.5 text-sm ${plan.structure === st.id ? 'bg-accent text-ink' : 'text-textDim'}`}
               >
-                {st.label}
+                {t(st.label)}
               </button>
             ))}
           </div>
@@ -402,11 +404,11 @@ function TrainingSchedule(props: {
             onClick={props.addWeek}
             className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent"
           >
-            + Add week
+            + {t('Add week')}
           </button>
         ) : (
           <div className="flex items-center gap-2 text-sm text-textDim">
-            <span>Duration</span>
+            <span>{t('Duration')}</span>
             <input
               type="number"
               min={1}
@@ -415,7 +417,7 @@ function TrainingSchedule(props: {
               onChange={(e) => props.setDayCount(Number(e.target.value))}
               className="field w-20 text-center"
             />
-            <span>days</span>
+            <span>{t('days')}</span>
           </div>
         )}
       </div>
@@ -425,7 +427,7 @@ function TrainingSchedule(props: {
             <WeekCard
               key={wi}
               week={week}
-              label={`WEEK ${wi + 1}`}
+              label={`${t('WEEK')} ${wi + 1}`}
               mode={plan.mode}
               editing={editing}
               setEditing={setEditing}
@@ -437,10 +439,10 @@ function TrainingSchedule(props: {
         : plan.days.map((day, di) => (
             <div key={day.id} className="glass-card rounded-xl p-4 space-y-3">
               <div className="flex items-center gap-3">
-                <span className="font-heading text-accent whitespace-nowrap shrink-0">DAY {di + 1}</span>
+                <span className="font-heading text-accent whitespace-nowrap shrink-0">{t('DAY')} {di + 1}</span>
                 <span className="text-textDim text-sm">{props.dayDateLabel(plan.startDate, di)}</span>
                 {plan.days.length > 1 && (
-                  <button onClick={() => props.removeDay(di)} className="text-red text-sm px-2 shrink-0 ml-auto" title="Remove day">
+                  <button onClick={() => props.removeDay(di)} className="text-red text-sm px-2 shrink-0 ml-auto" title={t('Remove day')}>
                     ✕
                   </button>
                 )}
@@ -456,7 +458,7 @@ function TrainingSchedule(props: {
           ))}
       {plan.structure === 'days' && (
         <button onClick={props.addDay} className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent">
-          + Add day
+          + {t('Add day')}
         </button>
       )}
     </section>
@@ -512,6 +514,7 @@ function SeasonSchedule(props: {
   removePhase: (pi: number) => void;
   setMeta: (patch: Partial<BuilderPlan>) => void;
 }) {
+  const t = useT();
   const { plan } = props;
   const compWeeks = plan.competitionDate
     ? Math.max(1, Math.ceil(daysBetween(plan.startDate, plan.competitionDate) / 7))
@@ -520,7 +523,7 @@ function SeasonSchedule(props: {
   return (
     <section className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Labeled label="Target competition date">
+        <Labeled label={t('Target competition date')}>
           <input
             type="date"
             className="field"
@@ -534,10 +537,10 @@ function SeasonSchedule(props: {
             }}
           />
           {compWeeks != null && (
-            <span className="block text-xs text-textDim mt-1">{compWeeks} weeks out.</span>
+            <span className="block text-xs text-textDim mt-1">{compWeeks} {t('weeks out.')}</span>
           )}
         </Labeled>
-        <Labeled label="Auto-build periodization">
+        <Labeled label={t('Auto-build periodization')}>
           <div className="flex items-center gap-2">
             <input
               type="number"
@@ -547,22 +550,22 @@ function SeasonSchedule(props: {
               onChange={(e) => props.setGenWeeks(Math.max(1, Math.min(52, Number(e.target.value) || 1)))}
               className="field w-20 text-center"
             />
-            <span className="text-sm text-textDim">weeks</span>
+            <span className="text-sm text-textDim">{t('weeks')}</span>
             <button
               onClick={props.regenerate}
               className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent whitespace-nowrap"
             >
-              Generate phases
+              {t('Generate phases')}
             </button>
           </div>
-          <span className="block text-xs text-textDim mt-1">Replaces the phases below with a Base→Peak skeleton you then edit.</span>
+          <span className="block text-xs text-textDim mt-1">{t('Replaces the phases below with a Base→Peak skeleton you then edit.')}</span>
         </Labeled>
       </div>
 
       <div className="flex items-center justify-between">
-        <h2 className="text-lg">Phases</h2>
+        <h2 className="text-lg">{t('Phases')}</h2>
         <button onClick={props.addPhase} className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent">
-          + Add phase
+          + {t('Add phase')}
         </button>
       </div>
 

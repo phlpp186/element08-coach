@@ -5,6 +5,7 @@
  * isn't bypassable from the website.
  */
 import { supabase } from './client';
+import { tr } from '../../i18n';
 
 export interface Profile {
   id: string;
@@ -15,9 +16,9 @@ export interface Profile {
 
 function friendly(message: string): string {
   const m = message.toLowerCase();
-  if (m.includes('invalid login credentials')) return 'Wrong email or password.';
-  if (m.includes('user already registered')) return 'That email already has an account — sign in instead.';
-  if (m.includes('email not confirmed')) return 'Check your inbox to confirm your email, then sign in.';
+  if (m.includes('invalid login credentials')) return tr('Wrong email or password.');
+  if (m.includes('user already registered')) return tr('That email already has an account — sign in instead.');
+  if (m.includes('email not confirmed')) return tr('Check your inbox to confirm your email, then sign in.');
   return message;
 }
 

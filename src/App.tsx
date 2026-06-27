@@ -5,6 +5,8 @@ import { ConnectedAthleteView } from './views/ConnectedAthleteView';
 import { PlanBuilderView } from './views/PlanBuilderView';
 import { AuthBar } from './components/AuthBar';
 import { AppFooter } from './components/AppFooter';
+import { useT } from './i18n';
+import { LanguageSwitcher } from './i18n/LanguageSwitcher';
 
 const NAV: { id: string; label: string; to: string }[] = [
   { id: 'athletes', label: 'Athletes', to: '/athletes' },
@@ -14,6 +16,7 @@ const NAV: { id: string; label: string; to: string }[] = [
 export function App() {
   const route = useRoute();
   const top = route.segments[0] ?? 'athletes';
+  const t = useT();
 
   return (
     <div className="min-h-screen pb-28">
@@ -23,10 +26,10 @@ export function App() {
           <button onClick={() => navigate('/athletes')} className="text-left">
             <h1 className="text-2xl font-heading tracking-wider">
               E<span className="text-red">|</span>08{' '}
-              <span className="text-textDim font-body text-base align-middle">Coach</span>
+              <span className="text-textDim font-body text-base align-middle">{t('Coach')}</span>
             </h1>
           </button>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <nav className="flex rounded-lg border border-border overflow-hidden">
               {NAV.map((n) => (
                 <button
@@ -34,10 +37,11 @@ export function App() {
                   onClick={() => navigate(n.to)}
                   className={`px-4 py-1.5 text-sm ${top === n.id ? 'glow-accent bg-accent text-ink' : 'text-textDim hover:text-text'}`}
                 >
-                  {n.label}
+                  {t(n.label)}
                 </button>
               ))}
             </nav>
+            <LanguageSwitcher />
             <AuthBar />
           </div>
         </div>

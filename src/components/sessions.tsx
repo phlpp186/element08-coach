@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { uid, type BuilderSession, type PlanMode } from '../lib/e08plan';
 import { ExerciseInput } from './ExerciseInput';
+import { useT } from '../i18n';
 
 const SESSION_MODES: PlanMode[] = ['depth', 'pool', 'dry', 'general'];
 
@@ -45,6 +46,7 @@ export function SessionList({
   /** When set, the "+ session" button is replaced by this dim note. */
   disabledText?: string;
 }) {
+  const t = useT();
   return (
     <div className="flex-1 space-y-2">
       {sessions.map((s) =>
@@ -67,7 +69,7 @@ export function SessionList({
         <span className="text-xs text-textDim italic">{disabledText}</span>
       ) : (
         <button onClick={onAdd} className="text-xs text-textDim hover:text-accent">
-          + session
+          {t('+ session')}
         </button>
       )}
     </div>
@@ -75,14 +77,18 @@ export function SessionList({
 }
 
 function SessionChip({ session, onEdit }: { session: BuilderSession; onEdit: () => void }) {
+  const t = useT();
   const exCount = session.exercises.filter((e) => e.description.trim()).length;
-  const hint = exCount > 0 ? `${exCount} exercise${exCount === 1 ? '' : 's'}` : session.body.trim();
+  const hint =
+    exCount > 0
+      ? `${exCount} ${exCount === 1 ? t('exercise') : t('exercises')}`
+      : session.body.trim();
   return (
     <button
       onClick={onEdit}
       className="w-full text-left rounded-lg border border-border bg-abyss px-3 py-2 hover:border-accent"
     >
-      <div className="text-sm text-text">{session.label.trim() || 'Untitled session'}</div>
+      <div className="text-sm text-text">{session.label.trim() || t('Untitled session')}</div>
       {hint && <div className="text-xs text-textDim truncate mt-0.5">{hint}</div>}
     </button>
   );
@@ -99,6 +105,7 @@ function SessionEditor({
   onClose: () => void;
   onDelete: () => void;
 }) {
+  const t = useT();
   const [dropping, setDropping] = useState(false);
   const addExercise = () =>
     onChange({ exercises: [...session.exercises, { id: uid('ex'), description: '' }] });
@@ -113,7 +120,7 @@ function SessionEditor({
     <div className="rounded-lg border border-accent bg-abyss p-3 space-y-3">
       <input
         className="field"
-        placeholder="Session title, e.g. Pool CO₂ table"
+        placeholder={t('Session title, e.g. Pool CO₂ table')}
         value={session.label}
         onChange={(e) => onChange({ label: e.target.value })}
       />
@@ -137,36 +144,36 @@ function SessionEditor({
         }}
       >
         <span className="block text-xs text-textDim uppercase tracking-wide">
-          Exercises (optional) · drag from your library
+          {t('Exercises (optional) · drag from your library')}
         </span>
         {session.exercises.map((ex, i) => (
           <div key={ex.id} className="flex gap-2 items-center">
             <span className="text-textDim text-xs font-mono w-4 shrink-0">{i + 1}</span>
             <ExerciseInput
               value={ex.description}
-              placeholder="e.g. 3×25m bi-fins, 5 min rest"
+              placeholder={t('e.g. 3×25m bi-fins, 5 min rest')}
               onChange={(v) => updateExercise(ex.id, v)}
             />
             <button
               onClick={() => removeExercise(ex.id)}
               className="text-red text-sm px-1"
-              title="Remove exercise"
+              title={t('Remove exercise')}
             >
               ✕
             </button>
           </div>
         ))}
         <button onClick={addExercise} className="text-xs text-accent hover:underline">
-          + exercise
+          {t('+ exercise')}
         </button>
       </div>
 
       {/* Free-text notes (mode #1), use either or both */}
       <div className="space-y-1">
-        <span className="block text-xs text-textDim uppercase tracking-wide">Notes / full text</span>
+        <span className="block text-xs text-textDim uppercase tracking-wide">{t('Notes / full text')}</span>
         <textarea
           className="field min-h-20"
-          placeholder="Or write the session in plain text: warm-up, cues, anything."
+          placeholder={t('Or write the session in plain text: warm-up, cues, anything.')}
           value={session.body}
           onChange={(e) => onChange({ body: e.target.value })}
         />
@@ -186,20 +193,20 @@ function SessionEditor({
         </select>
         <input
           className="field flex-1"
-          placeholder="Type (optional), e.g. CWT, CO₂ table"
+          placeholder={t('Type (optional), e.g. CWT, CO₂ table')}
           value={session.sessionType}
           onChange={(e) => onChange({ sessionType: e.target.value })}
         />
       </div>
       <div className="flex items-center justify-between pt-1">
         <button onClick={onDelete} className="text-red text-sm">
-          Delete
+          {t('Delete')}
         </button>
         <button
           onClick={onClose}
           className="glow-accent text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide"
         >
-          Done
+          {t('Done')}
         </button>
       </div>
     </div>

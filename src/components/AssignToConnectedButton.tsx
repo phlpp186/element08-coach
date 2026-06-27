@@ -9,6 +9,7 @@
  * stays as the account-free fallback.
  */
 import { useState } from 'react';
+import { useT } from '../i18n';
 import type { BuilderPlan } from '../lib/e08plan';
 import { buildPlanFile } from '../lib/e08plan';
 import { useAuth } from '../lib/supabase/AuthProvider';
@@ -27,6 +28,7 @@ export function AssignToConnectedButton({
   /** Persist the plan locally and return its stable SavedPlan id. */
   ensureSaved: () => string;
 }) {
+  const t = useT();
   const { session, isCoach } = useAuth();
   const { athletes, loading } = useRoster();
   const [open, setOpen] = useState(false);
@@ -49,7 +51,7 @@ export function AssignToConnectedButton({
       else cloudId = (await createPlan(file.metadata.title, definition)).id;
       setCloudPlanLink(recId, { cloudPlanId: cloudId, defId });
       await assignPlan(cloudId, studentId);
-      setMsg({ text: `Assigned to ${name} ✓`, ok: true });
+      setMsg({ text: `${t('Assigned to')} ${name} ✓`, ok: true });
       setOpen(false);
     } catch (e) {
       setMsg({ text: (e as Error).message, ok: false });
@@ -68,7 +70,7 @@ export function AssignToConnectedButton({
         }}
         className="rounded-lg px-4 py-2 font-heading tracking-wide border border-accent text-accent disabled:opacity-40 hover:bg-accent/10"
       >
-        Assign…
+        {t('Assign…')}
       </button>
 
       {msg && !open && (
@@ -81,12 +83,12 @@ export function AssignToConnectedButton({
 
       {open && (
         <div className="absolute bottom-full right-0 mb-2 w-64 rounded-lg border border-border bg-panel p-2 shadow-xl">
-          <p className="px-2 py-1 text-xs text-textDim">Assign to a connected athlete:</p>
+          <p className="px-2 py-1 text-xs text-textDim">{t('Assign to a connected athlete:')}</p>
           {loading ? (
-            <p className="px-2 py-2 text-sm text-textDim">Loading…</p>
+            <p className="px-2 py-2 text-sm text-textDim">{t('Loading…')}</p>
           ) : athletes.length === 0 ? (
             <p className="px-2 py-2 text-sm text-textDim">
-              No connected athletes yet. Invite one from the Athletes page.
+              {t('No connected athletes yet. Invite one from the Athletes page.')}
             </p>
           ) : (
             athletes.map((a) => (

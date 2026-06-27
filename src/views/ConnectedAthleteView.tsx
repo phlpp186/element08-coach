@@ -6,6 +6,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { navigate } from '../hooks/useHashRoute';
+import { useT } from '../i18n';
 import { groupStyleById } from '../lib/disciplines';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import {
@@ -25,8 +26,9 @@ import {
 } from '../lib/supabase/athleteProfileCloud';
 
 export function ConnectedAthleteView({ studentId }: { studentId: string }) {
+  const t = useT();
   const { session } = useAuth();
-  const [name, setName] = useState('Athlete');
+  const [name, setName] = useState(t('Athlete'));
   const [pbs, setPbs] = useState<AthletePB[]>([]);
   const [goals, setGoals] = useState<AthleteGoal[]>([]);
   const [assignments, setAssignments] = useState<CoachAssignment[]>([]);
@@ -43,7 +45,7 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
         listCoachAssignments(),
       ]);
       const me = students.find((s) => s.student.id === studentId);
-      setName(me?.student.display_name?.trim() || 'Athlete');
+      setName(me?.student.display_name?.trim() || t('Athlete'));
       setPbs(parsePBs(profile?.pbs));
       setGoals(parseGoals(profile?.goals));
       setAssignments(allAssignments.filter((a) => a.studentId === studentId));
@@ -52,7 +54,7 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
     } finally {
       setLoading(false);
     }
-  }, [studentId, session]);
+  }, [studentId, session, t]);
 
   useEffect(() => {
     setLoading(true);
@@ -69,7 +71,7 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
   if (!session) {
     return (
       <main className="mx-auto max-w-4xl px-5 py-6">
-        <p className="text-textDim">Sign in to view your connected athletes.</p>
+        <p className="text-textDim">{t('Sign in to view your connected athletes.')}</p>
       </main>
     );
   }
@@ -77,7 +79,7 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
   return (
     <main className="mx-auto max-w-4xl px-5 py-6 space-y-6">
       <button onClick={() => navigate('/athletes')} className="text-sm text-textDim hover:text-text">
-        ← Athletes
+        ← {t('Athletes')}
       </button>
 
       <div className="flex items-center gap-3">
@@ -86,19 +88,19 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
         </span>
         <div>
           <h2 className="text-xl text-text">{name}</h2>
-          <p className="text-xs text-accent">✓ connected · synced with the app</p>
+          <p className="text-xs text-accent">✓ {t('connected · synced with the app')}</p>
         </div>
       </div>
 
-      {loading && <p className="text-textDim text-sm">Loading…</p>}
+      {loading && <p className="text-textDim text-sm">{t('Loading…')}</p>}
       {error && <p className="text-red text-sm">{error}</p>}
 
       {!loading && (
         <>
           <section className="space-y-2">
-            <h3 className="font-heading tracking-wide text-text">PERSONAL BESTS</h3>
+            <h3 className="font-heading tracking-wide text-text">{t('PERSONAL BESTS')}</h3>
             {pbs.length === 0 ? (
-              <p className="text-textDim text-sm">No PBs published yet (the athlete sets these in the app).</p>
+              <p className="text-textDim text-sm">{t('No PBs published yet (the athlete sets these in the app).')}</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {pbs.map((pb) => {
@@ -116,7 +118,7 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
 
           {goals.length > 0 && (
             <section className="space-y-2">
-              <h3 className="font-heading tracking-wide text-text">GOALS</h3>
+              <h3 className="font-heading tracking-wide text-text">{t('GOALS')}</h3>
               <ul className="space-y-1">
                 {goals.map((g) => (
                   <li key={g.id} className="text-sm flex gap-2">
@@ -129,16 +131,16 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
           )}
 
           <section className="space-y-2">
-            <h3 className="font-heading tracking-wide text-text">ASSIGNED PLANS</h3>
+            <h3 className="font-heading tracking-wide text-text">{t('ASSIGNED PLANS')}</h3>
             {assignments.length === 0 ? (
-              <p className="text-textDim text-sm">No plans assigned yet.</p>
+              <p className="text-textDim text-sm">{t('No plans assigned yet.')}</p>
             ) : (
               <div className="space-y-2">
                 {assignments.map((a) => (
                   <div key={a.id} className="rounded-lg border border-border bg-panel p-3 flex items-center justify-between">
                     <span className="text-text">{a.planTitle}</span>
                     <span className="text-xs text-textDim">
-                      {a.doneCount} session{a.doneCount === 1 ? '' : 's'} done
+                      {a.doneCount} {a.doneCount === 1 ? t('session') : t('sessions')} {t('done')}
                     </span>
                   </div>
                 ))}

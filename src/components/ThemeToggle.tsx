@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useT } from '../i18n';
 
 const KEY = 'element08.theme';
 
@@ -25,6 +26,7 @@ function applyTheme(t: Theme) {
  *  class on <html> and persists the choice; index.html applies it before first
  *  paint to avoid a flash. */
 export function ThemeToggle() {
+  const t = useT();
   const [theme, setTheme] = useState<Theme>(readTheme);
 
   useEffect(() => {
@@ -41,8 +43,8 @@ export function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(next)}
-      aria-label={`Theme: ${LABEL[theme]}. Switch to ${LABEL[next]}.`}
-      title={`Theme: ${LABEL[theme]}, switch to ${LABEL[next]}`}
+      aria-label={`${t('Theme:')} ${LABEL[theme]}. ${t('Switch to')} ${LABEL[next]}.`}
+      title={`${t('Theme:')} ${LABEL[theme]}, ${t('switch to')} ${LABEL[next]}`}
       className="fixed right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-panel/80 text-textDim backdrop-blur transition-colors hover:border-accent hover:text-accent"
     >
       {theme === 'light' ? <SunIcon /> : theme === 'neon' ? <BoltIcon /> : <MoonIcon />}
