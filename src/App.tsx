@@ -3,6 +3,7 @@ import { AthletesView } from './views/AthletesView';
 import { AthleteDetailView } from './views/AthleteDetailView';
 import { ConnectedAthleteView } from './views/ConnectedAthleteView';
 import { PlanBuilderView } from './views/PlanBuilderView';
+import { ExercisesView } from './views/ExercisesView';
 import { AuthBar } from './components/AuthBar';
 import { AppFooter } from './components/AppFooter';
 import { useT } from './i18n';
@@ -10,6 +11,7 @@ import { LanguageSwitcher } from './i18n/LanguageSwitcher';
 
 const NAV: { id: string; label: string; to: string }[] = [
   { id: 'athletes', label: 'Athletes', to: '/athletes' },
+  { id: 'exercises', label: 'Exercises', to: '/exercises' },
   { id: 'plan', label: 'Plan builder', to: '/plan/new' },
 ];
 
@@ -56,6 +58,10 @@ export function App() {
 function Outlet() {
   const route = useRoute();
   const [top, second] = route.segments;
+
+  if (top === 'exercises') {
+    return <ExercisesView />;
+  }
 
   if (top === 'plan') {
     // /plan/new?athlete=ID  → fresh plan (optionally for an athlete)
