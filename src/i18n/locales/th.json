@@ -248,5 +248,16 @@
   "New block name, e.g. CO₂ set": "ชื่อบล็อกใหม่ เช่น CO₂ set",
   "No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.": "ยังไม่มีบล็อก จัดกลุ่มแบบฝึกที่คุณใช้ร่วมกัน (วอร์มอัพ, CO₂ set) แล้วเพิ่มทั้งบล็อกลงในเซสชันพร้อมกันได้จากเครื่องมือสร้างแผน",
   "Remove from block": "นำออกจากบล็อก",
-  "Reusable groups you drop into a session in one click": "กลุ่มที่ใช้ซ้ำได้ซึ่งคุณเพิ่มลงในเซสชันได้ในคลิกเดียว"
+  "Reusable groups you drop into a session in one click": "กลุ่มที่ใช้ซ้ำได้ซึ่งคุณเพิ่มลงในเซสชันได้ในคลิกเดียว",
+  "Add sessions to your plan first.": "เพิ่มเซสชันลงในแผนของคุณก่อน",
+  "Add to selected": "เพิ่มลงในที่เลือก",
+  "Add to sessions": "เพิ่มลงในเซสชัน",
+  "Assign to sessions…": "มอบหมายลงในเซสชัน…",
+  "Blocks — click to add to the open session, or ⋯ to assign to many.": "บล็อก — คลิกเพื่อเพิ่มลงในเซสชันที่เปิดอยู่ หรือ ⋯ เพื่อมอบหมายให้หลายเซสชัน",
+  "Cancel": "ยกเลิก",
+  "Clear": "ล้าง",
+  "Day": "วัน",
+  "Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.": "ลากชิปลงในเซสชัน คลิกเพื่อเพิ่มลงในเซสชันที่เปิดอยู่ หรือ ⋯ เพื่อมอบหมายให้หลายเซสชัน",
+  "Select all": "เลือกทั้งหมด",
+  "Week": "สัปดาห์"
 }

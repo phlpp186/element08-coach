@@ -249,5 +249,16 @@
   "New block name, e.g. CO₂ set": "새 블록 이름, 예: CO₂ set",
   "No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.": "아직 블록이 없습니다. 함께 사용하는 운동을 묶은 다음(워밍업, CO₂ set), 빌더에서 블록 전체를 세션에 한 번에 추가하세요.",
   "Remove from block": "블록에서 제거",
-  "Reusable groups you drop into a session in one click": "한 번의 클릭으로 세션에 넣는 재사용 가능한 그룹"
+  "Reusable groups you drop into a session in one click": "한 번의 클릭으로 세션에 넣는 재사용 가능한 그룹",
+  "Add sessions to your plan first.": "먼저 플랜에 세션을 추가하세요.",
+  "Add to selected": "선택 항목에 추가",
+  "Add to sessions": "세션에 추가",
+  "Assign to sessions…": "세션에 배정…",
+  "Blocks — click to add to the open session, or ⋯ to assign to many.": "블록 — 클릭하여 열린 세션에 추가하거나, ⋯로 여러 세션에 배정하세요.",
+  "Cancel": "취소",
+  "Clear": "지우기",
+  "Day": "일",
+  "Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.": "칩을 세션으로 드래그하거나, 클릭하여 열린 세션에 추가하거나, ⋯로 여러 세션에 배정하세요.",
+  "Select all": "모두 선택",
+  "Week": "주"
 }

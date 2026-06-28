@@ -247,5 +247,16 @@
   "New block name, e.g. CO₂ set": "Nom du nouveau bloc, p. ex. série CO₂",
   "No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.": "Aucun bloc pour l'instant. Regroupez les exercices que vous utilisez ensemble (un échauffement, une série CO₂), puis ajoutez le bloc entier à une séance d'un seul coup depuis le constructeur.",
   "Remove from block": "Retirer du bloc",
-  "Reusable groups you drop into a session in one click": "Des groupes réutilisables que vous déposez dans une séance en un clic"
+  "Reusable groups you drop into a session in one click": "Des groupes réutilisables que vous déposez dans une séance en un clic",
+  "Add sessions to your plan first.": "Ajoutez d'abord des séances à votre plan.",
+  "Add to selected": "Ajouter à la sélection",
+  "Add to sessions": "Ajouter aux séances",
+  "Assign to sessions…": "Assigner à des séances…",
+  "Blocks — click to add to the open session, or ⋯ to assign to many.": "Blocs : cliquez pour ajouter à la séance ouverte, ou ⋯ pour assigner à plusieurs.",
+  "Cancel": "Annuler",
+  "Clear": "Effacer",
+  "Day": "Jour",
+  "Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.": "Glissez une étiquette dans une séance, cliquez pour l'ajouter à celle ouverte, ou ⋯ pour assigner à plusieurs.",
+  "Select all": "Tout sélectionner",
+  "Week": "Semaine"
 }

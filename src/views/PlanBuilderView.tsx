@@ -2,12 +2,14 @@ import { useMemo, useState } from 'react';
 import { daysBetween } from '../lib/planHelpers';
 import {
   addDays,
+  DAY_LABELS,
   downloadPlanFile,
   dowOf,
   emptyDay,
   emptyPhase,
   generateSeasonSkeleton,
   initialPlan,
+  MESO_LABEL,
   mondayOf,
   normalizePlan,
   planIssues,
@@ -158,6 +160,53 @@ export function PlanBuilderView({
     }));
   };
 
+  // append exercises to MANY sessions at once (multi-assign)
+  const appendExercisesToSessions = (sessionIds: string[], descriptions: string[]) => {
+    if (!sessionIds.length || !descriptions.length) return;
+    const ids = new Set(sessionIds);
+    const stamp = Date.now().toString(36);
+    const mapSessions = (ss: BuilderWeek['sessions']) =>
+      ss.map((s) =>
+        ids.has(s.id)
+          ? {
+              ...s,
+              exercises: [
+                ...s.exercises,
+                ...descriptions.map((description, i) => ({ id: `ex-${stamp}-${s.id}-${i}`, description })),
+              ],
+            }
+          : s,
+      );
+    mutate((p) => ({
+      ...p,
+      weeks: p.weeks.map((w) => ({ ...w, sessions: mapSessions(w.sessions) })),
+      days: p.days.map((d) => ({ ...d, sessions: mapSessions(d.sessions) })),
+      phases: p.phases.map((ph) => ({ ...ph, weeks: ph.weeks.map((w) => ({ ...w, sessions: mapSessions(w.sessions) })) })),
+    }));
+  };
+
+  // flat list of every session in the plan, with a human label, for multi-assign
+  const assignTargets = useMemo(() => {
+    const out: { id: string; label: string }[] = [];
+    const day = (dow: number) => t(DAY_LABELS[dow] ?? 'Mon');
+    const suffix = (s: BuilderWeek['sessions'][number]) => (s.label.trim() ? ` · ${s.label.trim()}` : '');
+    if (plan.kind === 'season') {
+      let g = 0;
+      for (const ph of plan.phases) {
+        const phName = ph.name.trim() || t(MESO_LABEL[ph.type]);
+        for (const w of ph.weeks) {
+          g++;
+          for (const s of w.sessions) out.push({ id: s.id, label: `${phName} · ${t('Week')} ${g} · ${day(s.dayOfWeek)}${suffix(s)}` });
+        }
+      }
+    } else if (plan.structure === 'days') {
+      plan.days.forEach((d, di) => d.sessions.forEach((s) => out.push({ id: s.id, label: `${t('Day')} ${di + 1}${suffix(s)}` })));
+    } else {
+      plan.weeks.forEach((w, wi) => w.sessions.forEach((s) => out.push({ id: s.id, label: `${t('Week')} ${wi + 1} · ${day(s.dayOfWeek)}${suffix(s)}` })));
+    }
+    return out;
+  }, [plan, t]);
+
   const doSave = (): string => {
     const id = recordId ?? newPlanId();
     upsertPlan({ id, athleteId, plan, updatedAt: '' });
@@ -288,6 +337,8 @@ export function PlanBuilderView({
         onUse={(descs) => {
           if (editing) appendExercisesToSession(editing, descs);
         }}
+        targets={assignTargets}
+        onAssign={appendExercisesToSessions}
       />
 
       {plan.kind === 'season' ? (

@@ -247,5 +247,16 @@
   "New block name, e.g. CO₂ set": "新區塊名稱，例如 CO₂ set",
   "No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.": "尚無區塊。將你常一起使用的訓練項目分組（例如暖身、CO₂ set），然後在編輯器中一次將整個區塊加入課程。",
   "Remove from block": "從區塊移除",
-  "Reusable groups you drop into a session in one click": "可重複使用的群組，一鍵即可加入課程"
+  "Reusable groups you drop into a session in one click": "可重複使用的群組，一鍵即可加入課程",
+  "Add sessions to your plan first.": "請先將課程加入你的計畫。",
+  "Add to selected": "加入所選",
+  "Add to sessions": "加入課程",
+  "Assign to sessions…": "指派至課程…",
+  "Blocks — click to add to the open session, or ⋯ to assign to many.": "區塊 — 點選即可加入已開啟的課程，或點選 ⋯ 指派至多堂課程。",
+  "Cancel": "取消",
+  "Clear": "清除",
+  "Day": "日",
+  "Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.": "將標籤拖入課程、點選以加入已開啟的課程，或點選 ⋯ 指派至多堂課程。",
+  "Select all": "全選",
+  "Week": "週"
 }

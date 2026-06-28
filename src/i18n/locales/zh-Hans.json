@@ -247,5 +247,16 @@
   "New block name, e.g. CO₂ set": "新训练组名称，例如 CO₂ set",
   "No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.": "尚无训练组。将你常一起使用的训练项归为一组（如热身、CO₂ 组），然后在编辑器中一次性将整个训练组添加到课程中。",
   "Remove from block": "从训练组移除",
-  "Reusable groups you drop into a session in one click": "可复用的训练组，一键即可放入课程"
+  "Reusable groups you drop into a session in one click": "可复用的训练组，一键即可放入课程",
+  "Add sessions to your plan first.": "请先向计划中添加课程。",
+  "Add to selected": "添加到所选",
+  "Add to sessions": "添加到课程",
+  "Assign to sessions…": "分配到多节课程…",
+  "Blocks — click to add to the open session, or ⋯ to assign to many.": "训练组 — 点击添加到已打开的课程，或点击 ⋯ 分配到多节课程。",
+  "Cancel": "取消",
+  "Clear": "清除",
+  "Day": "日",
+  "Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.": "将标签拖入课程，点击添加到已打开的课程，或点击 ⋯ 分配到多节课程。",
+  "Select all": "全选",
+  "Week": "周"
 }

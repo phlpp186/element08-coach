@@ -247,5 +247,16 @@
   "New block name, e.g. CO₂ set": "新しいブロック名（例：CO₂ セット）",
   "No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.": "まだブロックがありません。よく一緒に使うエクササイズ（ウォームアップ、CO₂ セットなど）をグループ化し、ビルダーからブロック全体を一度にセッションに追加できます。",
   "Remove from block": "ブロックから削除",
-  "Reusable groups you drop into a session in one click": "ワンクリックでセッションに追加できる再利用可能なグループ"
+  "Reusable groups you drop into a session in one click": "ワンクリックでセッションに追加できる再利用可能なグループ",
+  "Add sessions to your plan first.": "先にプランへセッションを追加してください。",
+  "Add to selected": "選択中に追加",
+  "Add to sessions": "セッションに追加",
+  "Assign to sessions…": "セッションに割り当て…",
+  "Blocks — click to add to the open session, or ⋯ to assign to many.": "ブロック — クリックで開いているセッションに追加、⋯ で複数に割り当て。",
+  "Cancel": "キャンセル",
+  "Clear": "クリア",
+  "Day": "日",
+  "Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.": "チップをセッションにドラッグ、クリックで開いているセッションに追加、⋯ で複数に割り当て。",
+  "Select all": "すべて選択",
+  "Week": "週"
 }

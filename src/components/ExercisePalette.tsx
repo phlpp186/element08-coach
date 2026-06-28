@@ -3,12 +3,24 @@ import { blockExercises, useBlocks, useCategories, useExercises } from '../lib/l
 import { navigate } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
 
+interface AssignTarget {
+  id: string;
+  label: string;
+}
+
 /** A compact, searchable picker over the coach's exercise library + saved blocks.
- *  Search + category filter, then drag a chip into a session's exercise list or
- *  (with a session open) click it to add. Clicking a block inserts all of its
- *  exercises into the open session at once. Authoring lives in the Exercises tab.
- *  `onUse` receives one or more descriptions to append to the open session. */
-export function ExercisePalette({ onUse }: { onUse: (descriptions: string[]) => void }) {
+ *  Click a chip/block to add to the open session; the "⋯" opens "assign to many"
+ *  to add it to several sessions at once. Authoring lives in the Exercises tab.
+ *  `onUse` appends to the open session; `onAssign` appends to many sessions. */
+export function ExercisePalette({
+  onUse,
+  targets,
+  onAssign,
+}: {
+  onUse: (descriptions: string[]) => void;
+  targets: AssignTarget[];
+  onAssign: (sessionIds: string[], descriptions: string[]) => void;
+}) {
   const t = useT();
   const exercises = useExercises();
   const categories = useCategories();
@@ -16,6 +28,7 @@ export function ExercisePalette({ onUse }: { onUse: (descriptions: string[]) => 
   const [open, setOpen] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<string>('all');
+  const [assigning, setAssigning] = useState<{ name: string; descriptions: string[] } | null>(null);
 
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -60,19 +73,30 @@ export function ExercisePalette({ onUse }: { onUse: (descriptions: string[]) => 
           <>
             {nonEmptyBlocks.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-textDim text-xs">{t('Blocks — open a session, then click to add all its exercises.')}</p>
+                <p className="text-textDim text-xs">{t('Blocks — click to add to the open session, or ⋯ to assign to many.')}</p>
                 <div className="flex flex-wrap gap-2">
                   {nonEmptyBlocks.map((b) => (
-                    <button
+                    <span
                       key={b.id}
-                      onClick={() => onUse(blockExercises(b).map((e) => e.description))}
-                      className="flex items-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-2.5 py-1.5 text-sm text-text hover:border-accent"
-                      title={t('Add all exercises in this block to the open session')}
+                      className="group flex items-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-2.5 py-1.5 text-sm"
                     >
-                      <span className="text-accent">▦</span>
-                      {b.name}
-                      <span className="text-textDim text-xs">{b.exerciseIds.length}</span>
-                    </button>
+                      <button
+                        onClick={() => onUse(blockExercises(b).map((e) => e.description))}
+                        className="flex items-center gap-1.5 text-text"
+                        title={t('Add all exercises in this block to the open session')}
+                      >
+                        <span className="text-accent">▦</span>
+                        {b.name}
+                        <span className="text-textDim text-xs">{b.exerciseIds.length}</span>
+                      </button>
+                      <button
+                        onClick={() => setAssigning({ name: b.name, descriptions: blockExercises(b).map((e) => e.description) })}
+                        className="text-textDim opacity-0 group-hover:opacity-100 hover:text-accent"
+                        title={t('Assign to sessions…')}
+                      >
+                        ⋯
+                      </button>
+                    </span>
                   ))}
                 </div>
               </div>
@@ -104,23 +128,34 @@ export function ExercisePalette({ onUse }: { onUse: (descriptions: string[]) => 
             ) : (
               <>
                 <p className="text-textDim text-xs">
-                  {t('Drag a chip into a session, or open a session and click it.')}
+                  {t('Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.')}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {shown.map((ex) => (
                     <span
                       key={ex.id}
-                      draggable
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData('text/plain', ex.description);
-                        e.dataTransfer.effectAllowed = 'copy';
-                      }}
-                      onClick={() => onUse([ex.description])}
-                      className="flex items-center gap-1.5 rounded-lg border border-border bg-abyss px-2.5 py-1.5 text-sm cursor-grab active:cursor-grabbing hover:border-accent"
-                      title={t('Drag into a session, or click to add to the open session')}
+                      className="group flex items-center gap-1.5 rounded-lg border border-border bg-abyss px-2.5 py-1.5 text-sm hover:border-accent"
                     >
-                      {ex.category && <span className="h-1.5 w-1.5 rounded-full bg-accent/70 shrink-0" />}
-                      {ex.description}
+                      <span
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('text/plain', ex.description);
+                          e.dataTransfer.effectAllowed = 'copy';
+                        }}
+                        onClick={() => onUse([ex.description])}
+                        className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing"
+                        title={t('Drag into a session, or click to add to the open session')}
+                      >
+                        {ex.category && <span className="h-1.5 w-1.5 rounded-full bg-accent/70 shrink-0" />}
+                        {ex.description}
+                      </span>
+                      <button
+                        onClick={() => setAssigning({ name: ex.description, descriptions: [ex.description] })}
+                        className="text-textDim opacity-0 group-hover:opacity-100 hover:text-accent"
+                        title={t('Assign to sessions…')}
+                      >
+                        ⋯
+                      </button>
                     </span>
                   ))}
                 </div>
@@ -128,7 +163,100 @@ export function ExercisePalette({ onUse }: { onUse: (descriptions: string[]) => 
             )}
           </>
         ))}
+
+      {assigning && (
+        <AssignModal
+          name={assigning.name}
+          descriptions={assigning.descriptions}
+          targets={targets}
+          onAssign={onAssign}
+          onClose={() => setAssigning(null)}
+        />
+      )}
     </section>
+  );
+}
+
+function AssignModal({
+  name,
+  descriptions,
+  targets,
+  onAssign,
+  onClose,
+}: {
+  name: string;
+  descriptions: string[];
+  targets: AssignTarget[];
+  onAssign: (sessionIds: string[], descriptions: string[]) => void;
+  onClose: () => void;
+}) {
+  const t = useT();
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const toggle = (id: string) =>
+    setSel((s) => {
+      const n = new Set(s);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
+      <div
+        className="glass-card w-full max-w-md rounded-xl p-4 space-y-3 flex flex-col max-h-[80vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div>
+          <h3 className="text-base">{t('Add to sessions')}</h3>
+          <p className="text-textDim text-sm truncate">{name}</p>
+        </div>
+
+        {targets.length === 0 ? (
+          <p className="text-textDim text-sm">{t('Add sessions to your plan first.')}</p>
+        ) : (
+          <>
+            <div className="flex items-center gap-3 text-xs">
+              <button onClick={() => setSel(new Set(targets.map((x) => x.id)))} className="text-accent hover:underline">
+                {t('Select all')}
+              </button>
+              <button onClick={() => setSel(new Set())} className="text-textDim hover:text-text">
+                {t('Clear')}
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto space-y-1">
+              {targets.map((tg) => (
+                <label
+                  key={tg.id}
+                  className="flex items-center gap-2 rounded-lg border border-border bg-abyss px-3 py-2 text-sm cursor-pointer hover:border-accent"
+                >
+                  <input type="checkbox" className="accent-accent" checked={sel.has(tg.id)} onChange={() => toggle(tg.id)} />
+                  <span className="truncate">{tg.label}</span>
+                </label>
+              ))}
+            </div>
+          </>
+        )}
+
+        <div className="flex items-center justify-end gap-2 pt-1">
+          <button
+            onClick={onClose}
+            className="text-sm text-textDim border border-border rounded-lg px-3 py-1.5 hover:border-accent"
+          >
+            {t('Cancel')}
+          </button>
+          <button
+            disabled={sel.size === 0}
+            onClick={() => {
+              onAssign([...sel], descriptions);
+              onClose();
+            }}
+            className="glow-accent text-sm bg-accent text-ink rounded-lg px-4 py-1.5 font-heading tracking-wide disabled:opacity-50"
+          >
+            {t('Add to selected')} ({sel.size})
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
