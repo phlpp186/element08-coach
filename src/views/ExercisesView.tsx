@@ -5,17 +5,24 @@
  */
 import { useMemo, useRef, useState } from 'react';
 import {
+  addBlock,
   addCategory,
   addExercise,
+  addExerciseToBlock,
   addManyExercises,
   exportLibraryCsv,
   parseExerciseFile,
+  removeBlock,
   removeCategory,
   removeExercise,
+  removeExerciseFromBlock,
+  renameBlock,
   renameCategory,
   updateExercise,
+  useBlocks,
   useCategories,
   useExercises,
+  type ExerciseBlock,
   type LibraryExercise,
 } from '../lib/library';
 import { useT } from '../i18n';
@@ -24,6 +31,7 @@ export function ExercisesView() {
   const t = useT();
   const exercises = useExercises();
   const categories = useCategories();
+  const blocks = useBlocks();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [draft, setDraft] = useState('');
@@ -89,6 +97,8 @@ export function ExercisesView() {
       </div>
 
       <CategoryManager categories={categories} />
+
+      <BlockManager blocks={blocks} exercises={exercises} />
 
       {/* Add exercise */}
       <div className="glass-card rounded-xl p-4">
@@ -213,6 +223,153 @@ function ExerciseRow({ ex, categories }: { ex: LibraryExercise; categories: stri
       <button onClick={() => removeExercise(ex.id)} className="text-red text-sm px-1" title={t('Remove')}>
         ✕
       </button>
+    </div>
+  );
+}
+
+function BlockManager({ blocks, exercises }: { blocks: ExerciseBlock[]; exercises: LibraryExercise[] }) {
+  const t = useT();
+  const [draft, setDraft] = useState('');
+  const create = () => {
+    if (draft.trim()) {
+      addBlock(draft);
+      setDraft('');
+    }
+  };
+  return (
+    <div className="glass-card rounded-xl p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-heading tracking-wide text-text">{t('Blocks')}</h3>
+        <span className="text-textDim text-xs">{t('Reusable groups you drop into a session in one click')}</span>
+      </div>
+      <div className="flex gap-2">
+        <input
+          className="field flex-1 min-w-48"
+          placeholder={t('New block name, e.g. CO₂ set')}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && create()}
+        />
+        <button onClick={create} className="text-sm text-accent border border-border rounded-lg px-4 hover:border-accent">
+          {t('Add block')}
+        </button>
+      </div>
+      {blocks.length === 0 ? (
+        <p className="text-textDim text-sm">
+          {t('No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.')}
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {blocks.map((b) => (
+            <BlockRow key={b.id} block={b} exercises={exercises} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BlockRow({ block, exercises }: { block: ExerciseBlock; exercises: LibraryExercise[] }) {
+  const t = useT();
+  const [name, setName] = useState(block.name);
+  const items = block.exerciseIds
+    .map((id) => exercises.find((e) => e.id === id))
+    .filter((e): e is LibraryExercise => !!e);
+  const inBlock = new Set(block.exerciseIds);
+
+  return (
+    <div className="rounded-lg border border-border bg-panel p-3 space-y-2">
+      <div className="flex items-center gap-2">
+        <input
+          className="field flex-1 min-w-40"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={() => {
+            const n = name.trim();
+            if (n && n !== block.name) renameBlock(block.id, n);
+            else if (!n) setName(block.name);
+          }}
+          onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+        />
+        <span className="text-textDim text-xs">{items.length}</span>
+        <button
+          onClick={() => confirm(`${t('Delete block')} "${block.name}"?`) && removeBlock(block.id)}
+          className="text-red text-sm px-1"
+          title={t('Delete block')}
+        >
+          ✕
+        </button>
+      </div>
+      {items.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {items.map((ex) => (
+            <span
+              key={ex.id}
+              className="group flex items-center gap-1.5 rounded-lg border border-border bg-abyss px-2.5 py-1 text-sm"
+            >
+              {ex.description}
+              <button
+                onClick={() => removeExerciseFromBlock(block.id, ex.id)}
+                className="text-textDim opacity-0 group-hover:opacity-100 hover:text-red"
+                title={t('Remove from block')}
+              >
+                ✕
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <AddToBlock blockId={block.id} exercises={exercises} inBlock={inBlock} />
+    </div>
+  );
+}
+
+function AddToBlock({
+  blockId,
+  exercises,
+  inBlock,
+}: {
+  blockId: string;
+  exercises: LibraryExercise[];
+  inBlock: Set<string>;
+}) {
+  const t = useT();
+  const [q, setQ] = useState('');
+  const [focused, setFocused] = useState(false);
+  const matches = useMemo(() => {
+    const s = q.trim().toLowerCase();
+    return exercises.filter((e) => !inBlock.has(e.id) && (!s || e.description.toLowerCase().includes(s))).slice(0, 8);
+  }, [q, exercises, inBlock]);
+  const show = focused && matches.length > 0;
+
+  return (
+    <div className="relative">
+      <input
+        className="field w-full"
+        placeholder={t('Add an exercise to this block…')}
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setTimeout(() => setFocused(false), 120)}
+      />
+      {show && (
+        <ul className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-border bg-panel shadow-lg max-h-52 overflow-auto">
+          {matches.map((e) => (
+            <li key={e.id}>
+              <button
+                onMouseDown={(ev) => {
+                  ev.preventDefault();
+                  addExerciseToBlock(blockId, e.id);
+                  setQ('');
+                }}
+                className="block w-full text-left px-3 py-1.5 text-sm text-textDim hover:bg-accent/10 hover:text-text"
+              >
+                {e.description}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

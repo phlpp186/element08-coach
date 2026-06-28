@@ -144,11 +144,12 @@ export function PlanBuilderView({
     setOpenPhase(phases[0]?.id ?? null);
   };
 
-  // append a library exercise to the open session, wherever it lives
-  const appendExerciseToSession = (sessionId: string, description: string) => {
-    const ex = { id: `ex-${Date.now().toString(36)}-${Math.round(performance.now())}`, description };
+  // append one or more library exercises to the open session, wherever it lives
+  const appendExercisesToSession = (sessionId: string, descriptions: string[]) => {
+    const stamp = Date.now().toString(36);
+    const exs = descriptions.map((description, i) => ({ id: `ex-${stamp}-${i}-${Math.round(performance.now())}`, description }));
     const mapSessions = (ss: BuilderWeek['sessions']) =>
-      ss.map((s) => (s.id === sessionId ? { ...s, exercises: [...s.exercises, ex] } : s));
+      ss.map((s) => (s.id === sessionId ? { ...s, exercises: [...s.exercises, ...exs] } : s));
     mutate((p) => ({
       ...p,
       weeks: p.weeks.map((w) => ({ ...w, sessions: mapSessions(w.sessions) })),
@@ -284,8 +285,8 @@ export function PlanBuilderView({
       </section>
 
       <ExercisePalette
-        onUse={(desc) => {
-          if (editing) appendExerciseToSession(editing, desc);
+        onUse={(descs) => {
+          if (editing) appendExercisesToSession(editing, descs);
         }}
       />
 

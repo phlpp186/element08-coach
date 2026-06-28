@@ -1,16 +1,18 @@
 import { useMemo, useState } from 'react';
-import { useCategories, useExercises } from '../lib/library';
+import { blockExercises, useBlocks, useCategories, useExercises } from '../lib/library';
 import { navigate } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
 
-/** A compact, searchable picker over the coach's exercise library. Search +
- *  category filter, then drag a chip into a session's exercise list or (with a
- *  session open) click it to add. Authoring the library itself lives in the
- *  Exercises tab. */
-export function ExercisePalette({ onUse }: { onUse: (description: string) => void }) {
+/** A compact, searchable picker over the coach's exercise library + saved blocks.
+ *  Search + category filter, then drag a chip into a session's exercise list or
+ *  (with a session open) click it to add. Clicking a block inserts all of its
+ *  exercises into the open session at once. Authoring lives in the Exercises tab.
+ *  `onUse` receives one or more descriptions to append to the open session. */
+export function ExercisePalette({ onUse }: { onUse: (descriptions: string[]) => void }) {
   const t = useT();
   const exercises = useExercises();
   const categories = useCategories();
+  const blocks = useBlocks();
   const [open, setOpen] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<string>('all');
@@ -24,11 +26,11 @@ export function ExercisePalette({ onUse }: { onUse: (description: string) => voi
     });
   }, [exercises, filter, search]);
 
-  // Only the categories that actually have exercises, to keep the filter tidy.
   const usedCats = useMemo(
     () => categories.filter((c) => exercises.some((e) => e.category === c)),
     [categories, exercises],
   );
+  const nonEmptyBlocks = useMemo(() => blocks.filter((b) => b.exerciseIds.length > 0), [blocks]);
 
   return (
     <section className="glass-card rounded-xl p-4 space-y-3">
@@ -56,6 +58,26 @@ export function ExercisePalette({ onUse }: { onUse: (description: string) => voi
           </p>
         ) : (
           <>
+            {nonEmptyBlocks.length > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-textDim text-xs">{t('Blocks — open a session, then click to add all its exercises.')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {nonEmptyBlocks.map((b) => (
+                    <button
+                      key={b.id}
+                      onClick={() => onUse(blockExercises(b).map((e) => e.description))}
+                      className="flex items-center gap-1.5 rounded-lg border border-accent/40 bg-accent/10 px-2.5 py-1.5 text-sm text-text hover:border-accent"
+                      title={t('Add all exercises in this block to the open session')}
+                    >
+                      <span className="text-accent">▦</span>
+                      {b.name}
+                      <span className="text-textDim text-xs">{b.exerciseIds.length}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center gap-2">
               <input
                 className="field flex-1 min-w-40"
@@ -93,7 +115,7 @@ export function ExercisePalette({ onUse }: { onUse: (description: string) => voi
                         e.dataTransfer.setData('text/plain', ex.description);
                         e.dataTransfer.effectAllowed = 'copy';
                       }}
-                      onClick={() => onUse(ex.description)}
+                      onClick={() => onUse([ex.description])}
                       className="flex items-center gap-1.5 rounded-lg border border-border bg-abyss px-2.5 py-1.5 text-sm cursor-grab active:cursor-grabbing hover:border-accent"
                       title={t('Drag into a session, or click to add to the open session')}
                     >

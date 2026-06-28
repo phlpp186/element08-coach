@@ -237,5 +237,15 @@
   "Search exercises": "搜索训练项",
   "Uncategorized": "未分类",
   "Your own system, fully editable": "你自己的体系，完全可编辑",
-  "Your reusable exercise library. Assign them into plan sessions from the builder.": "你可复用的训练库。在编辑器中将它们分配到计划课程里。"
+  "Your reusable exercise library. Assign them into plan sessions from the builder.": "你可复用的训练库。在编辑器中将它们分配到计划课程里。",
+  "Add all exercises in this block to the open session": "将此训练组中的所有训练项添加到已打开的课程",
+  "Add an exercise to this block…": "向此训练组添加训练项…",
+  "Add block": "添加训练组",
+  "Blocks": "训练组",
+  "Blocks — open a session, then click to add all its exercises.": "训练组 — 打开一节课程，然后点击即可添加其全部训练项。",
+  "Delete block": "删除训练组",
+  "New block name, e.g. CO₂ set": "新训练组名称，例如 CO₂ set",
+  "No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.": "尚无训练组。将你常一起使用的训练项归为一组（如热身、CO₂ 组），然后在编辑器中一次性将整个训练组添加到课程中。",
+  "Remove from block": "从训练组移除",
+  "Reusable groups you drop into a session in one click": "可复用的训练组，一键即可放入课程"
 }

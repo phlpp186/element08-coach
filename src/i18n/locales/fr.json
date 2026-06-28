@@ -237,5 +237,15 @@
   "Search exercises": "Rechercher des exercices",
   "Uncategorized": "Non catégorisé",
   "Your own system, fully editable": "Votre propre système, entièrement modifiable",
-  "Your reusable exercise library. Assign them into plan sessions from the builder.": "Votre bibliothèque d'exercices réutilisables. Assignez-les aux séances de plan depuis le constructeur."
+  "Your reusable exercise library. Assign them into plan sessions from the builder.": "Votre bibliothèque d'exercices réutilisables. Assignez-les aux séances de plan depuis le constructeur.",
+  "Add all exercises in this block to the open session": "Ajouter tous les exercices de ce bloc à la séance ouverte",
+  "Add an exercise to this block…": "Ajouter un exercice à ce bloc…",
+  "Add block": "Ajouter un bloc",
+  "Blocks": "Blocs",
+  "Blocks — open a session, then click to add all its exercises.": "Blocs : ouvrez une séance, puis cliquez pour ajouter tous ses exercices.",
+  "Delete block": "Supprimer le bloc",
+  "New block name, e.g. CO₂ set": "Nom du nouveau bloc, p. ex. série CO₂",
+  "No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.": "Aucun bloc pour l'instant. Regroupez les exercices que vous utilisez ensemble (un échauffement, une série CO₂), puis ajoutez le bloc entier à une séance d'un seul coup depuis le constructeur.",
+  "Remove from block": "Retirer du bloc",
+  "Reusable groups you drop into a session in one click": "Des groupes réutilisables que vous déposez dans une séance en un clic"
 }

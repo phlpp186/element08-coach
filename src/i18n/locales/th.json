@@ -238,5 +238,15 @@
   "Search exercises": "ค้นหาแบบฝึก",
   "Uncategorized": "ไม่มีหมวดหมู่",
   "Your own system, fully editable": "ระบบของคุณเอง แก้ไขได้ทั้งหมด",
-  "Your reusable exercise library. Assign them into plan sessions from the builder.": "คลังแบบฝึกที่ใช้ซ้ำได้ของคุณ มอบหมายลงในเซสชันของแผนได้จากเครื่องมือสร้างแผน"
+  "Your reusable exercise library. Assign them into plan sessions from the builder.": "คลังแบบฝึกที่ใช้ซ้ำได้ของคุณ มอบหมายลงในเซสชันของแผนได้จากเครื่องมือสร้างแผน",
+  "Add all exercises in this block to the open session": "เพิ่มแบบฝึกทั้งหมดในบล็อกนี้ลงในเซสชันที่เปิดอยู่",
+  "Add an exercise to this block…": "เพิ่มแบบฝึกลงในบล็อกนี้…",
+  "Add block": "เพิ่มบล็อก",
+  "Blocks": "บล็อก",
+  "Blocks — open a session, then click to add all its exercises.": "บล็อก — เปิดเซสชัน แล้วคลิกเพื่อเพิ่มแบบฝึกทั้งหมด",
+  "Delete block": "ลบบล็อก",
+  "New block name, e.g. CO₂ set": "ชื่อบล็อกใหม่ เช่น CO₂ set",
+  "No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.": "ยังไม่มีบล็อก จัดกลุ่มแบบฝึกที่คุณใช้ร่วมกัน (วอร์มอัพ, CO₂ set) แล้วเพิ่มทั้งบล็อกลงในเซสชันพร้อมกันได้จากเครื่องมือสร้างแผน",
+  "Remove from block": "นำออกจากบล็อก",
+  "Reusable groups you drop into a session in one click": "กลุ่มที่ใช้ซ้ำได้ซึ่งคุณเพิ่มลงในเซสชันได้ในคลิกเดียว"
 }

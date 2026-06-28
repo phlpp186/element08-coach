@@ -21,8 +21,17 @@ export interface LibraryExercise {
   category?: string;
 }
 
+/** A reusable, named group of exercises (referenced by id, so edits/renames to
+ *  the underlying exercises flow through). Dropped into a plan session in one go. */
+export interface ExerciseBlock {
+  id: string;
+  name: string;
+  exerciseIds: string[];
+}
+
 const EX_KEY = 'element08.coach.library';
 const CAT_KEY = 'element08.coach.exerciseCategories';
+const BLK_KEY = 'element08.coach.exerciseBlocks';
 
 /** Pre-shipped categories (editable). A practical freediving starter set. */
 export const DEFAULT_CATEGORIES = ['Warm-up', 'CO₂', 'O₂', 'Technique', 'Depth', 'Pool', 'Dry'];
@@ -67,8 +76,23 @@ function readCategories(): string[] {
   return [...DEFAULT_CATEGORIES];
 }
 
+function readBlocks(): ExerciseBlock[] {
+  try {
+    const raw = localStorage.getItem(BLK_KEY);
+    if (!raw) return [];
+    const arr: unknown = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((x): x is ExerciseBlock => !!x && typeof (x as ExerciseBlock).name === 'string' && Array.isArray((x as ExerciseBlock).exerciseIds))
+      .map((x) => ({ id: x.id || uid('blk'), name: x.name, exerciseIds: x.exerciseIds.filter((i) => typeof i === 'string') }));
+  } catch {
+    return [];
+  }
+}
+
 let exercises: LibraryExercise[] = readExercises();
 let categories: string[] = readCategories();
+let blocks: ExerciseBlock[] = readBlocks();
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -97,6 +121,15 @@ function commitCategories(next: string[]) {
   }
   emit();
 }
+function commitBlocks(next: ExerciseBlock[]) {
+  blocks = next;
+  try {
+    localStorage.setItem(BLK_KEY, JSON.stringify(next));
+  } catch {
+    /* storage blocked */
+  }
+  emit();
+}
 
 // ── reactive reads ─────────────────────────────────────────────────────────
 
@@ -105,6 +138,17 @@ export function useExercises(): LibraryExercise[] {
 }
 export function useCategories(): string[] {
   return useSyncExternalStore(subscribe, () => categories);
+}
+export function useBlocks(): ExerciseBlock[] {
+  return useSyncExternalStore(subscribe, () => blocks);
+}
+
+/** Resolve a block's exercise ids to current library exercises, in order,
+ *  skipping any that have since been deleted. */
+export function blockExercises(block: ExerciseBlock): LibraryExercise[] {
+  return block.exerciseIds
+    .map((id) => exercises.find((e) => e.id === id))
+    .filter((e): e is LibraryExercise => !!e);
 }
 
 /** Non-reactive snapshot (used by the type-ahead in plan-session rows). */
@@ -156,6 +200,9 @@ export function updateExercise(id: string, patch: Partial<Omit<LibraryExercise, 
 
 export function removeExercise(id: string): void {
   commitExercises(exercises.filter((e) => e.id !== id));
+  if (blocks.some((b) => b.exerciseIds.includes(id))) {
+    commitBlocks(blocks.map((b) => ({ ...b, exerciseIds: b.exerciseIds.filter((x) => x !== id) })));
+  }
 }
 
 // ── category mutations ─────────────────────────────────────────────────────
@@ -180,6 +227,36 @@ export function removeCategory(name: string): void {
   if (exercises.some((e) => e.category === name)) {
     commitExercises(exercises.map((e) => (e.category === name ? { ...e, category: undefined } : e)));
   }
+}
+
+// ── block mutations ────────────────────────────────────────────────────────
+
+export function addBlock(name: string): string {
+  const id = uid('blk');
+  commitBlocks([...blocks, { id, name: name.trim() || 'Block', exerciseIds: [] }]);
+  return id;
+}
+export function renameBlock(id: string, name: string): void {
+  const n = name.trim();
+  if (!n) return;
+  commitBlocks(blocks.map((b) => (b.id === id ? { ...b, name: n } : b)));
+}
+export function removeBlock(id: string): void {
+  commitBlocks(blocks.filter((b) => b.id !== id));
+}
+export function addExerciseToBlock(blockId: string, exerciseId: string): void {
+  commitBlocks(
+    blocks.map((b) =>
+      b.id === blockId && !b.exerciseIds.includes(exerciseId)
+        ? { ...b, exerciseIds: [...b.exerciseIds, exerciseId] }
+        : b,
+    ),
+  );
+}
+export function removeExerciseFromBlock(blockId: string, exerciseId: string): void {
+  commitBlocks(
+    blocks.map((b) => (b.id === blockId ? { ...b, exerciseIds: b.exerciseIds.filter((x) => x !== exerciseId) } : b)),
+  );
 }
 
 // ── import / export ────────────────────────────────────────────────────────

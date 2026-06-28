@@ -237,5 +237,15 @@
   "Search exercises": "エクササイズを検索",
   "Uncategorized": "カテゴリーなし",
   "Your own system, fully editable": "あなた独自のシステム、完全に編集可能",
-  "Your reusable exercise library. Assign them into plan sessions from the builder.": "再利用可能なエクササイズライブラリです。ビルダーからプランのセッションに割り当てられます。"
+  "Your reusable exercise library. Assign them into plan sessions from the builder.": "再利用可能なエクササイズライブラリです。ビルダーからプランのセッションに割り当てられます。",
+  "Add all exercises in this block to the open session": "このブロックのすべてのエクササイズを開いているセッションに追加",
+  "Add an exercise to this block…": "このブロックにエクササイズを追加…",
+  "Add block": "ブロックを追加",
+  "Blocks": "ブロック",
+  "Blocks — open a session, then click to add all its exercises.": "ブロック — セッションを開いてから、クリックしてすべてのエクササイズを追加します。",
+  "Delete block": "ブロックを削除",
+  "New block name, e.g. CO₂ set": "新しいブロック名（例：CO₂ セット）",
+  "No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.": "まだブロックがありません。よく一緒に使うエクササイズ（ウォームアップ、CO₂ セットなど）をグループ化し、ビルダーからブロック全体を一度にセッションに追加できます。",
+  "Remove from block": "ブロックから削除",
+  "Reusable groups you drop into a session in one click": "ワンクリックでセッションに追加できる再利用可能なグループ"
 }

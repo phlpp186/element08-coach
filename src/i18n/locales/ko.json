@@ -239,5 +239,15 @@
   "Search exercises": "운동 검색",
   "Uncategorized": "카테고리 없음",
   "Your own system, fully editable": "완전히 편집 가능한 나만의 시스템",
-  "Your reusable exercise library. Assign them into plan sessions from the builder.": "재사용 가능한 운동 라이브러리입니다. 빌더에서 플랜 세션에 배정하세요."
+  "Your reusable exercise library. Assign them into plan sessions from the builder.": "재사용 가능한 운동 라이브러리입니다. 빌더에서 플랜 세션에 배정하세요.",
+  "Add all exercises in this block to the open session": "이 블록의 모든 운동을 열린 세션에 추가",
+  "Add an exercise to this block…": "이 블록에 운동 추가…",
+  "Add block": "블록 추가",
+  "Blocks": "블록",
+  "Blocks — open a session, then click to add all its exercises.": "블록 — 세션을 연 다음 클릭하여 모든 운동을 추가하세요.",
+  "Delete block": "블록 삭제",
+  "New block name, e.g. CO₂ set": "새 블록 이름, 예: CO₂ set",
+  "No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.": "아직 블록이 없습니다. 함께 사용하는 운동을 묶은 다음(워밍업, CO₂ set), 빌더에서 블록 전체를 세션에 한 번에 추가하세요.",
+  "Remove from block": "블록에서 제거",
+  "Reusable groups you drop into a session in one click": "한 번의 클릭으로 세션에 넣는 재사용 가능한 그룹"
 }
