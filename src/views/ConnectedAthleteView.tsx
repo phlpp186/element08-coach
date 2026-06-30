@@ -6,7 +6,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { navigate } from '../hooks/useHashRoute';
-import { useT } from '../i18n';
+import { useT, tr } from '../i18n';
 import { groupStyleById } from '../lib/disciplines';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import {
@@ -35,8 +35,14 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Depend only on STABLE primitives (studentId + the signed-in user's id), never
+  // the whole `session` object — Supabase's onAuthStateChange hands a fresh
+  // session object on every event (token refresh, focus), which would otherwise
+  // recreate `load`, re-fire the effects, and flicker. `tr()` (non-reactive) is
+  // used for the fallback label so a language change doesn't trigger a refetch.
+  const userId = session?.user?.id ?? null;
   const load = useCallback(async () => {
-    if (!session) return;
+    if (!userId) return;
     setError(null);
     try {
       const [students, profile, allAssignments] = await Promise.all([
@@ -45,7 +51,7 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
         listCoachAssignments(),
       ]);
       const me = students.find((s) => s.student.id === studentId);
-      setName(me?.student.display_name?.trim() || t('Athlete'));
+      setName(me?.student.display_name?.trim() || tr('Athlete'));
       setPbs(parsePBs(profile?.pbs));
       setGoals(parseGoals(profile?.goals));
       setAssignments(allAssignments.filter((a) => a.studentId === studentId));
@@ -54,7 +60,7 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
     } finally {
       setLoading(false);
     }
-  }, [studentId, session, t]);
+  }, [studentId, userId]);
 
   useEffect(() => {
     setLoading(true);
@@ -63,10 +69,10 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
 
   // Live: the athlete updating PBs/goals or completing a session reflects here.
   useEffect(() => {
-    if (!session) return;
+    if (!userId) return;
     const ch = subscribeToTables(['completions', 'athlete_profiles'], () => load());
     return () => unsubscribeChannel(ch);
-  }, [session, load]);
+  }, [userId, load]);
 
   if (!session) {
     return (
