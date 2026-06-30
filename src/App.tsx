@@ -2,6 +2,7 @@ import { navigate, useRoute } from './hooks/useHashRoute';
 import { AthletesView } from './views/AthletesView';
 import { AthleteDetailView } from './views/AthleteDetailView';
 import { ConnectedAthleteView } from './views/ConnectedAthleteView';
+import { ConnectedPlanView } from './views/ConnectedPlanView';
 import { PlanBuilderView } from './views/PlanBuilderView';
 import { ExercisesView } from './views/ExercisesView';
 import { AuthBar } from './components/AuthBar';
@@ -57,7 +58,7 @@ export function App() {
 
 function Outlet() {
   const route = useRoute();
-  const [top, second] = route.segments;
+  const [top, second, third, fourth] = route.segments;
 
   if (top === 'exercises') {
     return <ExercisesView />;
@@ -80,6 +81,16 @@ function Outlet() {
 
   // Cloud (paired) athlete — distinct from the local notebook detail below.
   if (top === 'connected' && second) {
+    // /connected/:studentId/plan/:assignmentId → one assigned plan + completions
+    if (third === 'plan' && fourth) {
+      return (
+        <ConnectedPlanView
+          key={fourth}
+          studentId={second}
+          assignmentId={fourth}
+        />
+      );
+    }
     return <ConnectedAthleteView key={second} studentId={second} />;
   }
 

@@ -143,12 +143,19 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
             ) : (
               <div className="space-y-2">
                 {assignments.map((a) => (
-                  <div key={a.id} className="rounded-lg border border-border bg-panel p-3 flex items-center justify-between">
+                  <button
+                    key={a.id}
+                    onClick={() => navigate(`/connected/${studentId}/plan/${a.id}`)}
+                    className="w-full text-left rounded-lg border border-border bg-panel p-3 flex items-center justify-between gap-3 hover:border-accent transition-colors"
+                  >
                     <span className="text-text">{a.planTitle}</span>
-                    <span className="text-xs text-textDim">
-                      {a.doneCount} {a.doneCount === 1 ? t('session') : t('sessions')} {t('done')}
+                    <span className="flex items-center gap-2 shrink-0">
+                      <span className="text-xs text-textDim">
+                        {a.doneCount} {a.doneCount === 1 ? t('session') : t('sessions')} {t('done')}
+                      </span>
+                      <span className="text-textDim">›</span>
                     </span>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
