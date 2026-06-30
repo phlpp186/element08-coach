@@ -9,6 +9,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { navigate } from '../hooks/useHashRoute';
+import { AttachedSessionDetail } from '../components/AttachedSessionDetail';
 import { useT, tr } from '../i18n';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import {
@@ -18,7 +19,6 @@ import {
   subscribeToTables,
   unsubscribeChannel,
   type CompletionRow,
-  type Json,
 } from '../lib/supabase/coachData';
 
 // ─── Stored-plan shape (mirrors the app's wire Plan; all fields defensive) ────
@@ -295,7 +295,11 @@ function SessionRow({
                   >
                     📎 {t('Attached session')} {open ? '▲' : '▾'}
                   </button>
-                  {open && <AttachedSession blob={attached} t={t} />}
+                  {open && (
+                    <div className="mt-2 rounded-lg border border-border bg-abyss p-3">
+                      <AttachedSessionDetail blob={attached} />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -304,53 +308,6 @@ function SessionRow({
       </div>
     </div>
   );
-}
-
-// ─── Attached logbook session summary (defensive — app Session blob) ─────────
-function AttachedSession({ blob, t }: { blob: Json; t: (s: string) => string }) {
-  const stats = summarizeSession(blob, t);
-  const s = blob as Record<string, unknown>;
-  return (
-    <div className="mt-2 rounded-lg border border-border bg-abyss p-3 space-y-2">
-      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-        {stats.map((st) => (
-          <div key={st.label}>
-            <div className="text-[10px] uppercase tracking-wide text-textDim">{st.label}</div>
-            <div className="font-heading text-text">{st.value}</div>
-          </div>
-        ))}
-      </div>
-      {typeof s.remarks === 'string' && s.remarks && (
-        <p className="text-sm text-textDim italic">{s.remarks}</p>
-      )}
-    </div>
-  );
-}
-
-function summarizeSession(blob: Json, t: (s: string) => string): { label: string; value: string }[] {
-  const s = (blob ?? {}) as Record<string, unknown>;
-  const out: { label: string; value: string }[] = [];
-  const push = (label: string, value: unknown, suffix = '') => {
-    if (value === null || value === undefined || value === '') return;
-    out.push({ label, value: `${value}${suffix}` });
-  };
-  if (typeof s.date === 'string') push(t('Date'), new Date(s.date).toLocaleDateString());
-  const mode = typeof s.mode === 'string' ? s.mode : undefined;
-  push(t('Type'), mode);
-  if (mode === 'depth') {
-    push(t('Max depth'), s.maxDepth, ' m');
-    push(t('Discipline'), s.discipline);
-    if (Array.isArray(s.dives)) push(t('Dives'), s.dives.length);
-  } else if (mode === 'pool') {
-    push(t('Distance'), s.totalDistance, ' m');
-    if (Array.isArray(s.dives)) push(t('Dives'), s.dives.length);
-  } else if (mode === 'dry') {
-    push(t('Activity'), s.dryActivity);
-    push(t('Cycles'), s.cyclesCount);
-  }
-  push(t('Duration'), s.duration);
-  if (typeof s.rating === 'number') push(t('Effort'), s.rating, '/5');
-  return out;
 }
 
 // ─── Flatten phases → weeks into a single ordered list with context ──────────
