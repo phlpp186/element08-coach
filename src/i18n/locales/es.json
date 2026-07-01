@@ -78,7 +78,7 @@
   "Depth": "Profundidad",
   "Description (optional)": "Descripción (opcional)",
   "Discipline": "Disciplina",
-  "Done": "Hecho",
+  "Done": "Listo",
   "Download": "Descargar",
   "Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.": "Arrastra una ficha a una sesión, haz clic para añadirla a la abierta, o ⋯ para asignar a varias.",
   "Drag a chip into a session, or open a session and click it.": "Arrastra una ficha a una sesión, o abre una sesión y haz clic en ella.",
@@ -268,5 +268,11 @@
   "Draft plans saved in this browser. Save keeps a draft here; Assign or Download delivers it to an athlete.": "Borradores de planes guardados en este navegador. Guardar mantiene un borrador aquí; Asignar o Descargar lo entrega a un atleta.",
   "No saved plans yet.": "Aún no hay planes guardados.",
   "Build your first plan": "Crea tu primer plan",
-  "Save this plan as a draft in this browser. Find it later under Plans.": "Guarda este plan como borrador en este navegador. Lo encontrarás en Planes."
+  "Save this plan as a draft in this browser. Find it later under Plans.": "Guarda este plan como borrador en este navegador. Lo encontrarás en Planes.",
+  "ends": "termina",
+  "ended": "terminado",
+  "Save and return to Plans": "Guardar y volver a Planes",
+  "Downloads a plan file. Send it to an athlete (email, chat); they open the app and import it under Training > Plans. This is the account-free alternative to Assign, which pushes the plan straight to a connected athlete.": "Descarga un archivo de plan. Envíalo a un atleta (correo, chat); abre la app y lo importa en Entrenamiento > Planes. La alternativa sin cuenta a Asignar, que envía el plan directamente a un atleta conectado.",
+  "Import a .csv or .xlsx with one exercise per row: column 1 = the exercise text, column 2 (optional) = its categories, up to 3 separated by ; or /. Export downloads your whole library in that same format, so you can back it up or edit it in a spreadsheet.": "Importa un .csv o .xlsx con un ejercicio por fila: columna 1 = el texto del ejercicio, columna 2 (opcional) = sus categorías, hasta 3 separadas por ; o /. Export descarga toda tu biblioteca en ese mismo formato, para respaldarla o editarla en una hoja de cálculo.",
+  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "Tu plantilla vive solo en este navegador. Export la guarda (atletas, notas, planes guardados) en un archivo .e08coach; Import la restaura en otro navegador o dispositivo. Úsalo para respaldar o mover tus datos."
 }

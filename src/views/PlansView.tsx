@@ -6,6 +6,8 @@
  */
 import { deletePlan, useAthletes, useSavedPlans } from '../lib/store';
 import { downloadPlanFile } from '../lib/e08plan';
+import { planSpan } from '../lib/athleteStats';
+import { PlanSpan } from '../components/PlanSpan';
 import { navigate } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
 
@@ -53,11 +55,14 @@ export function PlansView() {
                   className="min-w-0 flex-1 text-left"
                 >
                   <div className="truncate text-text">{sp.plan.name?.trim() || t('Untitled plan')}</div>
-                  <div className="truncate text-xs text-textDim">
-                    {sp.plan.kind === 'season' ? t('Season') : t('Training')}
-                    {' · '}
-                    {who ? who : <span className="text-textDim/70">{t('Not linked')}</span>}
-                    {sp.updatedAt ? ` · ${t('updated')} ${sp.updatedAt.slice(0, 10)}` : ''}
+                  <div className="flex flex-wrap items-center gap-x-1.5 text-xs text-textDim">
+                    <span>{sp.plan.kind === 'season' ? t('Season') : t('Training')}</span>
+                    <span>· {who ? who : t('Not linked')}</span>
+                    {planSpan(sp.plan).end && (
+                      <span>
+                        · <PlanSpan plan={sp.plan} />
+                      </span>
+                    )}
                   </div>
                 </button>
                 <button

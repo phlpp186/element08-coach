@@ -35,6 +35,7 @@ import {
 } from '../lib/store';
 import type { Athlete } from '../lib/types';
 import { AssignToConnectedButton } from '../components/AssignToConnectedButton';
+import { InfoTip } from '../components/InfoTip';
 import { useT } from '../i18n';
 
 const MODES: { id: PlanMode; label: string }[] = [
@@ -238,14 +239,26 @@ export function PlanBuilderView({
     <main className="mx-auto max-w-4xl px-5 py-6 space-y-8">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg">{recordId ? t('Edit plan') : t('New plan')}</h2>
-        {attachedAthlete && (
+        <div className="flex items-center gap-3">
+          {attachedAthlete && (
+            <button
+              onClick={() => navigate(`/athletes/${attachedAthlete.id}`)}
+              className="text-sm text-accent hover:underline"
+            >
+              ← {attachedAthlete.name || t('athlete')}
+            </button>
+          )}
           <button
-            onClick={() => navigate(`/athletes/${attachedAthlete.id}`)}
-            className="text-sm text-accent hover:underline"
+            onClick={() => {
+              doSave();
+              navigate('/plan');
+            }}
+            title={t('Save and return to Plans')}
+            className="rounded-lg border border-border px-3 py-1.5 text-sm text-text hover:border-accent"
           >
-            ← {attachedAthlete.name || t('athlete')}
+            {t('Done')}
           </button>
-        )}
+        </div>
       </div>
 
       {/* Plan details */}
@@ -397,13 +410,20 @@ export function PlanBuilderView({
             {t('Save')}
           </button>
           <AssignToConnectedButton plan={plan} ready={ready} ensureSaved={doSave} />
-          <button
-            disabled={!ready}
-            onClick={doDownload}
-            className="glow-accent rounded-lg px-4 py-2 font-heading tracking-wide disabled:opacity-40 bg-accent text-ink"
-          >
-            {t('Download')} .e08plan
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              disabled={!ready}
+              onClick={doDownload}
+              className="glow-accent rounded-lg px-4 py-2 font-heading tracking-wide disabled:opacity-40 bg-accent text-ink"
+            >
+              {t('Download')} .e08plan
+            </button>
+            <InfoTip
+              align="right"
+              dir="up"
+              text={t('Downloads a plan file. Send it to an athlete (email, chat); they open the app and import it under Training > Plans. This is the account-free alternative to Assign, which pushes the plan straight to a connected athlete.')}
+            />
+          </div>
         </div>
       </div>
     </main>

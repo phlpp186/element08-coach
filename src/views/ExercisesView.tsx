@@ -35,6 +35,7 @@ import { useT } from '../i18n';
 import { categoryColor } from '../lib/categoryColor';
 import { CatDot, CatDots } from '../components/CatDot';
 import { CategoryPicker } from '../components/CategoryPicker';
+import { InfoTip } from '../components/InfoTip';
 
 /** Titled zone: an accent tick + heading + optional hint over a hairline rule,
  *  so each functional area reads as its own section. */
@@ -122,6 +123,9 @@ export function ExercisesView() {
               {t('Export')}
             </button>
           )}
+          <InfoTip
+            text={t('Import a .csv or .xlsx with one exercise per row: column 1 = the exercise text, column 2 (optional) = its categories, up to 3 separated by ; or /. Export downloads your whole library in that same format, so you can back it up or edit it in a spreadsheet.')}
+          />
         </div>
       </div>
 

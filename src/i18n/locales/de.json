@@ -268,5 +268,11 @@
   "Draft plans saved in this browser. Save keeps a draft here; Assign or Download delivers it to an athlete.": "In diesem Browser gespeicherte Plan-Entwürfe. Speichern legt einen Entwurf hier ab; Zuweisen oder Herunterladen liefert ihn an eine:n Athlet:in.",
   "No saved plans yet.": "Noch keine gespeicherten Pläne.",
   "Build your first plan": "Ersten Plan erstellen",
-  "Save this plan as a draft in this browser. Find it later under Plans.": "Diesen Plan als Entwurf in diesem Browser speichern. Später unter Pläne zu finden."
+  "Save this plan as a draft in this browser. Find it later under Plans.": "Diesen Plan als Entwurf in diesem Browser speichern. Später unter Pläne zu finden.",
+  "ends": "endet",
+  "ended": "beendet",
+  "Save and return to Plans": "Speichern und zurück zu Pläne",
+  "Downloads a plan file. Send it to an athlete (email, chat); they open the app and import it under Training > Plans. This is the account-free alternative to Assign, which pushes the plan straight to a connected athlete.": "Lädt eine Plan-Datei herunter. Schicke sie einer/einem Athlet:in (E-Mail, Chat); sie öffnen die App und importieren sie unter Training > Pläne. Die kontofreie Alternative zu Zuweisen, das den Plan direkt an eine/einen verbundene:n Athlet:in schickt.",
+  "Import a .csv or .xlsx with one exercise per row: column 1 = the exercise text, column 2 (optional) = its categories, up to 3 separated by ; or /. Export downloads your whole library in that same format, so you can back it up or edit it in a spreadsheet.": "Importiere eine .csv oder .xlsx mit einer Übung pro Zeile: Spalte 1 = der Übungstext, Spalte 2 (optional) = die Kategorien, bis zu 3 getrennt mit ; oder /. Export lädt deine ganze Bibliothek im selben Format herunter, zum Sichern oder Bearbeiten in einer Tabelle.",
+  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "Dein Kader lebt nur in diesem Browser. Export sichert ihn (Athlet:innen, Notizen, gespeicherte Pläne) in eine .e08coach-Datei; Import stellt sie in einem anderen Browser oder Gerät wieder her. Zum Sichern oder Umziehen deiner Daten."
 }

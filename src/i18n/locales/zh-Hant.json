@@ -268,5 +268,11 @@
   "Draft plans saved in this browser. Save keeps a draft here; Assign or Download delivers it to an athlete.": "儲存在本瀏覽器中的計畫草稿。儲存會在此保留草稿；指派或下載會將其交給運動員。",
   "No saved plans yet.": "還沒有已儲存的計畫。",
   "Build your first plan": "建立你的第一個計畫",
-  "Save this plan as a draft in this browser. Find it later under Plans.": "將此計畫作為草稿儲存在本瀏覽器中。稍後可在「計畫」中找到。"
+  "Save this plan as a draft in this browser. Find it later under Plans.": "將此計畫作為草稿儲存在本瀏覽器中。稍後可在「計畫」中找到。",
+  "ends": "結束",
+  "ended": "已結束",
+  "Save and return to Plans": "儲存並返回「計畫」",
+  "Downloads a plan file. Send it to an athlete (email, chat); they open the app and import it under Training > Plans. This is the account-free alternative to Assign, which pushes the plan straight to a connected athlete.": "下載一個計畫檔案。傳給運動員（電子郵件、聊天），他們在應用程式的 訓練 > 計畫 中匯入。這是「指派」的免帳號替代方式，「指派」會將計畫直接推送給已連接的運動員。",
+  "Import a .csv or .xlsx with one exercise per row: column 1 = the exercise text, column 2 (optional) = its categories, up to 3 separated by ; or /. Export downloads your whole library in that same format, so you can back it up or edit it in a spreadsheet.": "匯入 .csv 或 .xlsx，每列一個練習：第1欄 = 練習文字，第2欄（選填）= 類別，最多3個，以 ; 或 / 分隔。匯出會以相同格式下載整個練習庫，方便備份或在試算表中編輯。",
+  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "你的名單只儲存在本瀏覽器中。匯出會將其（運動員、筆記、已儲存計畫）儲存為 .e08coach 檔案；匯入可在其他瀏覽器或裝置上還原。用於備份或搬移你的資料。"
 }

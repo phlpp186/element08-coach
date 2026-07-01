@@ -10,7 +10,8 @@ import {
   type Discipline,
 } from '../lib/disciplines';
 import { uid, downloadPlanFile } from '../lib/e08plan';
-import { bestEntry, pbHistory, today } from '../lib/athleteStats';
+import { bestEntry, pbHistory, planSpan, today } from '../lib/athleteStats';
+import { PlanSpan } from '../components/PlanSpan';
 import {
   deleteAthlete,
   deletePlan,
@@ -94,7 +95,15 @@ export function AthleteDetailView({ athleteId }: { athleteId: string }) {
                 <div className="min-w-0 flex-1">
                   <div className="text-sm text-text truncate">{sp.plan.name || t('Untitled plan')}</div>
                   <div className="text-xs text-textDim">
-                    {sp.plan.kind === 'season' ? t('Season') : t('Training')} · {t('updated')} {sp.updatedAt.slice(0, 10)}
+                    {sp.plan.kind === 'season' ? t('Season') : t('Training')}
+                    {planSpan(sp.plan).end ? (
+                      <>
+                        {' · '}
+                        <PlanSpan plan={sp.plan} />
+                      </>
+                    ) : (
+                      ` · ${t('updated')} ${sp.updatedAt.slice(0, 10)}`
+                    )}
                   </div>
                 </div>
                 <button onClick={() => navigate(`/plan/${sp.id}`)} className="text-sm text-accent hover:underline shrink-0">

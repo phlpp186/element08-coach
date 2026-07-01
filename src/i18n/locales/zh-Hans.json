@@ -268,5 +268,11 @@
   "Draft plans saved in this browser. Save keeps a draft here; Assign or Download delivers it to an athlete.": "保存在本浏览器中的计划草稿。保存会在此保留草稿；分配或下载会将其交给运动员。",
   "No saved plans yet.": "还没有已保存的计划。",
   "Build your first plan": "创建你的第一个计划",
-  "Save this plan as a draft in this browser. Find it later under Plans.": "将此计划作为草稿保存在本浏览器中。稍后可在“计划”中找到。"
+  "Save this plan as a draft in this browser. Find it later under Plans.": "将此计划作为草稿保存在本浏览器中。稍后可在“计划”中找到。",
+  "ends": "结束",
+  "ended": "已结束",
+  "Save and return to Plans": "保存并返回“计划”",
+  "Downloads a plan file. Send it to an athlete (email, chat); they open the app and import it under Training > Plans. This is the account-free alternative to Assign, which pushes the plan straight to a connected athlete.": "下载一个计划文件。发给运动员（邮件、聊天），他们在应用的 训练 > 计划 中导入。这是“分配”的免账号替代方式，“分配”会将计划直接推送给已连接的运动员。",
+  "Import a .csv or .xlsx with one exercise per row: column 1 = the exercise text, column 2 (optional) = its categories, up to 3 separated by ; or /. Export downloads your whole library in that same format, so you can back it up or edit it in a spreadsheet.": "导入 .csv 或 .xlsx，每行一个练习：第1列 = 练习文本，第2列（可选）= 类别，最多3个，用 ; 或 / 分隔。导出会以相同格式下载整个练习库，便于备份或在电子表格中编辑。",
+  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "你的名单只保存在本浏览器中。导出会将其（运动员、笔记、已保存计划）保存为 .e08coach 文件；导入可在其他浏览器或设备上恢复。用于备份或迁移你的数据。"
 }

@@ -268,5 +268,11 @@
   "Draft plans saved in this browser. Save keeps a draft here; Assign or Download delivers it to an athlete.": "이 브라우저에 저장된 플랜 초안입니다. 저장은 여기에 초안을 보관하고, 배정 또는 다운로드로 선수에게 전달합니다.",
   "No saved plans yet.": "저장된 플랜이 아직 없습니다.",
   "Build your first plan": "첫 플랜 만들기",
-  "Save this plan as a draft in this browser. Find it later under Plans.": "이 플랜을 이 브라우저에 초안으로 저장합니다. 나중에 플랜에서 찾을 수 있습니다."
+  "Save this plan as a draft in this browser. Find it later under Plans.": "이 플랜을 이 브라우저에 초안으로 저장합니다. 나중에 플랜에서 찾을 수 있습니다.",
+  "ends": "종료",
+  "ended": "종료됨",
+  "Save and return to Plans": "저장하고 플랜으로 돌아가기",
+  "Downloads a plan file. Send it to an athlete (email, chat); they open the app and import it under Training > Plans. This is the account-free alternative to Assign, which pushes the plan straight to a connected athlete.": "플랜 파일을 다운로드합니다. 선수에게 보내면(이메일, 채팅) 앱의 트레이닝 > 플랜에서 가져옵니다. 연결된 선수에게 바로 보내는 배정의 계정 불필요 대안입니다.",
+  "Import a .csv or .xlsx with one exercise per row: column 1 = the exercise text, column 2 (optional) = its categories, up to 3 separated by ; or /. Export downloads your whole library in that same format, so you can back it up or edit it in a spreadsheet.": "한 줄에 운동 하나인 .csv 또는 .xlsx를 가져옵니다. 1열 = 운동 텍스트, 2열(선택) = 카테고리(최대 3개, ; 또는 / 로 구분). 내보내기는 전체 라이브러리를 같은 형식으로 다운로드합니다. 백업하거나 스프레드시트에서 편집할 수 있습니다.",
+  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "로스터는 이 브라우저에만 저장됩니다. 내보내기는 로스터(선수, 메모, 저장된 플랜)를 .e08coach 파일로 저장하고, 가져오기로 다른 브라우저나 기기에서 복원합니다. 백업이나 이전에 사용하세요."
 }

@@ -11,6 +11,7 @@ import { groupStyle } from '../lib/disciplines';
 import { navigate } from '../hooks/useHashRoute';
 import type { Athlete } from '../lib/types';
 import { ConnectedAthletes } from '../components/ConnectedAthletes';
+import { InfoTip } from '../components/InfoTip';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import { useT } from '../i18n';
 
@@ -63,6 +64,9 @@ export function AthletesView() {
               {t('Export')}
             </button>
           )}
+          <InfoTip
+            text={t('Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.')}
+          />
           <button onClick={addAthlete} className="glow-accent text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide">
             + {t('Add athlete')}
           </button>

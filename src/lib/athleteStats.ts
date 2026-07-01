@@ -1,6 +1,6 @@
 /** Derived read-only views over an athlete: best PBs, headline marks, next comp. */
 import { DISCIPLINES, disciplineById, formatValue, type Discipline } from './disciplines';
-import { isoDate } from './e08plan';
+import { addDays, isoDate, mondayOf, type BuilderPlan } from './e08plan';
 import { daysBetween } from './planHelpers';
 import type { Athlete, Competition, PBEntry } from './types';
 
@@ -68,4 +68,38 @@ export function compColorClass(dateIso: string, ref = today()): string {
   if (d <= 14) return 'text-amber';
   if (d <= 45) return 'text-accent';
   return 'text-textDim';
+}
+
+// ── Plan span ──────────────────────────────────────────────────────────────
+
+function planWeekCount(plan: BuilderPlan): number {
+  if (plan.kind === 'season') return plan.phases.reduce((n, p) => n + (p.weeks?.length ?? 0), 0);
+  return plan.weeks?.length ?? 0;
+}
+
+/** First + last calendar day a plan covers, from its start date + length.
+ *  Weeks are Monday-anchored (matching the builder). Null when there's no
+ *  start date or the plan is empty. */
+export function planSpan(plan: BuilderPlan): { start: string | null; end: string | null } {
+  if (!plan.startDate) return { start: null, end: null };
+  const start = plan.startDate;
+  if (plan.kind !== 'season' && plan.structure === 'days') {
+    const n = plan.days?.length ?? 0;
+    return { start, end: n > 0 ? addDays(start, n - 1) : start };
+  }
+  const w = planWeekCount(plan);
+  return { start, end: w > 0 ? addDays(mondayOf(start), w * 7 - 1) : start };
+}
+
+/** Coaching status of a plan's end date: ended, wrapping up soon (<=14 days), or
+ *  still running. So a coach can spot who needs a fresh/updated plan. */
+export function planEndStatus(
+  end: string | null,
+  ref = today(),
+): 'ended' | 'endingSoon' | 'active' | null {
+  if (!end) return null;
+  const d = daysUntil(end, ref);
+  if (d < 0) return 'ended';
+  if (d <= 14) return 'endingSoon';
+  return 'active';
 }
