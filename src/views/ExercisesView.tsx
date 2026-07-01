@@ -32,36 +32,8 @@ import {
   type LibraryExercise,
 } from '../lib/library';
 import { useT } from '../i18n';
-
-// Deterministic colour per category name — theme-agnostic hues that read on
-// dark + light. Uncategorized falls back to dim grey.
-const CAT_HUES = [
-  '#5bcdfa',
-  '#66c87c',
-  '#ffb236',
-  '#ff6fa5',
-  '#b98cff',
-  '#3fd0c0',
-  '#f6825b',
-  '#9ccc65',
-  '#e6c84e',
-  '#7aa7ff',
-];
-function categoryColor(name?: string | null): string {
-  if (!name) return 'rgb(var(--c-textDim))';
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-  return CAT_HUES[h % CAT_HUES.length];
-}
-function CatDot({ name, size = 9 }: { name?: string | null; size?: number }) {
-  return (
-    <span
-      aria-hidden
-      className="inline-block shrink-0 rounded-full"
-      style={{ width: size, height: size, backgroundColor: categoryColor(name) }}
-    />
-  );
-}
+import { categoryColor } from '../lib/categoryColor';
+import { CatDot } from '../components/CatDot';
 
 /** Titled zone: an accent tick + heading + optional hint over a hairline rule,
  *  so each functional area reads as its own section. */

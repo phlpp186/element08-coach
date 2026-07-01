@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { blockExercises, useBlocks, useCategories, useExercises } from '../lib/library';
 import { navigate } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
+import { categoryColor } from '../lib/categoryColor';
+import { CatDot } from './CatDot';
 
 interface AssignTarget {
   id: string;
@@ -115,7 +117,7 @@ export function ExercisePalette({
                     {t('All')}
                   </Pill>
                   {usedCats.map((c) => (
-                    <Pill key={c} active={filter === c} onClick={() => setFilter(c)}>
+                    <Pill key={c} color={categoryColor(c)} active={filter === c} onClick={() => setFilter(c)}>
                       {c}
                     </Pill>
                   ))}
@@ -146,7 +148,7 @@ export function ExercisePalette({
                         className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing"
                         title={t('Drag into a session, or click to add to the open session')}
                       >
-                        {ex.category && <span className="h-1.5 w-1.5 rounded-full bg-accent/70 shrink-0" />}
+                        {ex.category && <CatDot name={ex.category} size={7} />}
                         {ex.description}
                       </span>
                       <button
@@ -260,14 +262,25 @@ function AssignModal({
   );
 }
 
-function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function Pill({
+  active,
+  onClick,
+  color,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  color?: string;
+  children: React.ReactNode;
+}) {
   return (
     <button
       onClick={onClick}
-      className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+      className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors ${
         active ? 'border-accent bg-accent/10 text-accent' : 'border-border text-textDim hover:border-accent hover:text-text'
       }`}
     >
+      {color && <span aria-hidden className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />}
       {children}
     </button>
   );
