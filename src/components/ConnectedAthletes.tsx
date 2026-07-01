@@ -40,7 +40,7 @@ export function ConnectedAthletes() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h3 className="font-heading tracking-wide text-text">{t('CONNECTED ATHLETES')}</h3>
-          <p className="text-textDim text-xs">{t('Synced with the app — live PBs, plans, and progress.')}</p>
+          <p className="text-textDim text-xs">{t('Synced with the app: live PBs, plans, and progress.')}</p>
         </div>
         <button
           onClick={invite}
@@ -53,7 +53,7 @@ export function ConnectedAthletes() {
 
       {code && (
         <div className="rounded-lg border border-accent bg-accent/10 p-3 text-sm">
-          {t('Share this code with your athlete — they enter it in the app under')}{' '}
+          {t('Share this code with your athlete, they enter it in the app under')}{' '}
           <span className="text-textDim">{t('Settings › Account › Connect with a coach')}</span>:
           <div className="mt-2 font-mono text-2xl tracking-[0.3em] text-accent">{code}</div>
           <button onClick={refresh} className="mt-2 text-xs text-textDim hover:text-text underline">

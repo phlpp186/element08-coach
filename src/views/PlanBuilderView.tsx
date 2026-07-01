@@ -63,7 +63,7 @@ function makeInitial(saved: BuilderPlan | undefined, athlete: Athlete | undefine
   if (saved) return normalizePlan(saved);
   const p = initialPlan();
   if (!athlete) return p;
-  p.name = `${athlete.name.trim() || 'Athlete'} — plan`;
+  p.name = `${athlete.name.trim() || 'Athlete'} plan`;
   const nextComp = [...athlete.competitions]
     .filter((c) => c.date && c.date >= p.startDate)
     .sort((a, b) => a.date.localeCompare(b.date))[0];
@@ -267,7 +267,7 @@ export function PlanBuilderView({
               onChange={(e) => setMeta({ coach: e.target.value })}
             />
           </Labeled>
-          <Labeled label={t('Athlete (optional)')}>
+          <Labeled label={t('Roster athlete (optional)')}>
             <select
               className="field"
               value={athleteId ?? ''}
@@ -277,13 +277,16 @@ export function PlanBuilderView({
                 setSavedTick(false);
               }}
             >
-              <option value="">{t('— Not linked —')}</option>
+              <option value="">{t('Not linked')}</option>
               {athletes.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name || t('Unnamed athlete')}
                 </option>
               ))}
             </select>
+            <span className="mt-1 block text-xs text-textDim">
+              {t('A local roster athlete (this browser), not a connected app athlete.')}
+            </span>
           </Labeled>
           <Labeled label={t('Start date')}>
             <input

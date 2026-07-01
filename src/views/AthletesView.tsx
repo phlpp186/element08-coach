@@ -74,7 +74,7 @@ export function AthletesView() {
       {showLocalHeading && (
         <div className="pt-2">
           <h3 className="font-heading tracking-wide text-text">{t('YOUR NOTES')}</h3>
-          <p className="text-textDim text-xs">{t('Local to this browser — for prospects or athletes not on the app.')}</p>
+          <p className="text-textDim text-xs">{t('Local to this browser, for prospects or athletes not on the app.')}</p>
         </div>
       )}
 

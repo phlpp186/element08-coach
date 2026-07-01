@@ -75,7 +75,7 @@ export function ExercisePalette({
           <>
             {nonEmptyBlocks.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-textDim text-xs">{t('Blocks — click to add to the open session, or ⋯ to assign to many.')}</p>
+                <p className="text-textDim text-xs">{t('Blocks: click to add to the open session, or ⋯ to assign to many.')}</p>
                 <div className="flex flex-wrap gap-2">
                   {nonEmptyBlocks.map((b) => (
                     <span

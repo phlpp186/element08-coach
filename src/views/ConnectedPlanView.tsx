@@ -195,7 +195,7 @@ export function ConnectedPlanView({
             </div>
             {(w.week.focus || w.week.notes) && (
               <p className="text-xs text-textDim">
-                {[w.week.focus, w.week.notes].filter(Boolean).join(' — ')}
+                {[w.week.focus, w.week.notes].filter(Boolean).join(' · ')}
               </p>
             )}
             {w.sessions.length === 0 ? (

@@ -86,7 +86,7 @@ export function AthleteDetailView({ athleteId }: { athleteId: string }) {
           </button>
         </div>
         {plans.length === 0 ? (
-          <p className="text-textDim text-sm">{t("No plans yet. Build one — the athlete's next competition pre-fills a season.")}</p>
+          <p className="text-textDim text-sm">{t("No plans yet. Build one, the athlete's next competition pre-fills a season.")}</p>
         ) : (
           <div className="space-y-2">
             {plans.map((sp) => (
@@ -161,7 +161,7 @@ function PBSection({ athlete, patch }: { athlete: Athlete; patch: (p: Partial<At
               <optgroup key={g} label={t(g)}>
                 {DISCIPLINES.filter((d) => d.group === g).map((d) => (
                   <option key={d.id} value={d.id}>
-                    {d.label} — {t(d.full)}
+                    {d.label}: {t(d.full)}
                   </option>
                 ))}
               </optgroup>
