@@ -510,6 +510,7 @@ function TrainingSchedule(props: {
               onChange={(patch) => props.updateWeek(wi, patch)}
               onRemove={plan.weeks.length > 1 ? () => props.removeWeek(wi) : undefined}
               partialBeforeDow={wi === 0 ? dowOf(plan.startDate) : undefined}
+              weekStart={plan.startDate ? addDays(mondayOf(plan.startDate), wi * 7) : undefined}
             />
           ))
         : plan.days.map((day, di) => (

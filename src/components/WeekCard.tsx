@@ -1,5 +1,6 @@
 import {
   DAY_LABELS,
+  addDays,
   newSession,
   type BuilderWeek,
   type Intensity,
@@ -9,6 +10,8 @@ import { SessionList } from './sessions';
 import { useT } from '../i18n';
 
 const INTENSITIES: Intensity[] = ['recovery', 'low', 'medium', 'high', 'max'];
+const DAY_DATE_FMT = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
+const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** One week: intensity + focus, a Mon–Sun session grid, and notes. Used for both
  *  training-plan weeks and the weeks inside a season phase. Sessions are owned by
@@ -23,6 +26,7 @@ export function WeekCard({
   onChange,
   onRemove,
   partialBeforeDow,
+  weekStart,
   compact,
 }: {
   week: BuilderWeek;
@@ -35,10 +39,13 @@ export function WeekCard({
   onRemove?: () => void;
   /** Days with index < this are dimmed as "before plan start" (global first week only). */
   partialBeforeDow?: number;
+  /** ISO Monday of this week; when set, each weekday shows its calendar date. */
+  weekStart?: string;
   /** Slightly lighter chrome for nesting inside a phase card. */
   compact?: boolean;
 }) {
   const t = useT();
+  const hasDates = !!weekStart && ISO_RE.test(weekStart);
   const addSession = (dayOfWeek: number) => {
     const s = newSession(dayOfWeek, mode);
     onChange({ sessions: [...week.sessions, s] });
@@ -83,9 +90,15 @@ export function WeekCard({
         {DAY_LABELS.map((dayLabel, day) => {
           const beforeStart = partialBeforeDow != null && day < partialBeforeDow;
           const daySessions = week.sessions.filter((s) => s.dayOfWeek === day);
+          const dayDate = hasDates
+            ? DAY_DATE_FMT.format(new Date(`${addDays(weekStart!, day)}T00:00:00Z`))
+            : null;
           return (
             <div key={day} className={`flex gap-3 items-start ${beforeStart ? 'opacity-40' : ''}`}>
-              <div className="w-10 shrink-0 text-textDim text-sm pt-2 font-mono">{t(dayLabel)}</div>
+              <div className="w-16 shrink-0 pt-2 font-mono text-sm leading-tight text-textDim">
+                <div>{t(dayLabel)}</div>
+                {dayDate && <div className="text-[10px] opacity-70">{dayDate}</div>}
+              </div>
               <SessionList
                 sessions={daySessions}
                 editing={editing}

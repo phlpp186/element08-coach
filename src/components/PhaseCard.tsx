@@ -110,6 +110,7 @@ export function PhaseCard({
                 onChange={(patch) => setWeek(wi, patch)}
                 onRemove={phase.weeks.length > 1 ? () => removeWeek(wi) : undefined}
                 partialBeforeDow={globalIndex === 0 ? startDow : undefined}
+                weekStart={addDays(firstMonday, globalIndex * 7)}
                 compact
               />
             );
