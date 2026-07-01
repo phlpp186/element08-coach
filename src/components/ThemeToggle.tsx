@@ -46,7 +46,7 @@ export function ThemeToggle() {
       onClick={() => setTheme(next)}
       aria-label={`${t('Theme:')} ${LABEL[theme]}. ${t('Switch to')} ${LABEL[next]}.`}
       title={`${t('Theme:')} ${LABEL[theme]}, ${t('switch to')} ${LABEL[next]}`}
-      className="fixed right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-panel/80 text-textDim backdrop-blur transition-colors hover:border-accent hover:text-accent"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-panel/80 text-textDim backdrop-blur transition-colors hover:border-accent hover:text-accent"
     >
       {theme === 'light' ? (
         <SunIcon />
