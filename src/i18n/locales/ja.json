@@ -259,5 +259,6 @@
   "Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.": "チップをセッションにドラッグ、クリックで開いているセッションに追加、⋯ で複数に割り当て。",
   "Select all": "すべて選択",
   "Week": "週",
-  "Your own colour-coded tags, fully editable": "自分専用の色分けタグ、自由に編集可能"
+  "Your own colour-coded tags, fully editable": "自分専用の色分けタグ、自由に編集可能",
+  "Private to you, not shared with the athlete. Kept on this device (backs up with your roster file).": "あなた専用で、アスリートには共有されません。この端末に保存されます（名簿ファイルと一緒にバックアップされます）。"
 }

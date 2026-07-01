@@ -6,11 +6,12 @@
  */
 import { useSyncExternalStore } from 'react';
 import { uid } from './e08plan';
-import type { Athlete, SavedPlan } from './types';
+import type { Athlete, CoachNote, SavedPlan } from './types';
 import { emptyAthlete } from './types';
 
 const ATHLETES_KEY = 'element08.coach.athletes';
 const PLANS_KEY = 'element08.coach.plans';
+const NOTES_KEY = 'element08.coach.connectedNotes';
 const ROSTER_FORMAT = 'e08coach-roster';
 const ROSTER_VERSION = 1;
 
@@ -72,8 +73,31 @@ const isAthlete = (x: unknown): x is Athlete =>
 const isPlan = (x: unknown): x is SavedPlan =>
   !!x && typeof (x as SavedPlan).id === 'string' && !!(x as SavedPlan).plan;
 
+const isCoachNote = (x: unknown): x is CoachNote =>
+  !!x && typeof (x as CoachNote).studentId === 'string';
+
 const athletes = makeSlice<Athlete>(ATHLETES_KEY, isAthlete);
 const plans = makeSlice<SavedPlan>(PLANS_KEY, isPlan);
+const coachNotes = makeSlice<CoachNote>(NOTES_KEY, isCoachNote);
+
+// ── Coach notes on connected (cloud) athletes ──────────────────────────────────
+
+const EMPTY_NOTE = (studentId: string): CoachNote => ({ studentId, competitions: [] });
+
+/** The coach's local CRM notes about a connected athlete (or an empty record). */
+export function useCoachNote(studentId: string): CoachNote {
+  const list = useSyncExternalStore(coachNotes.subscribe, coachNotes.get, coachNotes.get);
+  return list.find((n) => n.studentId === studentId) ?? EMPTY_NOTE(studentId);
+}
+
+export function updateCoachNote(studentId: string, patch: Partial<CoachNote>): void {
+  const list = coachNotes.get();
+  coachNotes.set(
+    list.some((n) => n.studentId === studentId)
+      ? list.map((n) => (n.studentId === studentId ? { ...n, ...patch } : n))
+      : [...list, { ...EMPTY_NOTE(studentId), ...patch }],
+  );
+}
 
 // ── Athletes ──────────────────────────────────────────────────────────────────
 
@@ -146,6 +170,8 @@ interface RosterFile {
   exported: string;
   athletes: Athlete[];
   plans: SavedPlan[];
+  /** Coach notes on connected athletes (optional — older files won't have it). */
+  connectedNotes?: CoachNote[];
 }
 
 export function exportRoster(): void {
@@ -155,6 +181,7 @@ export function exportRoster(): void {
     exported: new Date().toISOString(),
     athletes: athletes.get(),
     plans: plans.get(),
+    connectedNotes: coachNotes.get(),
   };
   const blob = new Blob([JSON.stringify(file, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -178,5 +205,6 @@ export async function importRoster(file: File): Promise<{ athletes: number; plan
   const p = Array.isArray(f.plans) ? f.plans.filter(isPlan) : [];
   athletes.set(a);
   plans.set(p);
+  coachNotes.set(Array.isArray(f.connectedNotes) ? f.connectedNotes.filter(isCoachNote) : []);
   return { athletes: a.length, plans: p.length };
 }

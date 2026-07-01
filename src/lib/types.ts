@@ -63,6 +63,22 @@ export interface Athlete {
   createdAt: string;
 }
 
+/** The coach's private notes about a CONNECTED (cloud/app) athlete — the same
+ *  CRM fields a manual roster Athlete has, keyed by the cloud student id. Kept
+ *  local (per-browser) so no backend/migration is needed; backed up with the
+ *  roster file. The athlete's own PBs/goals come from the app (read-only) and
+ *  are NOT stored here. */
+export interface CoachNote {
+  /** Cloud student id (profiles.id) this note is about. */
+  studentId: string;
+  contact?: string;
+  location?: string;
+  coachingFrom?: string;
+  coachingTo?: string;
+  notes?: string;
+  competitions: Competition[];
+}
+
 /** A plan saved into the portal (so drafts survive a refresh and can be attached
  *  to an athlete + re-downloaded any time). Stores the full builder working state. */
 export interface SavedPlan {

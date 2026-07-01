@@ -10,13 +10,7 @@ import {
   type Discipline,
 } from '../lib/disciplines';
 import { uid, downloadPlanFile } from '../lib/e08plan';
-import {
-  bestEntry,
-  compColorClass,
-  pbHistory,
-  relativeDays,
-  today,
-} from '../lib/athleteStats';
+import { bestEntry, pbHistory, today } from '../lib/athleteStats';
 import {
   deleteAthlete,
   deletePlan,
@@ -25,16 +19,10 @@ import {
   useSavedPlans,
 } from '../lib/store';
 import { Sparkline } from '../components/Sparkline';
-import { Labeled } from '../components/sessions';
+import { CoachNotesEditor } from '../components/CoachNotesEditor';
 import { navigate } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
-import type {
-  Athlete,
-  Competition,
-  GoalEntry,
-  PBEntry,
-  ProgressNote,
-} from '../lib/types';
+import type { Athlete, GoalEntry, PBEntry, ProgressNote } from '../lib/types';
 
 export function AthleteDetailView({ athleteId }: { athleteId: string }) {
   const t = useT();
@@ -78,35 +66,12 @@ export function AthleteDetailView({ athleteId }: { athleteId: string }) {
         </button>
       </div>
 
-      {/* Profile */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Labeled label={t('Contact (optional)')}>
-          <input className="field" placeholder={t('email / handle')} value={athlete.contact ?? ''} onChange={(e) => patch({ contact: e.target.value })} />
-        </Labeled>
-        <Labeled label={t('Location (optional)')}>
-          <input className="field" placeholder={t('e.g. Dahab')} value={athlete.location ?? ''} onChange={(e) => patch({ location: e.target.value })} />
-        </Labeled>
-        <Labeled label={t('Coaching from')}>
-          <input type="date" className="field" value={athlete.coachingFrom ?? ''} onChange={(e) => patch({ coachingFrom: e.target.value })} />
-        </Labeled>
-        <Labeled label={t('Coaching to')}>
-          <input type="date" className="field" value={athlete.coachingTo ?? ''} onChange={(e) => patch({ coachingTo: e.target.value })} />
-        </Labeled>
-        <div className="sm:col-span-2">
-          <Labeled label={t('Notes (optional)')}>
-            <textarea
-              className="field min-h-16"
-              placeholder={t('Background, strengths, things to watch, equalisation notes…')}
-              value={athlete.notes ?? ''}
-              onChange={(e) => patch({ notes: e.target.value })}
-            />
-          </Labeled>
-        </div>
-      </section>
+      {/* Coach's CRM block (contact / location / coaching period / notes /
+          competitions) — shared with the connected-athlete detail. */}
+      <CoachNotesEditor value={athlete} onPatch={patch} />
 
       <PBSection athlete={athlete} patch={patch} />
       <GoalSection athlete={athlete} patch={patch} />
-      <CompetitionSection athlete={athlete} patch={patch} />
       <ProgressSection athlete={athlete} patch={patch} />
 
       {/* Plans */}
@@ -372,48 +337,6 @@ function GoalRow({ goal, onChange, onRemove }: { goal: GoalEntry; onChange: (p: 
 }
 
 // ── Competitions ──────────────────────────────────────────────────────────────
-
-function CompetitionSection({ athlete, patch }: { athlete: Athlete; patch: (p: Partial<Athlete>) => void }) {
-  const t = useT();
-  const add = () => {
-    const c: Competition = { id: uid('comp'), name: '', date: today() };
-    patch({ competitions: [...athlete.competitions, c] });
-  };
-  const update = (id: string, p: Partial<Competition>) =>
-    patch({ competitions: athlete.competitions.map((c) => (c.id === id ? { ...c, ...p } : c)) });
-  const remove = (id: string) => patch({ competitions: athlete.competitions.filter((c) => c.id !== id) });
-
-  const sorted = [...athlete.competitions].sort((a, b) => a.date.localeCompare(b.date));
-
-  return (
-    <section className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base">{t('Competitions')}</h3>
-        <button onClick={add} className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent">
-          + {t('Add competition')}
-        </button>
-      </div>
-      {sorted.length === 0 ? (
-        <p className="text-textDim text-sm">{t('No competitions logged.')}</p>
-      ) : (
-        <div className="space-y-2">
-          {sorted.map((c) => (
-            <div key={c.id} className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-panel px-3 py-2">
-              <input className="field flex-1 min-w-40" placeholder={t('Competition name')} value={c.name} onChange={(e) => update(c.id, { name: e.target.value })} />
-              <input type="date" className="field w-auto" value={c.date} onChange={(e) => update(c.id, { date: e.target.value })} />
-              <input className="field w-32" placeholder={t('Location')} value={c.location ?? ''} onChange={(e) => update(c.id, { location: e.target.value })} />
-              <input className="field w-32" placeholder={t('Target, e.g. CWT 60m')} value={c.target ?? ''} onChange={(e) => update(c.id, { target: e.target.value })} />
-              {c.date && <span className={`text-xs ${compColorClass(c.date)}`}>{relativeDays(c.date)}</span>}
-              <button onClick={() => remove(c.id)} className="text-red text-sm" title={t('Remove')}>
-                ✕
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </section>
-  );
-}
 
 // ── Progress notes ────────────────────────────────────────────────────────────
 

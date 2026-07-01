@@ -145,7 +145,7 @@
   "Week focus (optional), e.g. CO₂ capacity": "本周重点（可选），例如 CO₂ 耐受能力",
   "Week notes (optional)": "本周备注（可选）",
   "Wrong email or password.": "邮箱或密码错误。",
-  "YOUR NOTES": "你的备注",
+  "YOUR NOTES": "你的笔记",
   "Your name": "你的姓名",
   "Your roster lives in this browser. Export it to back up or move devices.": "你的名单保存在此浏览器中。导出以备份或迁移设备。",
   "and": "和",
@@ -259,5 +259,6 @@
   "Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.": "将标签拖入课程，点击添加到已打开的课程，或点击 ⋯ 分配到多节课程。",
   "Select all": "全选",
   "Week": "周",
-  "Your own colour-coded tags, fully editable": "你自己的彩色标签，可完全编辑"
+  "Your own colour-coded tags, fully editable": "你自己的彩色标签，可完全编辑",
+  "Private to you, not shared with the athlete. Kept on this device (backs up with your roster file).": "仅你可见，不与运动员共享。保存在本设备（随名单文件一起备份）。"
 }

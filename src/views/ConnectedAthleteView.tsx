@@ -24,10 +24,13 @@ import {
   type AthletePB,
   type AthleteGoal,
 } from '../lib/supabase/athleteProfileCloud';
+import { CoachNotesEditor } from '../components/CoachNotesEditor';
+import { useCoachNote, updateCoachNote } from '../lib/store';
 
 export function ConnectedAthleteView({ studentId }: { studentId: string }) {
   const t = useT();
   const { session } = useAuth();
+  const note = useCoachNote(studentId);
   const [name, setName] = useState(t('Athlete'));
   const [pbs, setPbs] = useState<AthletePB[]>([]);
   const [goals, setGoals] = useState<AthleteGoal[]>([]);
@@ -159,6 +162,16 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
                 ))}
               </div>
             )}
+          </section>
+
+          <section className="space-y-3">
+            <div>
+              <h3 className="font-heading tracking-wide text-text">{t('YOUR NOTES')}</h3>
+              <p className="text-xs text-textDim">
+                {t('Private to you, not shared with the athlete. Kept on this device (backs up with your roster file).')}
+              </p>
+            </div>
+            <CoachNotesEditor value={note} onPatch={(p) => updateCoachNote(studentId, p)} />
           </section>
         </>
       )}

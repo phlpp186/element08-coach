@@ -259,5 +259,6 @@
   "Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.": "칩을 세션으로 드래그하거나, 클릭하여 열린 세션에 추가하거나, ⋯로 여러 세션에 배정하세요.",
   "Select all": "모두 선택",
   "Week": "주",
-  "Your own colour-coded tags, fully editable": "색상으로 구분된 나만의 태그, 자유롭게 편집 가능"
+  "Your own colour-coded tags, fully editable": "색상으로 구분된 나만의 태그, 자유롭게 편집 가능",
+  "Private to you, not shared with the athlete. Kept on this device (backs up with your roster file).": "본인 전용이며 선수와 공유되지 않습니다. 이 기기에 저장됩니다(로스터 파일과 함께 백업됨)."
 }

@@ -259,5 +259,6 @@
   "Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.": "ลากชิปลงในเซสชัน คลิกเพื่อเพิ่มลงในเซสชันที่เปิดอยู่ หรือ ⋯ เพื่อมอบหมายให้หลายเซสชัน",
   "Select all": "เลือกทั้งหมด",
   "Week": "สัปดาห์",
-  "Your own colour-coded tags, fully editable": "แท็กสีของคุณเอง แก้ไขได้ทั้งหมด"
+  "Your own colour-coded tags, fully editable": "แท็กสีของคุณเอง แก้ไขได้ทั้งหมด",
+  "Private to you, not shared with the athlete. Kept on this device (backs up with your roster file).": "เป็นส่วนตัวของคุณ ไม่แชร์กับนักกีฬา เก็บไว้ในอุปกรณ์นี้ (สำรองพร้อมไฟล์รายชื่อของคุณ)"
 }
