@@ -264,5 +264,9 @@
   "Roster athlete (optional)": "名簿のアスリート（任意）",
   "A local roster athlete (this browser), not a connected app athlete.": "このブラウザのローカル名簿のアスリートです。アプリで接続されたアスリートではありません。",
   "Categories (up to 3, optional)": "カテゴリ（最大3つ、任意）",
-  "No categories yet.": "まだカテゴリがありません。"
+  "No categories yet.": "まだカテゴリがありません。",
+  "Draft plans saved in this browser. Save keeps a draft here; Assign or Download delivers it to an athlete.": "このブラウザに保存されたプランの下書き。保存はここに下書きを残します。割り当てまたはダウンロードでアスリートに届けます。",
+  "No saved plans yet.": "保存されたプランはまだありません。",
+  "Build your first plan": "最初のプランを作成",
+  "Save this plan as a draft in this browser. Find it later under Plans.": "このプランをこのブラウザに下書きとして保存します。あとで「プラン」で見つけられます。"
 }

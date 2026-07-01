@@ -62,19 +62,19 @@ export function PhaseCard({
 
   return (
     <div className="glass-card rounded-xl">
-      <div className="flex items-center gap-3 p-4">
+      <div className="flex flex-wrap items-center gap-2 p-4">
         <button onClick={onToggle} className="text-textDim text-sm shrink-0" aria-label={t('Toggle phase')}>
           {open ? '▾' : '▸'}
         </button>
         <span className="font-heading text-accent shrink-0">{t('PHASE')} {index + 1}</span>
         <input
-          className="field flex-1 min-w-0"
+          className="field w-full sm:w-56"
           placeholder={t(MESO_LABEL[phase.type])}
           value={phase.name}
           onChange={(e) => onChange({ name: e.target.value })}
         />
         <select
-          className="field w-auto shrink-0"
+          className="field w-auto"
           value={phase.type}
           onChange={(e) => onChange({ type: e.target.value as MesoType })}
         >

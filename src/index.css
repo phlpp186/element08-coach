@@ -145,28 +145,33 @@ h3 {
   letter-spacing: 0.04em;
 }
 
-/* Shared form-control look so inputs read clearly on every surface. */
-.field {
-  width: 100%;
-  background: rgb(var(--c-abyss));
-  border: 1px solid rgb(var(--c-border));
-  border-radius: 8px;
-  padding: 8px 10px;
-  color: rgb(var(--c-text));
-  font-size: 14px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-}
-.field:hover {
-  border-color: rgb(var(--c-textDim) / 0.55);
-}
-.field:focus {
-  outline: none;
-  border-color: rgb(var(--c-accent));
-  /* Soft accent ring so focus is obvious without a jarring outline. */
-  box-shadow: 0 0 0 3px rgb(var(--c-accent) / 0.18);
-}
-.field::placeholder {
-  color: rgb(var(--c-textDim));
+/* Shared form-control look so inputs read clearly on every surface. In the
+ * components layer so width utilities (w-auto, w-32, flex-1) can override the
+ * default full width — otherwise a `.field w-auto` select still stretches to
+ * 100% and overshoots its row. */
+@layer components {
+  .field {
+    width: 100%;
+    background: rgb(var(--c-abyss));
+    border: 1px solid rgb(var(--c-border));
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: rgb(var(--c-text));
+    font-size: 14px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .field:hover {
+    border-color: rgb(var(--c-textDim) / 0.55);
+  }
+  .field:focus {
+    outline: none;
+    border-color: rgb(var(--c-accent));
+    /* Soft accent ring so focus is obvious without a jarring outline. */
+    box-shadow: 0 0 0 3px rgb(var(--c-accent) / 0.18);
+  }
+  .field::placeholder {
+    color: rgb(var(--c-textDim));
+  }
 }
 
 /* Accent CTA glow — a soft halo on primary action buttons so they read as the

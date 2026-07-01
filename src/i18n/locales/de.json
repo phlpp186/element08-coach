@@ -264,5 +264,9 @@
   "Roster athlete (optional)": "Kader-Athlet:in (optional)",
   "A local roster athlete (this browser), not a connected app athlete.": "Ein:e lokale:r Kader-Athlet:in (dieser Browser), keine verbundene App-Athlet:in.",
   "Categories (up to 3, optional)": "Kategorien (bis zu 3, optional)",
-  "No categories yet.": "Noch keine Kategorien."
+  "No categories yet.": "Noch keine Kategorien.",
+  "Draft plans saved in this browser. Save keeps a draft here; Assign or Download delivers it to an athlete.": "In diesem Browser gespeicherte Plan-Entwürfe. Speichern legt einen Entwurf hier ab; Zuweisen oder Herunterladen liefert ihn an eine:n Athlet:in.",
+  "No saved plans yet.": "Noch keine gespeicherten Pläne.",
+  "Build your first plan": "Ersten Plan erstellen",
+  "Save this plan as a draft in this browser. Find it later under Plans.": "Diesen Plan als Entwurf in diesem Browser speichern. Später unter Pläne zu finden."
 }

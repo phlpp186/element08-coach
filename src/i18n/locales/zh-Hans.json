@@ -264,5 +264,9 @@
   "Roster athlete (optional)": "名单运动员（可选）",
   "A local roster athlete (this browser), not a connected app athlete.": "本浏览器的本地名单运动员，而非已连接的应用运动员。",
   "Categories (up to 3, optional)": "类别（最多3个，可选）",
-  "No categories yet.": "还没有类别。"
+  "No categories yet.": "还没有类别。",
+  "Draft plans saved in this browser. Save keeps a draft here; Assign or Download delivers it to an athlete.": "保存在本浏览器中的计划草稿。保存会在此保留草稿；分配或下载会将其交给运动员。",
+  "No saved plans yet.": "还没有已保存的计划。",
+  "Build your first plan": "创建你的第一个计划",
+  "Save this plan as a draft in this browser. Find it later under Plans.": "将此计划作为草稿保存在本浏览器中。稍后可在“计划”中找到。"
 }

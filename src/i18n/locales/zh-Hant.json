@@ -264,5 +264,9 @@
   "Roster athlete (optional)": "名單運動員（選填）",
   "A local roster athlete (this browser), not a connected app athlete.": "本瀏覽器的本地名單運動員，而非已連接的應用程式運動員。",
   "Categories (up to 3, optional)": "類別（最多3個，選填）",
-  "No categories yet.": "還沒有類別。"
+  "No categories yet.": "還沒有類別。",
+  "Draft plans saved in this browser. Save keeps a draft here; Assign or Download delivers it to an athlete.": "儲存在本瀏覽器中的計畫草稿。儲存會在此保留草稿；指派或下載會將其交給運動員。",
+  "No saved plans yet.": "還沒有已儲存的計畫。",
+  "Build your first plan": "建立你的第一個計畫",
+  "Save this plan as a draft in this browser. Find it later under Plans.": "將此計畫作為草稿儲存在本瀏覽器中。稍後可在「計畫」中找到。"
 }

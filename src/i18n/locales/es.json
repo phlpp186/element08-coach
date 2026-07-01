@@ -264,5 +264,9 @@
   "Roster athlete (optional)": "Atleta de la plantilla (opcional)",
   "A local roster athlete (this browser), not a connected app athlete.": "Un atleta de la plantilla local (este navegador), no un atleta conectado de la app.",
   "Categories (up to 3, optional)": "Categorías (hasta 3, opcional)",
-  "No categories yet.": "Aún no hay categorías."
+  "No categories yet.": "Aún no hay categorías.",
+  "Draft plans saved in this browser. Save keeps a draft here; Assign or Download delivers it to an athlete.": "Borradores de planes guardados en este navegador. Guardar mantiene un borrador aquí; Asignar o Descargar lo entrega a un atleta.",
+  "No saved plans yet.": "Aún no hay planes guardados.",
+  "Build your first plan": "Crea tu primer plan",
+  "Save this plan as a draft in this browser. Find it later under Plans.": "Guarda este plan como borrador en este navegador. Lo encontrarás en Planes."
 }

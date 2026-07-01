@@ -391,6 +391,7 @@ export function PlanBuilderView({
           </div>
           <button
             onClick={doSave}
+            title={t('Save this plan as a draft in this browser. Find it later under Plans.')}
             className="rounded-lg px-4 py-2 font-heading tracking-wide border border-border text-text hover:border-accent"
           >
             {t('Save')}

@@ -264,5 +264,9 @@
   "Roster athlete (optional)": "Athlète de l’effectif (optionnel)",
   "A local roster athlete (this browser), not a connected app athlete.": "Un athlète de l’effectif local (ce navigateur), pas un athlète connecté de l’app.",
   "Categories (up to 3, optional)": "Catégories (jusqu’à 3, optionnel)",
-  "No categories yet.": "Aucune catégorie pour le moment."
+  "No categories yet.": "Aucune catégorie pour le moment.",
+  "Draft plans saved in this browser. Save keeps a draft here; Assign or Download delivers it to an athlete.": "Brouillons de plans enregistrés dans ce navigateur. Enregistrer garde un brouillon ici ; Attribuer ou Télécharger le remet à un athlète.",
+  "No saved plans yet.": "Aucun plan enregistré pour le moment.",
+  "Build your first plan": "Créer votre premier plan",
+  "Save this plan as a draft in this browser. Find it later under Plans.": "Enregistrer ce plan comme brouillon dans ce navigateur. À retrouver dans Plans."
 }

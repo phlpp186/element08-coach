@@ -264,5 +264,9 @@
   "Roster athlete (optional)": "นักกีฬาในรายชื่อ (ไม่บังคับ)",
   "A local roster athlete (this browser), not a connected app athlete.": "นักกีฬาในรายชื่อภายในเครื่อง (เบราว์เซอร์นี้) ไม่ใช่นักกีฬาที่เชื่อมต่อจากแอป",
   "Categories (up to 3, optional)": "หมวดหมู่ (สูงสุด 3, ไม่บังคับ)",
-  "No categories yet.": "ยังไม่มีหมวดหมู่"
+  "No categories yet.": "ยังไม่มีหมวดหมู่",
+  "Draft plans saved in this browser. Save keeps a draft here; Assign or Download delivers it to an athlete.": "แบบร่างแผนที่บันทึกไว้ในเบราว์เซอร์นี้ การบันทึกจะเก็บแบบร่างไว้ที่นี่ มอบหมายหรือดาวน์โหลดเพื่อส่งให้นักกีฬา",
+  "No saved plans yet.": "ยังไม่มีแผนที่บันทึกไว้",
+  "Build your first plan": "สร้างแผนแรกของคุณ",
+  "Save this plan as a draft in this browser. Find it later under Plans.": "บันทึกแผนนี้เป็นแบบร่างในเบราว์เซอร์นี้ หาได้ภายหลังที่ แผน"
 }

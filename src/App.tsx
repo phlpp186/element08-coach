@@ -4,6 +4,7 @@ import { AthleteDetailView } from './views/AthleteDetailView';
 import { ConnectedAthleteView } from './views/ConnectedAthleteView';
 import { ConnectedPlanView } from './views/ConnectedPlanView';
 import { PlanBuilderView } from './views/PlanBuilderView';
+import { PlansView } from './views/PlansView';
 import { ExercisesView } from './views/ExercisesView';
 import { AuthBar } from './components/AuthBar';
 import { AppFooter } from './components/AppFooter';
@@ -13,7 +14,7 @@ import { LanguageSwitcher } from './i18n/LanguageSwitcher';
 const NAV: { id: string; label: string; to: string }[] = [
   { id: 'athletes', label: 'Athletes', to: '/athletes' },
   { id: 'exercises', label: 'Exercises', to: '/exercises' },
-  { id: 'plan', label: 'Plan builder', to: '/plan/new' },
+  { id: 'plan', label: 'Plans', to: '/plan' },
 ];
 
 export function App() {
@@ -65,10 +66,11 @@ function Outlet() {
   }
 
   if (top === 'plan') {
-    // /plan/new?athlete=ID  → fresh plan (optionally for an athlete)
-    // /plan/:planId         → edit a saved plan
-    const isNew = !second || second === 'new';
-    const planId = isNew ? null : second;
+    // /plan               → the saved-plans list (findable drafts)
+    // /plan/new?athlete=ID → fresh plan (optionally for an athlete)
+    // /plan/:planId        → edit a saved plan
+    if (!second) return <PlansView />;
+    const planId = second === 'new' ? null : second;
     const presetAthleteId = route.query.get('athlete');
     return (
       <PlanBuilderView
