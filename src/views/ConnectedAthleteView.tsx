@@ -25,6 +25,7 @@ import {
   type AthleteGoal,
 } from '../lib/supabase/athleteProfileCloud';
 import { CoachNotesEditor } from '../components/CoachNotesEditor';
+import { IntakeEditor } from '../components/IntakeEditor';
 import { useCoachNote, updateCoachNote } from '../lib/store';
 
 export function ConnectedAthleteView({ studentId }: { studentId: string }) {
@@ -172,6 +173,14 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
               </p>
             </div>
             <CoachNotesEditor value={note} onPatch={(p) => updateCoachNote(studentId, p)} />
+          </section>
+
+          <section className="space-y-3">
+            <h3 className="font-heading tracking-wide text-text">{t('Intro questionnaire')}</h3>
+            <IntakeEditor
+              value={note.intake}
+              onChange={(p) => updateCoachNote(studentId, { intake: { ...note.intake, ...p } })}
+            />
           </section>
         </>
       )}

@@ -275,5 +275,20 @@
   "Downloads a plan file. Send it to an athlete (email, chat); they open the app and import it under Training > Plans. This is the account-free alternative to Assign, which pushes the plan straight to a connected athlete.": "下載一個計畫檔案。傳給運動員（電子郵件、聊天），他們在應用程式的 訓練 > 計畫 中匯入。這是「指派」的免帳號替代方式，「指派」會將計畫直接推送給已連接的運動員。",
   "Import a .csv or .xlsx with one exercise per row: column 1 = the exercise text, column 2 (optional) = its categories, up to 3 separated by ; or /. Export downloads your whole library in that same format, so you can back it up or edit it in a spreadsheet.": "匯入 .csv 或 .xlsx，每列一個練習：第1欄 = 練習文字，第2欄（選填）= 類別，最多3個，以 ; 或 / 分隔。匯出會以相同格式下載整個練習庫，方便備份或在試算表中編輯。",
   "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "你的名單只儲存在本瀏覽器中。匯出會將其（運動員、筆記、已儲存計畫）儲存為 .e08coach 檔案；匯入可在其他瀏覽器或裝置上還原。用於備份或搬移你的資料。",
-  "Same account as the ELEMENT | 08 app. New here? Create your account in the app, coach access is set there too.": "與 ELEMENT | 08 應用程式同一個帳號。新用戶？請在應用程式中建立帳號，教練權限也在應用程式中設定。"
+  "Same account as the ELEMENT | 08 app. New here? Create your account in the app, coach access is set there too.": "與 ELEMENT | 08 應用程式同一個帳號。新用戶？請在應用程式中建立帳號，教練權限也在應用程式中設定。",
+  "Intro questionnaire": "入門問卷",
+  "Height": "身高",
+  "Weight": "體重",
+  "Age": "年齡",
+  "Diving experience": "自由潛水經驗",
+  "Current training": "目前訓練",
+  "What's holding you back": "是什麼在阻礙你？",
+  "Health & safety (injuries, equalisation, medical)": "健康與安全（傷病、耳壓平衡、病史）",
+  "Copy blank form": "複製空白表單",
+  "Copied ✓": "已複製 ✓",
+  "Years diving, certifications, disciplines, PBs so far…": "潛水年資、證照、項目、目前的個人最佳成績…",
+  "What their week looks like now: pool, depth, dry, gym…": "目前一週的安排：泳池、深度、乾式、健身…",
+  "What they want to achieve, and by when…": "他們想達成的目標，以及何時…",
+  "Fear, equalisation, contractions, time, technique…": "恐懼、耳壓平衡、收縮、時間、技術…",
+  "Anything affecting safe training: injuries, ear/sinus issues, medical…": "任何影響安全訓練的因素：傷病、耳鼻問題、病史…"
 }

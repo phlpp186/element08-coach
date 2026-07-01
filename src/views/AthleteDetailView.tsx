@@ -21,6 +21,7 @@ import {
 } from '../lib/store';
 import { Sparkline } from '../components/Sparkline';
 import { CoachNotesEditor } from '../components/CoachNotesEditor';
+import { IntakeEditor } from '../components/IntakeEditor';
 import { navigate } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
 import type { Athlete, GoalEntry, PBEntry, ProgressNote } from '../lib/types';
@@ -70,6 +71,14 @@ export function AthleteDetailView({ athleteId }: { athleteId: string }) {
       {/* Coach's CRM block (contact / location / coaching period / notes /
           competitions) — shared with the connected-athlete detail. */}
       <CoachNotesEditor value={athlete} onPatch={patch} />
+
+      <section className="space-y-3">
+        <h3 className="text-base">{t('Intro questionnaire')}</h3>
+        <IntakeEditor
+          value={athlete.intake}
+          onChange={(p) => patch({ intake: { ...athlete.intake, ...p } })}
+        />
+      </section>
 
       <PBSection athlete={athlete} patch={patch} />
       <GoalSection athlete={athlete} patch={patch} />

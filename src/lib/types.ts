@@ -46,6 +46,26 @@ export interface ProgressNote {
   text: string;
 }
 
+/** Intro-questionnaire / intake answers the coach captures when onboarding an
+ *  athlete: physical stats, experience, current training, goals, and what's
+ *  holding them back. All free-text + optional (a coach fills what they have).
+ *  Coach-owned, kept local like the rest of the notes. */
+export interface Intake {
+  height?: string;
+  weight?: string;
+  age?: string;
+  /** Years diving, certs, disciplines, PBs so far. */
+  experience?: string;
+  /** What their training looks like right now. */
+  currentTraining?: string;
+  /** What they want to achieve. */
+  goals?: string;
+  /** What's holding them back (fear, equalisation, contractions, time…). */
+  blockers?: string;
+  /** Injuries, equalisation issues, medical notes relevant to safety. */
+  health?: string;
+}
+
 export interface Athlete {
   id: string;
   name: string;
@@ -55,6 +75,8 @@ export interface Athlete {
   coachingFrom?: string;
   coachingTo?: string;
   notes?: string;
+  /** Intro-questionnaire answers. */
+  intake?: Intake;
   /** discipline id → chronological PB history. */
   pbs: Record<string, PBEntry[]>;
   goals: GoalEntry[];
@@ -76,6 +98,7 @@ export interface CoachNote {
   coachingFrom?: string;
   coachingTo?: string;
   notes?: string;
+  intake?: Intake;
   competitions: Competition[];
 }
 

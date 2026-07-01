@@ -275,5 +275,20 @@
   "Downloads a plan file. Send it to an athlete (email, chat); they open the app and import it under Training > Plans. This is the account-free alternative to Assign, which pushes the plan straight to a connected athlete.": "Télécharge un fichier de plan. Envoyez-le à un athlète (e-mail, message) ; il ouvre l’app et l’importe dans Entraînement > Plans. L’alternative sans compte à Attribuer, qui envoie le plan directement à un athlète connecté.",
   "Import a .csv or .xlsx with one exercise per row: column 1 = the exercise text, column 2 (optional) = its categories, up to 3 separated by ; or /. Export downloads your whole library in that same format, so you can back it up or edit it in a spreadsheet.": "Importez un .csv ou .xlsx avec un exercice par ligne : colonne 1 = le texte de l’exercice, colonne 2 (facultatif) = ses catégories, jusqu’à 3 séparées par ; ou /. Export télécharge toute votre bibliothèque dans ce format, pour la sauvegarder ou la modifier dans un tableur.",
   "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "Votre effectif reste uniquement dans ce navigateur. Export l’enregistre (athlètes, notes, plans enregistrés) dans un fichier .e08coach ; Import le restaure sur un autre navigateur ou appareil. Pour sauvegarder ou déplacer vos données.",
-  "Same account as the ELEMENT | 08 app. New here? Create your account in the app, coach access is set there too.": "Même compte que l’app ELEMENT | 08. Nouveau ? Créez votre compte dans l’app ; l’accès coach s’y configure aussi."
+  "Same account as the ELEMENT | 08 app. New here? Create your account in the app, coach access is set there too.": "Même compte que l’app ELEMENT | 08. Nouveau ? Créez votre compte dans l’app ; l’accès coach s’y configure aussi.",
+  "Intro questionnaire": "Questionnaire d’accueil",
+  "Height": "Taille",
+  "Weight": "Poids",
+  "Age": "Âge",
+  "Diving experience": "Expérience en apnée",
+  "Current training": "Entraînement actuel",
+  "What's holding you back": "Qu’est-ce qui vous freine ?",
+  "Health & safety (injuries, equalisation, medical)": "Santé & sécurité (blessures, compensation, médical)",
+  "Copy blank form": "Copier le formulaire vierge",
+  "Copied ✓": "Copié ✓",
+  "Years diving, certifications, disciplines, PBs so far…": "Années d’apnée, certifications, disciplines, records actuels…",
+  "What their week looks like now: pool, depth, dry, gym…": "À quoi ressemble leur semaine : piscine, profondeur, sec, muscu…",
+  "What they want to achieve, and by when…": "Ce qu’ils veulent atteindre, et pour quand…",
+  "Fear, equalisation, contractions, time, technique…": "Peur, compensation, contractions, temps, technique…",
+  "Anything affecting safe training: injuries, ear/sinus issues, medical…": "Tout ce qui touche à la sécurité : blessures, oreilles/sinus, médical…"
 }
