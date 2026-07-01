@@ -262,5 +262,7 @@
   "Your own colour-coded tags, fully editable": "แท็กสีของคุณเอง แก้ไขได้ทั้งหมด",
   "Private to you, not shared with the athlete. Kept on this device (backs up with your roster file).": "เป็นส่วนตัวของคุณ ไม่แชร์กับนักกีฬา เก็บไว้ในอุปกรณ์นี้ (สำรองพร้อมไฟล์รายชื่อของคุณ)",
   "Roster athlete (optional)": "นักกีฬาในรายชื่อ (ไม่บังคับ)",
-  "A local roster athlete (this browser), not a connected app athlete.": "นักกีฬาในรายชื่อภายในเครื่อง (เบราว์เซอร์นี้) ไม่ใช่นักกีฬาที่เชื่อมต่อจากแอป"
+  "A local roster athlete (this browser), not a connected app athlete.": "นักกีฬาในรายชื่อภายในเครื่อง (เบราว์เซอร์นี้) ไม่ใช่นักกีฬาที่เชื่อมต่อจากแอป",
+  "Categories (up to 3, optional)": "หมวดหมู่ (สูงสุด 3, ไม่บังคับ)",
+  "No categories yet.": "ยังไม่มีหมวดหมู่"
 }

@@ -262,5 +262,7 @@
   "Your own colour-coded tags, fully editable": "색상으로 구분된 나만의 태그, 자유롭게 편집 가능",
   "Private to you, not shared with the athlete. Kept on this device (backs up with your roster file).": "본인 전용이며 선수와 공유되지 않습니다. 이 기기에 저장됩니다(로스터 파일과 함께 백업됨).",
   "Roster athlete (optional)": "로스터 선수(선택)",
-  "A local roster athlete (this browser), not a connected app athlete.": "이 브라우저의 로컬 로스터 선수이며, 앱에 연결된 선수가 아닙니다."
+  "A local roster athlete (this browser), not a connected app athlete.": "이 브라우저의 로컬 로스터 선수이며, 앱에 연결된 선수가 아닙니다.",
+  "Categories (up to 3, optional)": "카테고리 (최대 3개, 선택)",
+  "No categories yet.": "아직 카테고리가 없습니다."
 }

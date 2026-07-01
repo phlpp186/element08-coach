@@ -11,3 +11,16 @@ export function CatDot({ name, size = 9 }: { name?: string | null; size?: number
     />
   );
 }
+
+/** A row of dots, one per category (an exercise can carry up to 3). */
+export function CatDots({ names, size = 8 }: { names?: string[]; size?: number }) {
+  const list = names ?? [];
+  if (list.length === 0) return null;
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1">
+      {list.map((n, i) => (
+        <CatDot key={`${n}-${i}`} name={n} size={size} />
+      ))}
+    </span>
+  );
+}

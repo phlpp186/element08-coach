@@ -262,5 +262,7 @@
   "Your own colour-coded tags, fully editable": "自分専用の色分けタグ、自由に編集可能",
   "Private to you, not shared with the athlete. Kept on this device (backs up with your roster file).": "あなた専用で、アスリートには共有されません。この端末に保存されます（名簿ファイルと一緒にバックアップされます）。",
   "Roster athlete (optional)": "名簿のアスリート（任意）",
-  "A local roster athlete (this browser), not a connected app athlete.": "このブラウザのローカル名簿のアスリートです。アプリで接続されたアスリートではありません。"
+  "A local roster athlete (this browser), not a connected app athlete.": "このブラウザのローカル名簿のアスリートです。アプリで接続されたアスリートではありません。",
+  "Categories (up to 3, optional)": "カテゴリ（最大3つ、任意）",
+  "No categories yet.": "まだカテゴリがありません。"
 }

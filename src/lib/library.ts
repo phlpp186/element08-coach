@@ -14,11 +14,32 @@
 import { useSyncExternalStore } from 'react';
 import { uid } from './e08plan';
 
+/** Max categories an exercise can carry. */
+export const MAX_CATEGORIES = 3;
+
 export interface LibraryExercise {
   id: string;
   description: string;
-  /** A category name from the coach's list, or undefined (uncategorized). */
-  category?: string;
+  /** Up to MAX_CATEGORIES category names from the coach's list. Empty/undefined
+   *  = uncategorized. */
+  categories?: string[];
+}
+
+/** Trim, drop empties, de-dupe (case-insensitive), and cap at MAX_CATEGORIES. */
+function normCats(input: unknown): string[] {
+  const arr = Array.isArray(input) ? input : typeof input === 'string' && input ? [input] : [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const c of arr) {
+    const s = typeof c === 'string' ? c.trim() : '';
+    const key = s.toLowerCase();
+    if (s && !seen.has(key)) {
+      seen.add(key);
+      out.push(s);
+    }
+    if (out.length >= MAX_CATEGORIES) break;
+  }
+  return out;
 }
 
 /** A reusable, named group of exercises (referenced by id, so edits/renames to
@@ -46,11 +67,16 @@ function readExercises(): LibraryExercise[] {
     if (!Array.isArray(arr)) return [];
     return arr
       .filter((x): x is LibraryExercise => !!x && typeof (x as LibraryExercise).description === 'string')
-      .map((x) => ({
-        id: x.id || uid('lib'),
-        description: x.description,
-        category: typeof x.category === 'string' && x.category ? x.category : undefined,
-      }));
+      .map((x) => {
+        // Migrate the legacy single `category` string into the `categories` array.
+        const legacy = (x as { category?: unknown }).category;
+        const cats = normCats((x as LibraryExercise).categories ?? legacy);
+        return {
+          id: x.id || uid('lib'),
+          description: x.description,
+          ...(cats.length ? { categories: cats } : {}),
+        };
+      });
   } catch {
     return [];
   }
@@ -158,43 +184,51 @@ export function loadLibrary(): LibraryExercise[] {
 
 // ── exercise mutations ─────────────────────────────────────────────────────
 
-export function addExercise(description: string, category?: string): void {
+export function addExercise(description: string, categories?: string[]): void {
   const d = description.trim();
   if (!d) return;
-  commitExercises([...exercises, { id: uid('lib'), description: d, category: category || undefined }]);
+  const cats = normCats(categories);
+  commitExercises([...exercises, { id: uid('lib'), description: d, ...(cats.length ? { categories: cats } : {}) }]);
 }
 
 /** Bulk add (import), de-duped against existing descriptions (case-insensitive).
- *  Any non-empty category that isn't already known is added to the category list.
+ *  Any category that isn't already known is added to the category list.
  *  Returns how many fresh exercises were added. */
-export function addManyExercises(items: { description: string; category?: string }[]): number {
+export function addManyExercises(items: { description: string; categories?: string[] }[]): number {
   const seen = new Set(exercises.map((i) => i.description.toLowerCase()));
-  const newCats = new Set<string>();
+  const known = new Set(categories.map((c) => c.toLowerCase()));
+  const newCats: string[] = [];
   const fresh: LibraryExercise[] = [];
   for (const it of items) {
     const d = it.description.trim();
     if (!d || seen.has(d.toLowerCase())) continue;
     seen.add(d.toLowerCase());
-    const cat = it.category?.trim() || undefined;
-    if (cat && !categories.includes(cat)) newCats.add(cat);
-    fresh.push({ id: uid('lib'), description: d, category: cat });
+    const cats = normCats(it.categories);
+    for (const c of cats) {
+      if (!known.has(c.toLowerCase())) {
+        known.add(c.toLowerCase());
+        newCats.push(c);
+      }
+    }
+    fresh.push({ id: uid('lib'), description: d, ...(cats.length ? { categories: cats } : {}) });
   }
-  if (newCats.size) commitCategories([...categories, ...newCats]);
+  if (newCats.length) commitCategories([...categories, ...newCats]);
   if (fresh.length) commitExercises([...exercises, ...fresh]);
   return fresh.length;
 }
 
 export function updateExercise(id: string, patch: Partial<Omit<LibraryExercise, 'id'>>): void {
   commitExercises(
-    exercises.map((e) =>
-      e.id === id
-        ? {
-            ...e,
-            ...patch,
-            ...(patch.category !== undefined ? { category: patch.category || undefined } : {}),
-          }
-        : e,
-    ),
+    exercises.map((e) => {
+      if (e.id !== id) return e;
+      const next: LibraryExercise = { ...e, ...patch };
+      if (patch.categories !== undefined) {
+        const cats = normCats(patch.categories);
+        if (cats.length) next.categories = cats;
+        else delete next.categories;
+      }
+      return next;
+    }),
   );
 }
 
@@ -218,14 +252,29 @@ export function renameCategory(oldName: string, newName: string): void {
   if (!n || oldName === n) return;
   if (categories.some((c) => c.toLowerCase() === n.toLowerCase() && c !== oldName)) return;
   commitCategories(categories.map((c) => (c === oldName ? n : c)));
-  commitExercises(exercises.map((e) => (e.category === oldName ? { ...e, category: n } : e)));
+  commitExercises(
+    exercises.map((e) =>
+      e.categories?.includes(oldName)
+        ? { ...e, categories: e.categories.map((c) => (c === oldName ? n : c)) }
+        : e,
+    ),
+  );
 }
 
-/** Remove a category; exercises that used it become uncategorized. */
+/** Remove a category; it's dropped from any exercise that used it. */
 export function removeCategory(name: string): void {
   commitCategories(categories.filter((c) => c !== name));
-  if (exercises.some((e) => e.category === name)) {
-    commitExercises(exercises.map((e) => (e.category === name ? { ...e, category: undefined } : e)));
+  if (exercises.some((e) => e.categories?.includes(name))) {
+    commitExercises(
+      exercises.map((e) => {
+        if (!e.categories?.includes(name)) return e;
+        const cats = e.categories.filter((c) => c !== name);
+        const next: LibraryExercise = { ...e };
+        if (cats.length) next.categories = cats;
+        else delete next.categories;
+        return next;
+      }),
+    );
   }
 }
 
@@ -284,17 +333,22 @@ function splitCsvLine(line: string): string[] {
   return out;
 }
 
+/** Split a category cell into up to MAX_CATEGORIES names (separated by ; or /). */
+function parseCatCell(cell: string): string[] {
+  return normCats(cell.split(/[;/]/));
+}
+
 /** Parse a .csv or .xlsx into exercises: column 1 = description, optional column
- *  2 = category. SheetJS is loaded from a CDN on demand so it never bloats the
- *  normal bundle. */
-export async function parseExerciseFile(file: File): Promise<{ description: string; category?: string }[]> {
+ *  2 = categories (up to 3, separated by ; or /). SheetJS is loaded from a CDN on
+ *  demand so it never bloats the normal bundle. */
+export async function parseExerciseFile(file: File): Promise<{ description: string; categories?: string[] }[]> {
   const name = file.name.toLowerCase();
   if (name.endsWith('.csv') || file.type === 'text/csv') {
     const text = await file.text();
     return text
       .split(/\r?\n/)
       .map((l) => splitCsvLine(l))
-      .map((cols) => ({ description: (cols[0] ?? '').trim(), category: (cols[1] ?? '').trim() || undefined }))
+      .map((cols) => ({ description: (cols[0] ?? '').trim(), categories: parseCatCell(cols[1] ?? '') }))
       .filter((r) => r.description);
   }
   const xlsxUrl = 'https://esm.sh/xlsx@0.18.5';
@@ -308,15 +362,16 @@ export async function parseExerciseFile(file: File): Promise<{ description: stri
   return rows
     .map((r) => ({
       description: r && r[0] != null ? String(r[0]).trim() : '',
-      category: r && r[1] != null ? String(r[1]).trim() || undefined : undefined,
+      categories: r && r[1] != null ? parseCatCell(String(r[1])) : [],
     }))
     .filter((r) => r.description);
 }
 
-/** Download the library as a 2-column CSV (description, category) — re-importable. */
+/** Download the library as a 2-column CSV (description, categories joined by "; ")
+ *  — re-importable. */
 export function exportLibraryCsv(items: LibraryExercise[]): void {
   const esc = (s: string) => `"${s.replace(/"/g, '""')}"`;
-  const body = items.map((i) => `${esc(i.description)},${esc(i.category ?? '')}`).join('\n');
+  const body = items.map((i) => `${esc(i.description)},${esc((i.categories ?? []).join('; '))}`).join('\n');
   const blob = new Blob([body], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

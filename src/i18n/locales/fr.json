@@ -262,5 +262,7 @@
   "Your own colour-coded tags, fully editable": "Vos propres étiquettes colorées, entièrement modifiables",
   "Private to you, not shared with the athlete. Kept on this device (backs up with your roster file).": "Privé, non partagé avec l’athlète. Conservé sur cet appareil (sauvegardé avec votre fichier d’effectif).",
   "Roster athlete (optional)": "Athlète de l’effectif (optionnel)",
-  "A local roster athlete (this browser), not a connected app athlete.": "Un athlète de l’effectif local (ce navigateur), pas un athlète connecté de l’app."
+  "A local roster athlete (this browser), not a connected app athlete.": "Un athlète de l’effectif local (ce navigateur), pas un athlète connecté de l’app.",
+  "Categories (up to 3, optional)": "Catégories (jusqu’à 3, optionnel)",
+  "No categories yet.": "Aucune catégorie pour le moment."
 }

@@ -33,7 +33,8 @@ import {
 } from '../lib/library';
 import { useT } from '../i18n';
 import { categoryColor } from '../lib/categoryColor';
-import { CatDot } from '../components/CatDot';
+import { CatDot, CatDots } from '../components/CatDot';
+import { CategoryPicker } from '../components/CategoryPicker';
 
 /** Titled zone: an accent tick + heading + optional hint over a hairline rule,
  *  so each functional area reads as its own section. */
@@ -62,14 +63,15 @@ export function ExercisesView() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [draft, setDraft] = useState('');
-  const [draftCat, setDraftCat] = useState('');
+  const [draftCats, setDraftCats] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<string>('all'); // 'all' | 'uncat' | <category>
 
   const addDraft = () => {
     if (!draft.trim()) return;
-    addExercise(draft, draftCat || undefined);
+    addExercise(draft, draftCats);
     setDraft('');
+    setDraftCats([]);
   };
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -88,8 +90,8 @@ export function ExercisesView() {
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
     return exercises.filter((ex) => {
-      if (filter === 'uncat' && ex.category) return false;
-      if (filter !== 'all' && filter !== 'uncat' && ex.category !== filter) return false;
+      if (filter === 'uncat' && ex.categories?.length) return false;
+      if (filter !== 'all' && filter !== 'uncat' && !ex.categories?.includes(filter)) return false;
       if (q && !ex.description.toLowerCase().includes(q)) return false;
       return true;
     });
@@ -137,20 +139,18 @@ export function ExercisesView() {
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && addDraft()}
           />
-          <select className="field w-auto" value={draftCat} onChange={(e) => setDraftCat(e.target.value)}>
-            <option value="">{t('No category')}</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
           <button
             onClick={addDraft}
             className="glow-accent text-sm bg-accent text-ink rounded-lg px-4 font-heading tracking-wide"
           >
             {t('Add')}
           </button>
+          {categories.length > 0 && (
+            <div className="w-full space-y-1.5">
+              <span className="text-xs text-textDim">{t('Categories (up to 3, optional)')}</span>
+              <CategoryPicker selected={draftCats} categories={categories} onChange={setDraftCats} />
+            </div>
+          )}
         </div>
 
         {/* Search + filter */}
@@ -237,23 +237,28 @@ function ExerciseRow({ ex, categories }: { ex: LibraryExercise; categories: stri
   return (
     <div
       className="overflow-hidden rounded-lg border border-border bg-panel"
-      style={{ borderLeft: `3px solid ${categoryColor(ex.category)}` }}
+      style={{ borderLeft: `3px solid ${categoryColor(ex.categories?.[0])}` }}
     >
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-abyss/50"
       >
         <span className="min-w-0 flex-1 truncate text-text">{ex.description}</span>
-        <span
-          className="shrink-0 text-xs"
-          style={{ color: ex.category ? categoryColor(ex.category) : 'rgb(var(--c-textDim))' }}
-        >
-          {ex.category ?? t('Uncategorized')}
-        </span>
+        {ex.categories?.length ? (
+          <span className="flex shrink-0 flex-wrap items-center justify-end gap-x-2 gap-y-0.5">
+            {ex.categories.map((c) => (
+              <span key={c} className="text-xs" style={{ color: categoryColor(c) }}>
+                {c}
+              </span>
+            ))}
+          </span>
+        ) : (
+          <span className="shrink-0 text-xs text-textDim">{t('Uncategorized')}</span>
+        )}
         <span className="shrink-0 text-textDim">{open ? '▴' : '▾'}</span>
       </button>
       {open && (
-        <div className="space-y-2 border-t border-border px-3 py-3">
+        <div className="space-y-2.5 border-t border-border px-3 py-3">
           <input
             className="field"
             value={desc}
@@ -261,19 +266,15 @@ function ExerciseRow({ ex, categories }: { ex: LibraryExercise; categories: stri
             onBlur={commit}
             onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
           />
-          <div className="flex items-center gap-2">
-            <select
-              className="field w-auto"
-              value={ex.category ?? ''}
-              onChange={(e) => updateExercise(ex.id, { category: e.target.value || undefined })}
-            >
-              <option value="">{t('Uncategorized')}</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
+          <div className="space-y-1.5">
+            <span className="text-xs text-textDim">{t('Categories (up to 3, optional)')}</span>
+            <CategoryPicker
+              selected={ex.categories ?? []}
+              categories={categories}
+              onChange={(next) => updateExercise(ex.id, { categories: next })}
+            />
+          </div>
+          <div className="flex">
             <button
               onClick={() => removeExercise(ex.id)}
               className="ml-auto px-2 text-sm text-red hover:underline"
@@ -365,7 +366,7 @@ function BlockRow({
             {items.length > 0 && (
               <span className="flex items-center gap-1">
                 {items.slice(0, 8).map((ex) => (
-                  <CatDot key={ex.id} name={ex.category} size={7} />
+                  <CatDot key={ex.id} name={ex.categories?.[0]} size={7} />
                 ))}
               </span>
             )}
@@ -393,7 +394,7 @@ function BlockRow({
                   key={ex.id}
                   className="group flex items-center gap-1.5 rounded-full border border-border bg-panel px-2.5 py-1 text-sm"
                 >
-                  <CatDot name={ex.category} size={7} />
+                  <CatDots names={ex.categories} size={7} />
                   {ex.description}
                   <button
                     onClick={() => removeExerciseFromBlock(block.id, ex.id)}
@@ -459,7 +460,7 @@ function AddToBlock({
                 }}
                 className="flex w-full items-center gap-2 text-left px-3 py-1.5 text-sm text-textDim hover:bg-accent/10 hover:text-text"
               >
-                <CatDot name={e.category} size={7} />
+                <CatDots names={e.categories} size={7} />
                 {e.description}
               </button>
             </li>

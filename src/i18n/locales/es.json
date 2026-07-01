@@ -262,5 +262,7 @@
   "Your own colour-coded tags, fully editable": "Tus propias etiquetas con color, totalmente editables",
   "Private to you, not shared with the athlete. Kept on this device (backs up with your roster file).": "Privado para ti, no se comparte con el atleta. Guardado en este dispositivo (se respalda con tu archivo de plantilla).",
   "Roster athlete (optional)": "Atleta de la plantilla (opcional)",
-  "A local roster athlete (this browser), not a connected app athlete.": "Un atleta de la plantilla local (este navegador), no un atleta conectado de la app."
+  "A local roster athlete (this browser), not a connected app athlete.": "Un atleta de la plantilla local (este navegador), no un atleta conectado de la app.",
+  "Categories (up to 3, optional)": "Categorías (hasta 3, opcional)",
+  "No categories yet.": "Aún no hay categorías."
 }

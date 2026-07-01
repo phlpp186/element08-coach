@@ -3,7 +3,7 @@ import { blockExercises, useBlocks, useCategories, useExercises } from '../lib/l
 import { navigate } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
 import { categoryColor } from '../lib/categoryColor';
-import { CatDot } from './CatDot';
+import { CatDots } from './CatDot';
 
 interface AssignTarget {
   id: string;
@@ -35,14 +35,14 @@ export function ExercisePalette({
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
     return exercises.filter((ex) => {
-      if (filter !== 'all' && ex.category !== filter) return false;
+      if (filter !== 'all' && !ex.categories?.includes(filter)) return false;
       if (q && !ex.description.toLowerCase().includes(q)) return false;
       return true;
     });
   }, [exercises, filter, search]);
 
   const usedCats = useMemo(
-    () => categories.filter((c) => exercises.some((e) => e.category === c)),
+    () => categories.filter((c) => exercises.some((e) => e.categories?.includes(c))),
     [categories, exercises],
   );
   const nonEmptyBlocks = useMemo(() => blocks.filter((b) => b.exerciseIds.length > 0), [blocks]);
@@ -148,7 +148,7 @@ export function ExercisePalette({
                         className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing"
                         title={t('Drag into a session, or click to add to the open session')}
                       >
-                        {ex.category && <CatDot name={ex.category} size={7} />}
+                        <CatDots names={ex.categories} size={7} />
                         {ex.description}
                       </span>
                       <button

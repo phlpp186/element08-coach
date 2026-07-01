@@ -262,5 +262,7 @@
   "Your own colour-coded tags, fully editable": "你自己的彩色标签，可完全编辑",
   "Private to you, not shared with the athlete. Kept on this device (backs up with your roster file).": "仅你可见，不与运动员共享。保存在本设备（随名单文件一起备份）。",
   "Roster athlete (optional)": "名单运动员（可选）",
-  "A local roster athlete (this browser), not a connected app athlete.": "本浏览器的本地名单运动员，而非已连接的应用运动员。"
+  "A local roster athlete (this browser), not a connected app athlete.": "本浏览器的本地名单运动员，而非已连接的应用运动员。",
+  "Categories (up to 3, optional)": "类别（最多3个，可选）",
+  "No categories yet.": "还没有类别。"
 }
