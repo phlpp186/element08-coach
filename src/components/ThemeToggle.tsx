@@ -3,14 +3,14 @@ import { useT } from '../i18n';
 
 const KEY = 'element08.theme';
 
-type Theme = 'dark' | 'light' | 'neon';
-const ORDER: Theme[] = ['dark', 'light', 'neon'];
-const LABEL: Record<Theme, string> = { dark: 'Dark', light: 'Light', neon: 'Neon' };
+type Theme = 'dark' | 'light' | 'sky' | 'neon';
+const ORDER: Theme[] = ['dark', 'light', 'sky', 'neon'];
+const LABEL: Record<Theme, string> = { dark: 'Dark', light: 'Light', sky: 'Sky', neon: 'Neon' };
 
 function readTheme(): Theme {
   try {
     const v = localStorage.getItem(KEY);
-    return v === 'light' || v === 'neon' ? v : 'dark';
+    return v === 'light' || v === 'neon' || v === 'sky' ? v : 'dark';
   } catch {
     return 'dark';
   }
@@ -20,6 +20,7 @@ function applyTheme(t: Theme) {
   const root = document.documentElement;
   root.classList.toggle('light', t === 'light');
   root.classList.toggle('neon', t === 'neon');
+  root.classList.toggle('sky', t === 'sky');
 }
 
 /** Floating theme switch that cycles Dark → Light → Neon. Toggles the matching
@@ -47,8 +48,34 @@ export function ThemeToggle() {
       title={`${t('Theme:')} ${LABEL[theme]}, ${t('switch to')} ${LABEL[next]}`}
       className="fixed right-4 top-4 z-50 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-panel/80 text-textDim backdrop-blur transition-colors hover:border-accent hover:text-accent"
     >
-      {theme === 'light' ? <SunIcon /> : theme === 'neon' ? <BoltIcon /> : <MoonIcon />}
+      {theme === 'light' ? (
+        <SunIcon />
+      ) : theme === 'sky' ? (
+        <DropIcon />
+      ) : theme === 'neon' ? (
+        <BoltIcon />
+      ) : (
+        <MoonIcon />
+      )}
     </button>
+  );
+}
+
+function DropIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 2.5C12 2.5 5 10 5 14.5a7 7 0 0 0 14 0C19 10 12 2.5 12 2.5z" />
+    </svg>
   );
 }
 

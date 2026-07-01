@@ -153,7 +153,7 @@ export function ExercisesView() {
 
       <CategoryManager categories={categories} />
 
-      <BlockManager blocks={blocks} exercises={exercises} categories={categories} />
+      <BlockManager blocks={blocks} exercises={exercises} />
 
       <Section title={t('Exercise library')} hint={`${exercises.length} ${exercises.length === 1 ? t('exercise') : t('exercises')}`}>
         {/* Add to library */}
@@ -249,8 +249,11 @@ function FilterPill({
   );
 }
 
+/** Compact one-line card (category-coloured left edge + description + category
+ *  label). Click to expand the inline editor (description, category, delete). */
 function ExerciseRow({ ex, categories }: { ex: LibraryExercise; categories: string[] }) {
   const t = useT();
+  const [open, setOpen] = useState(false);
   const [desc, setDesc] = useState(ex.description);
 
   const commit = () => {
@@ -261,44 +264,59 @@ function ExerciseRow({ ex, categories }: { ex: LibraryExercise; categories: stri
 
   return (
     <div
-      className="flex flex-wrap items-center gap-2.5 rounded-lg border border-border bg-panel px-3 py-2"
+      className="overflow-hidden rounded-lg border border-border bg-panel"
       style={{ borderLeft: `3px solid ${categoryColor(ex.category)}` }}
     >
-      <input
-        className="field flex-1 min-w-48"
-        value={desc}
-        onChange={(e) => setDesc(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-      />
-      <select
-        className="field w-auto"
-        value={ex.category ?? ''}
-        onChange={(e) => updateExercise(ex.id, { category: e.target.value || undefined })}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-abyss/50"
       >
-        <option value="">{t('Uncategorized')}</option>
-        {categories.map((c) => (
-          <option key={c} value={c}>
-            {c}
-          </option>
-        ))}
-      </select>
-      <button onClick={() => removeExercise(ex.id)} className="text-red text-sm px-1" title={t('Remove')}>
-        ✕
+        <span className="min-w-0 flex-1 truncate text-text">{ex.description}</span>
+        <span
+          className="shrink-0 text-xs"
+          style={{ color: ex.category ? categoryColor(ex.category) : 'rgb(var(--c-textDim))' }}
+        >
+          {ex.category ?? t('Uncategorized')}
+        </span>
+        <span className="shrink-0 text-textDim">{open ? '▴' : '▾'}</span>
       </button>
+      {open && (
+        <div className="space-y-2 border-t border-border px-3 py-3">
+          <input
+            className="field"
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            onBlur={commit}
+            onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+          />
+          <div className="flex items-center gap-2">
+            <select
+              className="field w-auto"
+              value={ex.category ?? ''}
+              onChange={(e) => updateExercise(ex.id, { category: e.target.value || undefined })}
+            >
+              <option value="">{t('Uncategorized')}</option>
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => removeExercise(ex.id)}
+              className="ml-auto px-2 text-sm text-red hover:underline"
+              title={t('Remove')}
+            >
+              {t('Remove')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function BlockManager({
-  blocks,
-  exercises,
-  categories,
-}: {
-  blocks: ExerciseBlock[];
-  exercises: LibraryExercise[];
-  categories: string[];
-}) {
+function BlockManager({ blocks, exercises }: { blocks: ExerciseBlock[]; exercises: LibraryExercise[] }) {
   const t = useT();
   const [draft, setDraft] = useState('');
   const create = () => {
@@ -329,9 +347,9 @@ function BlockManager({
           {t('No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.')}
         </p>
       ) : (
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {blocks.map((b, i) => (
-            <BlockRow key={b.id} block={b} index={i} exercises={exercises} categories={categories} />
+            <BlockRow key={b.id} block={b} index={i} exercises={exercises} />
           ))}
         </div>
       )}
@@ -339,6 +357,9 @@ function BlockManager({
   );
 }
 
+/** Collapsed by default (name + exercise-count + a category-dot preview), like
+ *  an athlete card, so a long block list stays scannable. Click to expand the
+ *  editor (rename, chips, add-to-block, delete). */
 function BlockRow({
   block,
   index,
@@ -347,9 +368,9 @@ function BlockRow({
   block: ExerciseBlock;
   index: number;
   exercises: LibraryExercise[];
-  categories: string[];
 }) {
   const t = useT();
+  const [open, setOpen] = useState(false);
   const [name, setName] = useState(block.name);
   const items = block.exerciseIds
     .map((id) => exercises.find((e) => e.id === id))
@@ -357,52 +378,71 @@ function BlockRow({
   const inBlock = new Set(block.exerciseIds);
 
   return (
-    <div className="rounded-lg border border-border bg-abyss p-3 space-y-2.5">
-      <div className="flex items-center gap-2">
-        <span className="shrink-0 font-heading text-xs text-textDim">{index + 1}</span>
-        <input
-          className="field flex-1 min-w-40 font-heading"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onBlur={() => {
-            const n = name.trim();
-            if (n && n !== block.name) renameBlock(block.id, n);
-            else if (!n) setName(block.name);
-          }}
-          onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-        />
-        <span className="rounded-full border border-border px-2 py-0.5 text-xs text-textDim">
-          {items.length}
-        </span>
-        <button
-          onClick={() => confirm(`${t('Delete block')} "${block.name}"?`) && removeBlock(block.id)}
-          className="text-red text-sm px-1"
-          title={t('Delete block')}
-        >
-          ✕
-        </button>
-      </div>
-      {items.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {items.map((ex) => (
-            <span
-              key={ex.id}
-              className="group flex items-center gap-1.5 rounded-full border border-border bg-panel px-2.5 py-1 text-sm"
-            >
-              <CatDot name={ex.category} size={7} />
-              {ex.description}
-              <button
-                onClick={() => removeExerciseFromBlock(block.id, ex.id)}
-                className="text-textDim opacity-0 group-hover:opacity-100 hover:text-red"
-                title={t('Remove from block')}
-              >
-                ✕
-              </button>
+    <div className="overflow-hidden rounded-lg border border-border bg-abyss">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-panel/40"
+      >
+        <span className="w-4 shrink-0 font-heading text-xs text-textDim">{index + 1}</span>
+        <div className="min-w-0 flex-1">
+          <div className="truncate font-heading text-text">{block.name}</div>
+          <div className="mt-0.5 flex items-center gap-2 text-xs text-textDim">
+            <span>
+              {items.length} {items.length === 1 ? t('exercise') : t('exercises')}
             </span>
-          ))}
+            {items.length > 0 && (
+              <span className="flex items-center gap-1">
+                {items.slice(0, 8).map((ex) => (
+                  <CatDot key={ex.id} name={ex.category} size={7} />
+                ))}
+              </span>
+            )}
+          </div>
+        </div>
+        <span className="shrink-0 text-textDim">{open ? '▴' : '▾'}</span>
+      </button>
+      {open && (
+        <div className="space-y-2.5 border-t border-border px-3 py-3">
+          <input
+            className="field font-heading"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => {
+              const n = name.trim();
+              if (n && n !== block.name) renameBlock(block.id, n);
+              else if (!n) setName(block.name);
+            }}
+            onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+          />
+          {items.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {items.map((ex) => (
+                <span
+                  key={ex.id}
+                  className="group flex items-center gap-1.5 rounded-full border border-border bg-panel px-2.5 py-1 text-sm"
+                >
+                  <CatDot name={ex.category} size={7} />
+                  {ex.description}
+                  <button
+                    onClick={() => removeExerciseFromBlock(block.id, ex.id)}
+                    className="text-textDim hover:text-red"
+                    title={t('Remove from block')}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <AddToBlock blockId={block.id} exercises={exercises} inBlock={inBlock} />
+          <button
+            onClick={() => confirm(`${t('Delete block')} "${block.name}"?`) && removeBlock(block.id)}
+            className="text-red text-xs hover:underline"
+          >
+            {t('Delete block')}
+          </button>
         </div>
       )}
-      <AddToBlock blockId={block.id} exercises={exercises} inBlock={inBlock} />
     </div>
   );
 }

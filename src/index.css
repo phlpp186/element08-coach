@@ -70,6 +70,28 @@
   color-scheme: dark;
 }
 
+:root.sky {
+  /* Sky — a light, airy blue theme: cool blue-white surfaces with a clear blue
+   * accent. A brighter, cooler sibling to the warm Chalk light theme. Because
+   * the accent is a saturated blue, `ink` (on-accent text) is LIGHT here, unlike
+   * the other light theme where it's dark. */
+  --c-deep: 226 237 249; /* page — soft sky blue */
+  --c-abyss: 239 246 253; /* fields — a step lighter */
+  --c-panel: 251 253 255; /* cards — near-white, faint blue */
+  --c-border: 191 211 233;
+  --c-text: 23 43 66; /* deep navy slate */
+  --c-textDim: 88 111 138;
+  --c-accent: 37 133 224; /* clear blue */
+  --c-highlight: 232 67 147;
+  --c-recover: 46 168 92;
+  --c-amber: 190 128 0;
+  --c-red: 198 40 40;
+  --c-ink: 244 249 255; /* light text on the saturated-blue accent fill */
+  --glow-1: 37 133 224; /* blue, top */
+  --glow-2: 120 190 245; /* light blue, lower */
+  color-scheme: light;
+}
+
 html,
 body,
 #root {
@@ -92,7 +114,8 @@ body::before {
     radial-gradient(60% 50% at 15% -5%, rgb(var(--glow-1) / 0.1), transparent 70%),
     radial-gradient(55% 45% at 100% 8%, rgb(var(--glow-2) / 0.07), transparent 70%);
 }
-:root.light body::before {
+:root.light body::before,
+:root.sky body::before {
   background:
     radial-gradient(60% 50% at 15% -5%, rgb(var(--glow-1) / 0.12), transparent 70%),
     radial-gradient(55% 45% at 100% 8%, rgb(var(--glow-2) / 0.08), transparent 70%);
@@ -183,7 +206,8 @@ h3 {
     inset 0 1px 0 rgb(255 255 255 / 0.06),
     0 10px 30px -16px rgb(0 0 0 / 0.55);
 }
-:root.light .glass-card {
+:root.light .glass-card,
+:root.sky .glass-card {
   background: rgb(var(--c-panel) / 0.7);
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.7),
