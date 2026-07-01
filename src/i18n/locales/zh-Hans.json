@@ -224,7 +224,7 @@
   "Categories": "分类",
   "Could not read that file. Use a .csv or .xlsx with exercises in the first column (category optional in the second).": "无法读取该文件。请使用第一列为训练项的 .csv 或 .xlsx 文件（第二列可选填分类）。",
   "Delete category": "删除分类",
-  "Exercise library": "训练库",
+  "Exercise library": "练习库",
   "Exercises": "训练项",
   "Exercises keep their description but become uncategorized.": "训练项会保留其描述，但将变为未分类。",
   "Manage exercises": "管理训练项",
@@ -258,5 +258,6 @@
   "Day": "日",
   "Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.": "将标签拖入课程，点击添加到已打开的课程，或点击 ⋯ 分配到多节课程。",
   "Select all": "全选",
-  "Week": "周"
+  "Week": "周",
+  "Your own colour-coded tags, fully editable": "你自己的彩色标签，可完全编辑"
 }

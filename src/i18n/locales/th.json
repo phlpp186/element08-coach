@@ -197,7 +197,6 @@
   "Taper": "Taper",
   "Peak / Comp": "Peak / Comp",
   "Transition": "Transition",
-  "weeks": "สัปดาห์",
   "day": "วัน",
   "Add a plan name.": "เพิ่มชื่อแผน",
   "Add your coach name (shown to the athlete as the author).": "เพิ่มชื่อโค้ชของคุณ (แสดงต่อนักกีฬาในฐานะผู้สร้าง)",
@@ -225,7 +224,7 @@
   "Categories": "หมวดหมู่",
   "Could not read that file. Use a .csv or .xlsx with exercises in the first column (category optional in the second).": "อ่านไฟล์นั้นไม่ได้ ใช้ไฟล์ .csv หรือ .xlsx ที่มีแบบฝึกในคอลัมน์แรก (หมวดหมู่ไม่บังคับในคอลัมน์ที่สอง)",
   "Delete category": "ลบหมวดหมู่",
-  "Exercise library": "คลังแบบฝึก",
+  "Exercise library": "คลังท่าฝึก",
   "Exercises": "แบบฝึก",
   "Exercises keep their description but become uncategorized.": "แบบฝึกจะยังคงคำอธิบายไว้แต่จะไม่มีหมวดหมู่",
   "Manage exercises": "จัดการแบบฝึก",
@@ -259,5 +258,6 @@
   "Day": "วัน",
   "Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.": "ลากชิปลงในเซสชัน คลิกเพื่อเพิ่มลงในเซสชันที่เปิดอยู่ หรือ ⋯ เพื่อมอบหมายให้หลายเซสชัน",
   "Select all": "เลือกทั้งหมด",
-  "Week": "สัปดาห์"
+  "Week": "สัปดาห์",
+  "Your own colour-coded tags, fully editable": "แท็กสีของคุณเอง แก้ไขได้ทั้งหมด"
 }

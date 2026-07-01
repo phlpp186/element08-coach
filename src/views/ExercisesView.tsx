@@ -1,9 +1,15 @@
 /**
  * ExercisesView — the coach's exercise library home. Add free-text exercises,
- * assign an optional category (the coach's own, editable set), search/filter,
- * and import/export. Exercises are assigned into plan sessions from the builder.
+ * assign an optional (colour-coded) category, group them into reusable Blocks,
+ * search/filter, and import/export. Exercises are dropped into plan sessions
+ * from the builder.
+ *
+ * Layout: three clearly-separated zones — CATEGORIES (the vocabulary), BLOCKS
+ * (reusable groups), and EXERCISE LIBRARY (the list + its add bar). Each zone
+ * has a titled header, and the surface ramp (page → recessed item → raised pill)
+ * plus category colour dots keep the levels distinct.
  */
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   addBlock,
   addCategory,
@@ -26,6 +32,55 @@ import {
   type LibraryExercise,
 } from '../lib/library';
 import { useT } from '../i18n';
+
+// Deterministic colour per category name — theme-agnostic hues that read on
+// dark + light. Uncategorized falls back to dim grey.
+const CAT_HUES = [
+  '#5bcdfa',
+  '#66c87c',
+  '#ffb236',
+  '#ff6fa5',
+  '#b98cff',
+  '#3fd0c0',
+  '#f6825b',
+  '#9ccc65',
+  '#e6c84e',
+  '#7aa7ff',
+];
+function categoryColor(name?: string | null): string {
+  if (!name) return 'rgb(var(--c-textDim))';
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return CAT_HUES[h % CAT_HUES.length];
+}
+function CatDot({ name, size = 9 }: { name?: string | null; size?: number }) {
+  return (
+    <span
+      aria-hidden
+      className="inline-block shrink-0 rounded-full"
+      style={{ width: size, height: size, backgroundColor: categoryColor(name) }}
+    />
+  );
+}
+
+/** Titled zone: an accent tick + heading + optional hint over a hairline rule,
+ *  so each functional area reads as its own section. */
+function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+  return (
+    <section className="space-y-3">
+      <div className="flex items-baseline justify-between gap-3 border-b border-border/60 pb-2">
+        <div className="flex items-center gap-2.5">
+          <span aria-hidden className="h-4 w-1 rounded-full bg-accent" />
+          <h3 className="font-heading text-base tracking-wide text-text">{title}</h3>
+        </div>
+        {hint && <span className="shrink-0 text-right text-xs text-textDim">{hint}</span>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+const CREATE_BAR = 'flex flex-wrap gap-2 rounded-xl border border-accent/25 bg-accent/5 p-3';
 
 export function ExercisesView() {
   const t = useT();
@@ -69,10 +124,10 @@ export function ExercisesView() {
   }, [exercises, filter, search]);
 
   return (
-    <main className="mx-auto max-w-4xl px-5 py-6 space-y-6">
+    <main className="mx-auto max-w-4xl px-5 py-6 space-y-9">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-lg">{t('Exercises')}</h2>
+          <h2 className="text-xl">{t('Exercises')}</h2>
           <p className="text-textDim text-sm">
             {t('Your reusable exercise library. Assign them into plan sessions from the builder.')}
           </p>
@@ -98,11 +153,11 @@ export function ExercisesView() {
 
       <CategoryManager categories={categories} />
 
-      <BlockManager blocks={blocks} exercises={exercises} />
+      <BlockManager blocks={blocks} exercises={exercises} categories={categories} />
 
-      {/* Add exercise */}
-      <div className="glass-card rounded-xl p-4">
-        <div className="flex flex-wrap gap-2">
+      <Section title={t('Exercise library')} hint={`${exercises.length} ${exercises.length === 1 ? t('exercise') : t('exercises')}`}>
+        {/* Add to library */}
+        <div className={CREATE_BAR}>
           <input
             className="field flex-1 min-w-48"
             placeholder={t('Add an exercise, e.g. 4×50m bi-fins, 3 min rest')}
@@ -125,45 +180,45 @@ export function ExercisesView() {
             {t('Add')}
           </button>
         </div>
-      </div>
 
-      {/* Filter */}
-      {exercises.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            className="field w-auto flex-1 min-w-40"
-            placeholder={t('Search exercises')}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-          <FilterPill active={filter === 'all'} onClick={() => setFilter('all')}>
-            {t('All')}
-          </FilterPill>
-          {categories.map((c) => (
-            <FilterPill key={c} active={filter === c} onClick={() => setFilter(c)}>
-              {c}
+        {/* Search + filter */}
+        {exercises.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              className="field w-auto flex-1 min-w-40"
+              placeholder={t('Search exercises')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <FilterPill active={filter === 'all'} onClick={() => setFilter('all')}>
+              {t('All')}
             </FilterPill>
-          ))}
-          <FilterPill active={filter === 'uncat'} onClick={() => setFilter('uncat')}>
-            {t('Uncategorized')}
-          </FilterPill>
-        </div>
-      )}
+            {categories.map((c) => (
+              <FilterPill key={c} color={categoryColor(c)} active={filter === c} onClick={() => setFilter(c)}>
+                {c}
+              </FilterPill>
+            ))}
+            <FilterPill active={filter === 'uncat'} onClick={() => setFilter('uncat')}>
+              {t('Uncategorized')}
+            </FilterPill>
+          </div>
+        )}
 
-      {/* List */}
-      {exercises.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-10 text-center text-textDim">
-          {t('No exercises yet. Add one above, or import a spreadsheet.')}
-        </div>
-      ) : shown.length === 0 ? (
-        <p className="text-textDim text-sm">{t('No exercises match.')}</p>
-      ) : (
-        <div className="space-y-2">
-          {shown.map((ex) => (
-            <ExerciseRow key={ex.id} ex={ex} categories={categories} />
-          ))}
-        </div>
-      )}
+        {/* List */}
+        {exercises.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border p-10 text-center text-textDim">
+            {t('No exercises yet. Add one above, or import a spreadsheet.')}
+          </div>
+        ) : shown.length === 0 ? (
+          <p className="text-textDim text-sm">{t('No exercises match.')}</p>
+        ) : (
+          <div className="space-y-2">
+            {shown.map((ex) => (
+              <ExerciseRow key={ex.id} ex={ex} categories={categories} />
+            ))}
+          </div>
+        )}
+      </Section>
     </main>
   );
 }
@@ -171,19 +226,24 @@ export function ExercisesView() {
 function FilterPill({
   active,
   onClick,
+  color,
   children,
 }: {
   active: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  color?: string;
+  children: ReactNode;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
+      className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors ${
         active ? 'border-accent bg-accent/10 text-accent' : 'border-border text-textDim hover:border-accent hover:text-text'
       }`}
     >
+      {color && (
+        <span aria-hidden className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+      )}
       {children}
     </button>
   );
@@ -200,7 +260,10 @@ function ExerciseRow({ ex, categories }: { ex: LibraryExercise; categories: stri
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-panel px-3 py-2">
+    <div
+      className="flex flex-wrap items-center gap-2.5 rounded-lg border border-border bg-panel px-3 py-2"
+      style={{ borderLeft: `3px solid ${categoryColor(ex.category)}` }}
+    >
       <input
         className="field flex-1 min-w-48"
         value={desc}
@@ -227,7 +290,15 @@ function ExerciseRow({ ex, categories }: { ex: LibraryExercise; categories: stri
   );
 }
 
-function BlockManager({ blocks, exercises }: { blocks: ExerciseBlock[]; exercises: LibraryExercise[] }) {
+function BlockManager({
+  blocks,
+  exercises,
+  categories,
+}: {
+  blocks: ExerciseBlock[];
+  exercises: LibraryExercise[];
+  categories: string[];
+}) {
   const t = useT();
   const [draft, setDraft] = useState('');
   const create = () => {
@@ -237,12 +308,8 @@ function BlockManager({ blocks, exercises }: { blocks: ExerciseBlock[]; exercise
     }
   };
   return (
-    <div className="glass-card rounded-xl p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-heading tracking-wide text-text">{t('Blocks')}</h3>
-        <span className="text-textDim text-xs">{t('Reusable groups you drop into a session in one click')}</span>
-      </div>
-      <div className="flex gap-2">
+    <Section title={t('Blocks')} hint={t('Reusable groups you drop into a session in one click')}>
+      <div className={CREATE_BAR}>
         <input
           className="field flex-1 min-w-48"
           placeholder={t('New block name, e.g. CO₂ set')}
@@ -250,7 +317,10 @@ function BlockManager({ blocks, exercises }: { blocks: ExerciseBlock[]; exercise
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && create()}
         />
-        <button onClick={create} className="text-sm text-accent border border-border rounded-lg px-4 hover:border-accent">
+        <button
+          onClick={create}
+          className="text-sm text-accent border border-accent/60 rounded-lg px-4 hover:bg-accent/10"
+        >
           {t('Add block')}
         </button>
       </div>
@@ -259,17 +329,26 @@ function BlockManager({ blocks, exercises }: { blocks: ExerciseBlock[]; exercise
           {t('No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.')}
         </p>
       ) : (
-        <div className="space-y-2">
-          {blocks.map((b) => (
-            <BlockRow key={b.id} block={b} exercises={exercises} />
+        <div className="space-y-2.5">
+          {blocks.map((b, i) => (
+            <BlockRow key={b.id} block={b} index={i} exercises={exercises} categories={categories} />
           ))}
         </div>
       )}
-    </div>
+    </Section>
   );
 }
 
-function BlockRow({ block, exercises }: { block: ExerciseBlock; exercises: LibraryExercise[] }) {
+function BlockRow({
+  block,
+  index,
+  exercises,
+}: {
+  block: ExerciseBlock;
+  index: number;
+  exercises: LibraryExercise[];
+  categories: string[];
+}) {
   const t = useT();
   const [name, setName] = useState(block.name);
   const items = block.exerciseIds
@@ -278,10 +357,11 @@ function BlockRow({ block, exercises }: { block: ExerciseBlock; exercises: Libra
   const inBlock = new Set(block.exerciseIds);
 
   return (
-    <div className="rounded-lg border border-border bg-panel p-3 space-y-2">
+    <div className="rounded-lg border border-border bg-abyss p-3 space-y-2.5">
       <div className="flex items-center gap-2">
+        <span className="shrink-0 font-heading text-xs text-textDim">{index + 1}</span>
         <input
-          className="field flex-1 min-w-40"
+          className="field flex-1 min-w-40 font-heading"
           value={name}
           onChange={(e) => setName(e.target.value)}
           onBlur={() => {
@@ -291,7 +371,9 @@ function BlockRow({ block, exercises }: { block: ExerciseBlock; exercises: Libra
           }}
           onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
         />
-        <span className="text-textDim text-xs">{items.length}</span>
+        <span className="rounded-full border border-border px-2 py-0.5 text-xs text-textDim">
+          {items.length}
+        </span>
         <button
           onClick={() => confirm(`${t('Delete block')} "${block.name}"?`) && removeBlock(block.id)}
           className="text-red text-sm px-1"
@@ -305,8 +387,9 @@ function BlockRow({ block, exercises }: { block: ExerciseBlock; exercises: Libra
           {items.map((ex) => (
             <span
               key={ex.id}
-              className="group flex items-center gap-1.5 rounded-lg border border-border bg-abyss px-2.5 py-1 text-sm"
+              className="group flex items-center gap-1.5 rounded-full border border-border bg-panel px-2.5 py-1 text-sm"
             >
+              <CatDot name={ex.category} size={7} />
               {ex.description}
               <button
                 onClick={() => removeExerciseFromBlock(block.id, ex.id)}
@@ -362,8 +445,9 @@ function AddToBlock({
                   addExerciseToBlock(blockId, e.id);
                   setQ('');
                 }}
-                className="block w-full text-left px-3 py-1.5 text-sm text-textDim hover:bg-accent/10 hover:text-text"
+                className="flex w-full items-center gap-2 text-left px-3 py-1.5 text-sm text-textDim hover:bg-accent/10 hover:text-text"
               >
+                <CatDot name={e.category} size={7} />
                 {e.description}
               </button>
             </li>
@@ -401,11 +485,7 @@ function CategoryManager({ categories }: { categories: string[] }) {
   };
 
   return (
-    <div className="glass-card rounded-xl p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-heading tracking-wide text-text">{t('Categories')}</h3>
-        <span className="text-textDim text-xs">{t('Your own system, fully editable')}</span>
-      </div>
+    <Section title={t('Categories')} hint={t('Your own colour-coded tags, fully editable')}>
       <div className="flex flex-wrap items-center gap-2">
         {categories.map((c) =>
           editing === c ? (
@@ -424,8 +504,9 @@ function CategoryManager({ categories }: { categories: string[] }) {
           ) : (
             <span
               key={c}
-              className="group flex items-center gap-1.5 rounded-lg border border-border bg-abyss px-2.5 py-1.5 text-sm"
+              className="group flex items-center gap-1.5 rounded-full border border-border bg-abyss px-2.5 py-1.5 text-sm"
             >
+              <CatDot name={c} />
               {c}
               <button
                 onClick={() => startEdit(c)}
@@ -453,6 +534,6 @@ function CategoryManager({ categories }: { categories: string[] }) {
           onBlur={add}
         />
       </div>
-    </div>
+    </Section>
   );
 }

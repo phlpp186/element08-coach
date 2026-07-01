@@ -197,9 +197,7 @@
   "Taper": "테이퍼",
   "Peak / Comp": "피크 / 대회",
   "Transition": "전환",
-  "weeks": "주",
   "day": "일",
-  "days": "일",
   "Add a plan name.": "플랜 이름을 추가하세요.",
   "Add your coach name (shown to the athlete as the author).": "코치 이름을 추가하세요 (선수에게 작성자로 표시됩니다).",
   "Pick a start date.": "시작일을 선택하세요.",
@@ -260,5 +258,6 @@
   "Day": "일",
   "Drag a chip into a session, click to add to the open one, or ⋯ to assign to many.": "칩을 세션으로 드래그하거나, 클릭하여 열린 세션에 추가하거나, ⋯로 여러 세션에 배정하세요.",
   "Select all": "모두 선택",
-  "Week": "주"
+  "Week": "주",
+  "Your own colour-coded tags, fully editable": "색상으로 구분된 나만의 태그, 자유롭게 편집 가능"
 }
