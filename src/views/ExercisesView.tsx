@@ -438,7 +438,10 @@ function AddToBlock({
   const [focused, setFocused] = useState(false);
   const matches = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return exercises.filter((e) => !inBlock.has(e.id) && (!s || e.description.toLowerCase().includes(s))).slice(0, 8);
+    // No hard cap on suggestions (was .slice(0, 8), which hid a coach's
+    // library exercises past the first 8). Keep a generous bound for perf; the
+    // dropdown scrolls (max-h + overflow-auto) so a long list stays usable.
+    return exercises.filter((e) => !inBlock.has(e.id) && (!s || e.description.toLowerCase().includes(s))).slice(0, 50);
   }, [q, exercises, inBlock]);
   const show = focused && matches.length > 0;
 
@@ -453,7 +456,7 @@ function AddToBlock({
         onBlur={() => setTimeout(() => setFocused(false), 120)}
       />
       {show && (
-        <ul className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-border bg-panel shadow-lg max-h-52 overflow-auto">
+        <ul className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-border bg-panel shadow-lg max-h-72 overflow-auto">
           {matches.map((e) => (
             <li key={e.id}>
               <button
