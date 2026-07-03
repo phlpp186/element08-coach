@@ -47,8 +47,14 @@ export function AssignToConnectedButton({
       const defId = link?.defId ?? Date.now() + Math.floor(Math.random() * 1000);
       const definition = planFileToDefinition(file, defId);
       let cloudId = link?.cloudPlanId;
-      if (cloudId) await updatePlan(cloudId, { title: file.metadata.title, definition });
-      else cloudId = (await createPlan(file.metadata.title, definition)).id;
+      if (cloudId) {
+        // The linked cloud plan may have been deleted (stale local link) — updatePlan then
+        // matches 0 rows and returns null. Recreate it instead of erroring ("Cannot coerce
+        // the result to a single JSON object"). Server-side defId dedup avoids a duplicate.
+        const updated = await updatePlan(cloudId, { title: file.metadata.title, definition });
+        if (!updated) cloudId = undefined;
+      }
+      if (!cloudId) cloudId = (await createPlan(file.metadata.title, definition)).id;
       setCloudPlanLink(recId, { cloudPlanId: cloudId, defId });
       await assignPlan(cloudId, studentId);
       setMsg({ text: `${t('Assigned to')} ${name} ✓`, ok: true });

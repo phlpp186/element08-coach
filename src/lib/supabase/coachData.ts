@@ -139,17 +139,20 @@ export async function createPlan(title: string, definition: Json): Promise<PlanR
   );
 }
 
+// Returns null when no plan with `id` exists (e.g. a stale local cloud-plan link
+// pointing at a plan that was since deleted) — maybeSingle() so 0 rows is not an
+// error. Callers recreate the cloud plan in that case.
 export async function updatePlan(
   id: string,
   patch: { title?: string; definition?: Json },
-): Promise<PlanRow> {
+): Promise<PlanRow | null> {
   return unwrap(
     await supabase
       .from('plans')
       .update({ ...patch, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
-      .single(),
+      .maybeSingle(),
   );
 }
 
