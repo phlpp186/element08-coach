@@ -9,7 +9,7 @@
  * has a titled header, and the surface ramp (page → recessed item → raised pill)
  * plus category colour dots keep the levels distinct.
  */
-import { useMemo, useRef, useState, type ReactNode } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import {
   addBlock,
   addCategory,
@@ -30,31 +30,46 @@ import {
   useExercises,
   type ExerciseBlock,
   type LibraryExercise,
-} from '../lib/library';
-import { useT } from '../i18n';
-import { categoryColor } from '../lib/categoryColor';
-import { CatDot, CatDots } from '../components/CatDot';
-import { CategoryPicker } from '../components/CategoryPicker';
-import { InfoTip } from '../components/InfoTip';
+} from "../lib/library";
+import { useT } from "../i18n";
+import { categoryColor } from "../lib/categoryColor";
+import { CatDot, CatDots } from "../components/CatDot";
+import { CategoryPicker } from "../components/CategoryPicker";
+import { InfoTip } from "../components/InfoTip";
 
 /** Titled zone: an accent tick + heading + optional hint over a hairline rule,
  *  so each functional area reads as its own section. */
-function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+function Section({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: ReactNode;
+}) {
   return (
     <section className="space-y-3">
       <div className="flex items-baseline justify-between gap-3 border-b border-border/60 pb-2">
         <div className="flex items-center gap-2.5">
           <span aria-hidden className="h-4 w-1 rounded-full bg-accent" />
-          <h3 className="font-heading text-base tracking-wide text-text">{title}</h3>
+          <h3 className="font-heading text-base tracking-wide text-text">
+            {title}
+          </h3>
         </div>
-        {hint && <span className="shrink-0 text-right text-xs text-textDim">{hint}</span>}
+        {hint && (
+          <span className="shrink-0 text-right text-xs text-textDim">
+            {hint}
+          </span>
+        )}
       </div>
       {children}
     </section>
   );
 }
 
-const CREATE_BAR = 'flex flex-wrap gap-2 rounded-xl border border-accent/25 bg-accent/5 p-3';
+const CREATE_BAR =
+  "flex flex-wrap gap-2 rounded-xl border border-accent/25 bg-accent/5 p-3";
 
 export function ExercisesView() {
   const t = useT();
@@ -63,36 +78,49 @@ export function ExercisesView() {
   const blocks = useBlocks();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState("");
   const [draftCats, setDraftCats] = useState<string[]>([]);
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<string>('all'); // 'all' | 'uncat' | <category>
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<string>("all"); // 'all' | 'uncat' | <category>
 
   const addDraft = () => {
     if (!draft.trim()) return;
     addExercise(draft, draftCats);
-    setDraft('');
+    setDraft("");
     setDraftCats([]);
   };
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    e.target.value = '';
+    e.target.value = "";
     if (!file) return;
     try {
       const rows = await parseExerciseFile(file);
       const n = addManyExercises(rows);
-      alert(n ? `${t('Imported')} ${n} ${n === 1 ? t('exercise') : t('exercises')}.` : t('No new exercises found.'));
+      alert(
+        n
+          ? `${t("Imported")} ${n} ${n === 1 ? t("exercise") : t("exercises")}.`
+          : t("No new exercises found."),
+      );
     } catch {
-      alert(t('Could not read that file. Use a .csv or .xlsx with exercises in the first column (category optional in the second).'));
+      alert(
+        t(
+          "Could not read that file. Use a .csv or .xlsx with exercises in the first column (category optional in the second).",
+        ),
+      );
     }
   };
 
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
     return exercises.filter((ex) => {
-      if (filter === 'uncat' && ex.categories?.length) return false;
-      if (filter !== 'all' && filter !== 'uncat' && !ex.categories?.includes(filter)) return false;
+      if (filter === "uncat" && ex.categories?.length) return false;
+      if (
+        filter !== "all" &&
+        filter !== "uncat" &&
+        !ex.categories?.includes(filter)
+      )
+        return false;
       if (q && !ex.description.toLowerCase().includes(q)) return false;
       return true;
     });
@@ -102,98 +130,134 @@ export function ExercisesView() {
     <main className="mx-auto max-w-4xl px-5 py-6 space-y-9">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h2 className="text-xl">{t('Exercises')}</h2>
+          <h2 className="text-xl">{t("Exercises")}</h2>
           <p className="text-textDim text-sm">
-            {t('Your reusable exercise library. Assign them into plan sessions from the builder.')}
+            {t(
+              "Your reusable exercise library. Assign them into plan sessions from the builder.",
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <input ref={fileRef} type="file" accept=".csv,.xlsx" onChange={onFile} className="hidden" />
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".csv,.xlsx"
+            onChange={onFile}
+            className="hidden"
+          />
           <button
             onClick={() => fileRef.current?.click()}
             className="text-sm text-textDim border border-border rounded-lg px-3 py-1.5 hover:border-accent"
           >
-            {t('Import Excel/CSV')}
+            {t("Import Excel/CSV")}
           </button>
           {exercises.length > 0 && (
             <button
               onClick={() => exportLibraryCsv(exercises)}
               className="text-sm text-textDim border border-border rounded-lg px-3 py-1.5 hover:border-accent"
             >
-              {t('Export')}
+              {t("Export")}
             </button>
           )}
           <InfoTip
-            text={t('Import a .csv or .xlsx with one exercise per row: column 1 = the exercise text, column 2 (optional) = its categories, up to 3 separated by ; or /. Export downloads your whole library in that same format, so you can back it up or edit it in a spreadsheet.')}
+            text={t(
+              "Import a .csv or .xlsx with one exercise per row: column 1 = the exercise text, column 2 (optional) = its categories, up to 3 separated by ; or /. Export downloads your whole library in that same format, so you can back it up or edit it in a spreadsheet.",
+            )}
           />
         </div>
       </div>
 
-      <CategoryManager categories={categories} />
+      {/* Categories + Blocks are compact vocab tools — put them side by side on wide screens
+          (they don't need the full width) and stack on narrow. */}
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-start">
+        <CategoryManager categories={categories} />
+        <BlockManager blocks={blocks} exercises={exercises} />
+      </div>
 
-      <BlockManager blocks={blocks} exercises={exercises} />
-
-      <Section title={t('Exercise library')} hint={`${exercises.length} ${exercises.length === 1 ? t('exercise') : t('exercises')}`}>
+      <Section
+        title={t("Exercise library")}
+        hint={`${exercises.length} ${exercises.length === 1 ? t("exercise") : t("exercises")}`}
+      >
         {/* Add to library */}
         <div className={CREATE_BAR}>
           <input
             className="field flex-1 min-w-48"
-            placeholder={t('Add an exercise, e.g. 4×50m bi-fins, 3 min rest')}
+            placeholder={t("Add an exercise, e.g. 4×50m bi-fins, 3 min rest")}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && addDraft()}
+            onKeyDown={(e) => e.key === "Enter" && addDraft()}
           />
           <button
             onClick={addDraft}
             className="glow-accent text-sm bg-accent text-ink rounded-lg px-4 font-heading tracking-wide"
           >
-            {t('Add')}
+            {t("Add")}
           </button>
           {categories.length > 0 && (
             <div className="w-full space-y-1.5">
-              <span className="text-xs text-textDim">{t('Categories (up to 3, optional)')}</span>
-              <CategoryPicker selected={draftCats} categories={categories} onChange={setDraftCats} />
+              <span className="text-xs text-textDim">
+                {t("Categories (up to 3, optional)")}
+              </span>
+              <CategoryPicker
+                selected={draftCats}
+                categories={categories}
+                onChange={setDraftCats}
+              />
             </div>
           )}
         </div>
 
-        {/* Search + filter */}
-        {exercises.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              className="field w-auto flex-1 min-w-40"
-              placeholder={t('Search exercises')}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <FilterPill active={filter === 'all'} onClick={() => setFilter('all')}>
-              {t('All')}
-            </FilterPill>
-            {categories.map((c) => (
-              <FilterPill key={c} color={categoryColor(c)} active={filter === c} onClick={() => setFilter(c)}>
-                {c}
+        {/* Your library — set apart from the add bar above with a divider + spacing. */}
+        <div className="space-y-3 border-t border-border/50 pt-6">
+          {/* Search + filter */}
+          {exercises.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                className="field w-auto flex-1 min-w-40"
+                placeholder={t("Search exercises")}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <FilterPill
+                active={filter === "all"}
+                onClick={() => setFilter("all")}
+              >
+                {t("All")}
               </FilterPill>
-            ))}
-            <FilterPill active={filter === 'uncat'} onClick={() => setFilter('uncat')}>
-              {t('Uncategorized')}
-            </FilterPill>
-          </div>
-        )}
+              {categories.map((c) => (
+                <FilterPill
+                  key={c}
+                  color={categoryColor(c)}
+                  active={filter === c}
+                  onClick={() => setFilter(c)}
+                >
+                  {c}
+                </FilterPill>
+              ))}
+              <FilterPill
+                active={filter === "uncat"}
+                onClick={() => setFilter("uncat")}
+              >
+                {t("Uncategorized")}
+              </FilterPill>
+            </div>
+          )}
 
-        {/* List */}
-        {exercises.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-10 text-center text-textDim">
-            {t('No exercises yet. Add one above, or import a spreadsheet.')}
-          </div>
-        ) : shown.length === 0 ? (
-          <p className="text-textDim text-sm">{t('No exercises match.')}</p>
-        ) : (
-          <div className="space-y-2">
-            {shown.map((ex) => (
-              <ExerciseRow key={ex.id} ex={ex} categories={categories} />
-            ))}
-          </div>
-        )}
+          {/* List */}
+          {exercises.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border p-10 text-center text-textDim">
+              {t("No exercises yet. Add one above, or import a spreadsheet.")}
+            </div>
+          ) : shown.length === 0 ? (
+            <p className="text-textDim text-sm">{t("No exercises match.")}</p>
+          ) : (
+            <div className="space-y-2">
+              {shown.map((ex) => (
+                <ExerciseRow key={ex.id} ex={ex} categories={categories} />
+              ))}
+            </div>
+          )}
+        </div>
       </Section>
     </main>
   );
@@ -214,11 +278,17 @@ function FilterPill({
     <button
       onClick={onClick}
       className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors ${
-        active ? 'border-accent bg-accent/10 text-accent' : 'border-border text-textDim hover:border-accent hover:text-text'
+        active
+          ? "border-accent bg-accent/10 text-accent"
+          : "border-border text-textDim hover:border-accent hover:text-text"
       }`}
     >
       {color && (
-        <span aria-hidden className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
+        <span
+          aria-hidden
+          className="h-2 w-2 rounded-full"
+          style={{ backgroundColor: color }}
+        />
       )}
       {children}
     </button>
@@ -227,7 +297,13 @@ function FilterPill({
 
 /** Compact one-line card (category-coloured left edge + description + category
  *  label). Click to expand the inline editor (description, category, delete). */
-function ExerciseRow({ ex, categories }: { ex: LibraryExercise; categories: string[] }) {
+function ExerciseRow({
+  ex,
+  categories,
+}: {
+  ex: LibraryExercise;
+  categories: string[];
+}) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [desc, setDesc] = useState(ex.description);
@@ -247,19 +323,27 @@ function ExerciseRow({ ex, categories }: { ex: LibraryExercise; categories: stri
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-abyss/50"
       >
-        <span className="min-w-0 flex-1 truncate text-text">{ex.description}</span>
+        <span className="min-w-0 flex-1 truncate text-text">
+          {ex.description}
+        </span>
         {ex.categories?.length ? (
           <span className="flex shrink-0 flex-wrap items-center justify-end gap-x-2 gap-y-0.5">
             {ex.categories.map((c) => (
-              <span key={c} className="text-xs" style={{ color: categoryColor(c) }}>
+              <span
+                key={c}
+                className="text-xs"
+                style={{ color: categoryColor(c) }}
+              >
                 {c}
               </span>
             ))}
           </span>
         ) : (
-          <span className="shrink-0 text-xs text-textDim">{t('Uncategorized')}</span>
+          <span className="shrink-0 text-xs text-textDim">
+            {t("Uncategorized")}
+          </span>
         )}
-        <span className="shrink-0 text-textDim">{open ? '▴' : '▾'}</span>
+        <span className="shrink-0 text-textDim">{open ? "▴" : "▾"}</span>
       </button>
       {open && (
         <div className="space-y-2.5 border-t border-border px-3 py-3">
@@ -268,10 +352,14 @@ function ExerciseRow({ ex, categories }: { ex: LibraryExercise; categories: stri
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
             onBlur={commit}
-            onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+            onKeyDown={(e) =>
+              e.key === "Enter" && (e.target as HTMLInputElement).blur()
+            }
           />
           <div className="space-y-1.5">
-            <span className="text-xs text-textDim">{t('Categories (up to 3, optional)')}</span>
+            <span className="text-xs text-textDim">
+              {t("Categories (up to 3, optional)")}
+            </span>
             <CategoryPicker
               selected={ex.categories ?? []}
               categories={categories}
@@ -282,9 +370,9 @@ function ExerciseRow({ ex, categories }: { ex: LibraryExercise; categories: stri
             <button
               onClick={() => removeExercise(ex.id)}
               className="ml-auto px-2 text-sm text-red hover:underline"
-              title={t('Remove')}
+              title={t("Remove")}
             >
-              {t('Remove')}
+              {t("Remove")}
             </button>
           </div>
         </div>
@@ -293,35 +381,46 @@ function ExerciseRow({ ex, categories }: { ex: LibraryExercise; categories: stri
   );
 }
 
-function BlockManager({ blocks, exercises }: { blocks: ExerciseBlock[]; exercises: LibraryExercise[] }) {
+function BlockManager({
+  blocks,
+  exercises,
+}: {
+  blocks: ExerciseBlock[];
+  exercises: LibraryExercise[];
+}) {
   const t = useT();
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState("");
   const create = () => {
     if (draft.trim()) {
       addBlock(draft);
-      setDraft('');
+      setDraft("");
     }
   };
   return (
-    <Section title={t('Blocks')} hint={t('Reusable groups you drop into a session in one click')}>
+    <Section
+      title={t("Blocks")}
+      hint={t("Reusable groups you drop into a session in one click")}
+    >
       <div className={CREATE_BAR}>
         <input
           className="field flex-1 min-w-48"
-          placeholder={t('New block name, e.g. CO₂ set')}
+          placeholder={t("New block name, e.g. CO₂ set")}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && create()}
+          onKeyDown={(e) => e.key === "Enter" && create()}
         />
         <button
           onClick={create}
           className="text-sm text-accent border border-accent/60 rounded-lg px-4 hover:bg-accent/10"
         >
-          {t('Add block')}
+          {t("Add block")}
         </button>
       </div>
       {blocks.length === 0 ? (
         <p className="text-textDim text-sm">
-          {t('No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.')}
+          {t(
+            "No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.",
+          )}
         </p>
       ) : (
         <div className="space-y-2">
@@ -360,12 +459,15 @@ function BlockRow({
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-panel/40"
       >
-        <span className="w-4 shrink-0 font-heading text-xs text-textDim">{index + 1}</span>
+        <span className="w-4 shrink-0 font-heading text-xs text-textDim">
+          {index + 1}
+        </span>
         <div className="min-w-0 flex-1">
           <div className="truncate font-heading text-text">{block.name}</div>
           <div className="mt-0.5 flex items-center gap-2 text-xs text-textDim">
             <span>
-              {items.length} {items.length === 1 ? t('exercise') : t('exercises')}
+              {items.length}{" "}
+              {items.length === 1 ? t("exercise") : t("exercises")}
             </span>
             {items.length > 0 && (
               <span className="flex items-center gap-1">
@@ -376,7 +478,7 @@ function BlockRow({
             )}
           </div>
         </div>
-        <span className="shrink-0 text-textDim">{open ? '▴' : '▾'}</span>
+        <span className="shrink-0 text-textDim">{open ? "▴" : "▾"}</span>
       </button>
       {open && (
         <div className="space-y-2.5 border-t border-border px-3 py-3">
@@ -389,7 +491,9 @@ function BlockRow({
               if (n && n !== block.name) renameBlock(block.id, n);
               else if (!n) setName(block.name);
             }}
-            onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+            onKeyDown={(e) =>
+              e.key === "Enter" && (e.target as HTMLInputElement).blur()
+            }
           />
           {items.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
@@ -403,7 +507,7 @@ function BlockRow({
                   <button
                     onClick={() => removeExerciseFromBlock(block.id, ex.id)}
                     className="text-textDim hover:text-red"
-                    title={t('Remove from block')}
+                    title={t("Remove from block")}
                   >
                     ✕
                   </button>
@@ -411,12 +515,19 @@ function BlockRow({
               ))}
             </div>
           )}
-          <AddToBlock blockId={block.id} exercises={exercises} inBlock={inBlock} />
+          <AddToBlock
+            blockId={block.id}
+            exercises={exercises}
+            inBlock={inBlock}
+          />
           <button
-            onClick={() => confirm(`${t('Delete block')} "${block.name}"?`) && removeBlock(block.id)}
+            onClick={() =>
+              confirm(`${t("Delete block")} "${block.name}"?`) &&
+              removeBlock(block.id)
+            }
             className="text-red text-xs hover:underline"
           >
-            {t('Delete block')}
+            {t("Delete block")}
           </button>
         </div>
       )}
@@ -434,14 +545,19 @@ function AddToBlock({
   inBlock: Set<string>;
 }) {
   const t = useT();
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState("");
   const [focused, setFocused] = useState(false);
   const matches = useMemo(() => {
     const s = q.trim().toLowerCase();
     // No hard cap on suggestions (was .slice(0, 8), which hid a coach's
     // library exercises past the first 8). Keep a generous bound for perf; the
     // dropdown scrolls (max-h + overflow-auto) so a long list stays usable.
-    return exercises.filter((e) => !inBlock.has(e.id) && (!s || e.description.toLowerCase().includes(s))).slice(0, 50);
+    return exercises
+      .filter(
+        (e) =>
+          !inBlock.has(e.id) && (!s || e.description.toLowerCase().includes(s)),
+      )
+      .slice(0, 50);
   }, [q, exercises, inBlock]);
   const show = focused && matches.length > 0;
 
@@ -449,7 +565,7 @@ function AddToBlock({
     <div className="relative">
       <input
         className="field w-full"
-        placeholder={t('Add an exercise to this block…')}
+        placeholder={t("Add an exercise to this block…")}
         value={q}
         onChange={(e) => setQ(e.target.value)}
         onFocus={() => setFocused(true)}
@@ -463,7 +579,7 @@ function AddToBlock({
                 onMouseDown={(ev) => {
                   ev.preventDefault();
                   addExerciseToBlock(blockId, e.id);
-                  setQ('');
+                  setQ("");
                 }}
                 className="flex w-full items-center gap-2 text-left px-3 py-1.5 text-sm text-textDim hover:bg-accent/10 hover:text-text"
               >
@@ -480,9 +596,9 @@ function AddToBlock({
 
 function CategoryManager({ categories }: { categories: string[] }) {
   const t = useT();
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
-  const [editVal, setEditVal] = useState('');
+  const [editVal, setEditVal] = useState("");
 
   const startEdit = (c: string) => {
     setEditing(c);
@@ -495,17 +611,24 @@ function CategoryManager({ categories }: { categories: string[] }) {
   const add = () => {
     if (draft.trim()) {
       addCategory(draft);
-      setDraft('');
+      setDraft("");
     }
   };
   const del = (c: string) => {
-    if (confirm(`${t('Delete category')} "${c}"? ${t('Exercises keep their description but become uncategorized.')}`)) {
+    if (
+      confirm(
+        `${t("Delete category")} "${c}"? ${t("Exercises keep their description but become uncategorized.")}`,
+      )
+    ) {
       removeCategory(c);
     }
   };
 
   return (
-    <Section title={t('Categories')} hint={t('Your own colour-coded tags, fully editable')}>
+    <Section
+      title={t("Categories")}
+      hint={t("Your own colour-coded tags, fully editable")}
+    >
       <div className="flex flex-wrap items-center gap-2">
         {categories.map((c) =>
           editing === c ? (
@@ -517,8 +640,8 @@ function CategoryManager({ categories }: { categories: string[] }) {
               onChange={(e) => setEditVal(e.target.value)}
               onBlur={commitEdit}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') commitEdit();
-                if (e.key === 'Escape') setEditing(null);
+                if (e.key === "Enter") commitEdit();
+                if (e.key === "Escape") setEditing(null);
               }}
             />
           ) : (
@@ -531,14 +654,14 @@ function CategoryManager({ categories }: { categories: string[] }) {
               <button
                 onClick={() => startEdit(c)}
                 className="text-textDim opacity-0 group-hover:opacity-100 hover:text-accent"
-                title={t('Rename')}
+                title={t("Rename")}
               >
                 ✎
               </button>
               <button
                 onClick={() => del(c)}
                 className="text-textDim opacity-0 group-hover:opacity-100 hover:text-red"
-                title={t('Delete category')}
+                title={t("Delete category")}
               >
                 ✕
               </button>
@@ -547,10 +670,10 @@ function CategoryManager({ categories }: { categories: string[] }) {
         )}
         <input
           className="field w-36"
-          placeholder={t('+ Add category')}
+          placeholder={t("+ Add category")}
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && add()}
+          onKeyDown={(e) => e.key === "Enter" && add()}
           onBlur={add}
         />
       </div>
