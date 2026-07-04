@@ -6,8 +6,14 @@ import {
   type Intensity,
   type PlanMode,
 } from '../lib/e08plan';
+import {
+  applyWeekTemplate,
+  materializeSessionTemplate,
+  saveWeekTemplate,
+  useWeekTemplates,
+} from '../lib/library';
 import { SessionList } from './sessions';
-import { useT } from '../i18n';
+import { useT, tr } from '../i18n';
 
 const INTENSITIES: Intensity[] = ['recovery', 'low', 'medium', 'high', 'max'];
 const DAY_DATE_FMT = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
@@ -45,6 +51,7 @@ export function WeekCard({
   compact?: boolean;
 }) {
   const t = useT();
+  const weekTemplates = useWeekTemplates();
   const hasDates = !!weekStart && ISO_RE.test(weekStart);
   const addSession = (dayOfWeek: number) => {
     const s = newSession(dayOfWeek, mode);
@@ -106,6 +113,11 @@ export function WeekCard({
                 onAdd={() => addSession(day)}
                 onChange={updateSession}
                 onRemove={removeSession}
+                onInsertTemplate={(tpl) => {
+                  const s = materializeSessionTemplate(tpl, day);
+                  onChange({ sessions: [...week.sessions, s] });
+                  setEditing(s.id);
+                }}
                 disabledText={beforeStart ? t('before plan start') : undefined}
               />
             </div>
@@ -119,6 +131,37 @@ export function WeekCard({
         value={week.notes}
         onChange={(e) => onChange({ notes: e.target.value })}
       />
+
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          onClick={() => {
+            const name = prompt(tr('Template name'), week.focus.trim() || label);
+            if (name !== null) saveWeekTemplate(name, week);
+          }}
+          className="text-xs text-textDim hover:text-accent"
+          title={t('Save this whole week (all sessions, doses, focus) for one-click reuse')}
+        >
+          {t('Save week as template')}
+        </button>
+        {weekTemplates.length > 0 && (
+          <select
+            className="ml-auto max-w-48 cursor-pointer border-none bg-transparent p-0 text-xs text-textDim hover:text-accent"
+            value=""
+            title={t('Fill this week from a saved week template (sessions append)')}
+            onChange={(e) => {
+              const tpl = weekTemplates.find((x) => x.id === e.target.value);
+              if (tpl) onChange(applyWeekTemplate(tpl, week));
+            }}
+          >
+            <option value="">{t('+ week from template')}</option>
+            {weekTemplates.map((x) => (
+              <option key={x.id} value={x.id}>
+                {x.name}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
     </div>
   );
 }

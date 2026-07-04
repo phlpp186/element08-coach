@@ -14,6 +14,7 @@ import {
   addExercisesToBlockBulk,
   addExerciseToBlock,
   addManyExercises,
+  blockToSessionTemplate,
   exportLibraryCsv,
   mergeExercises,
   parseExerciseFile,
@@ -21,6 +22,8 @@ import {
   removeCategory,
   removeExerciseFromBlock,
   removeExercises,
+  removeSessionTemplate,
+  removeWeekTemplate,
   renameBlock,
   renameCategory,
   setArchived,
@@ -29,6 +32,8 @@ import {
   useBlocks,
   useCategories,
   useExercises,
+  useSessionTemplates,
+  useWeekTemplates,
   type ExerciseBlock,
   type LibraryExercise,
 } from "../lib/library";
@@ -57,6 +62,7 @@ type RailView =
   | { kind: "uncat" }
   | { kind: "archived" }
   | { kind: "blocks" }
+  | { kind: "templates" }
   | { kind: "categories" };
 
 type SortId = "recent" | "used" | "name" | "newest";
@@ -71,6 +77,8 @@ export function ExercisesView() {
   const exercises = useExercises();
   const categories = useCategories();
   const blocks = useBlocks();
+  const sessionTemplates = useSessionTemplates();
+  const weekTemplates = useWeekTemplates();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [view, setView] = useState<RailView>({ kind: "all" });
@@ -108,7 +116,7 @@ export function ExercisesView() {
 
   // The rows for the current exercises view (before the render window).
   const shown = useMemo(() => {
-    if (view.kind === "blocks" || view.kind === "categories") return [];
+    if (view.kind === "blocks" || view.kind === "categories" || view.kind === "templates") return [];
     let base: LibraryExercise[];
     if (view.kind === "archived") base = exercises.filter((e) => e.archived);
     else if (view.kind === "cat")
@@ -272,6 +280,16 @@ export function ExercisesView() {
             () => setView({ kind: "blocks" }),
           )}
           {railRow(
+            <>
+              <span className="text-accent">▤</span>
+              {t("Templates")}
+            </>,
+            sessionTemplates.length + weekTemplates.length,
+            view.kind === "templates",
+            () => setView({ kind: "templates" }),
+          )}
+
+          {railRow(
             t("Archived"),
             archivedCount,
             view.kind === "archived",
@@ -289,6 +307,8 @@ export function ExercisesView() {
         {/* ── Main column ── */}
         {view.kind === "blocks" ? (
           <BlocksPanel blocks={blocks} exercises={exercises} />
+        ) : view.kind === "templates" ? (
+          <TemplatesPanel />
         ) : view.kind === "categories" ? (
           <CategoriesPanel categories={categories} counts={catCounts} />
         ) : (
@@ -939,14 +959,28 @@ function BlockRow({
             </div>
           )}
           <AddToBlock blockId={block.id} exercises={exercises} inBlock={inBlock} />
-          <button
-            onClick={() =>
-              confirm(`${t("Delete block")} "${block.name}"?`) && removeBlock(block.id)
-            }
-            className="text-red text-xs hover:underline"
-          >
-            {t("Delete block")}
-          </button>
+          <div className="flex items-center gap-4">
+            {items.length > 0 && (
+              <button
+                onClick={() => {
+                  blockToSessionTemplate(block);
+                  alert(`${t("Saved as a session template.")} (${block.name})`);
+                }}
+                className="text-xs text-accent hover:underline"
+                title={t("Templates carry a whole session (label, notes, doses) and are inserted via + from template in the builder.")}
+              >
+                {t("Convert to session template")}
+              </button>
+            )}
+            <button
+              onClick={() =>
+                confirm(`${t("Delete block")} "${block.name}"?`) && removeBlock(block.id)
+              }
+              className="ml-auto text-red text-xs hover:underline"
+            >
+              {t("Delete block")}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -1007,6 +1041,68 @@ function AddToBlock({
           )}
         </ul>
       )}
+    </div>
+  );
+}
+
+// ── Templates panel (rail view) ──────────────────────────────────────────────
+
+function TemplatesPanel() {
+  const t = useT();
+  const sessionTemplates = useSessionTemplates();
+  const weekTemplates = useWeekTemplates();
+
+  if (sessionTemplates.length === 0 && weekTemplates.length === 0) {
+    return (
+      <p className="text-textDim text-sm">
+        {t(
+          'No templates yet. In the plan builder, open a session and hit "Save as template", or save a whole week from its card. Blocks can also be converted into session templates.',
+        )}
+      </p>
+    );
+  }
+
+  const row = (key: string, name: string, meta: string, onDelete: () => void) => (
+    <div key={key} className="flex items-center gap-3 rounded-lg border border-border bg-panel px-3 py-2">
+      <span className="min-w-0 flex-1 truncate text-text">{name}</span>
+      <span className="shrink-0 text-xs text-textDim tabular-nums">{meta}</span>
+      <button onClick={onDelete} className="shrink-0 text-textDim hover:text-red" title={t("Remove")}>
+        ✕
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4 min-w-0">
+      {sessionTemplates.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-wide text-textDim">{t("Session templates")}</p>
+          {sessionTemplates.map((x) =>
+            row(
+              x.id,
+              x.name,
+              `${x.exercises.length} ${x.exercises.length === 1 ? t("exercise") : t("exercises")}${x.useCount ? ` · ${x.useCount}×` : ""}`,
+              () => confirm(`${t("Delete")} "${x.name}"?`) && removeSessionTemplate(x.id),
+            ),
+          )}
+        </div>
+      )}
+      {weekTemplates.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-wide text-textDim">{t("Week templates")}</p>
+          {weekTemplates.map((x) =>
+            row(
+              x.id,
+              x.name,
+              `${x.sessions.length} ${x.sessions.length === 1 ? t("session") : t("sessions")}${x.useCount ? ` · ${x.useCount}×` : ""}`,
+              () => confirm(`${t("Delete")} "${x.name}"?`) && removeWeekTemplate(x.id),
+            ),
+          )}
+        </div>
+      )}
+      <p className="text-xs text-textDim">
+        {t("Insert session templates in the builder via + from template on any day; apply week templates from a week card.")}
+      </p>
     </div>
   );
 }

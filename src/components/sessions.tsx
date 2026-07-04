@@ -1,9 +1,15 @@
 import { useState, type ReactNode } from 'react';
 import { uid, type BuilderExercise, type BuilderSession, type PlanMode } from '../lib/e08plan';
 import { ExerciseInput } from './ExerciseInput';
-import { defaultDoseFor, recordUseByDescription } from '../lib/library';
+import {
+  defaultDoseFor,
+  recordUseByDescription,
+  saveSessionTemplate,
+  useSessionTemplates,
+  type SessionTemplate,
+} from '../lib/library';
 import { DoseChips, DoseEditor } from './dose';
-import { useT } from '../i18n';
+import { useT, tr } from '../i18n';
 
 const SESSION_MODES: PlanMode[] = ['depth', 'pool', 'dry', 'general'];
 
@@ -37,6 +43,7 @@ export function SessionList({
   onAdd,
   onChange,
   onRemove,
+  onInsertTemplate,
   disabledText,
 }: {
   sessions: BuilderSession[];
@@ -45,10 +52,13 @@ export function SessionList({
   onAdd: () => void;
   onChange: (id: string, patch: Partial<BuilderSession>) => void;
   onRemove: (id: string) => void;
+  /** When given (and templates exist), a "+ from template" picker appears. */
+  onInsertTemplate?: (tpl: SessionTemplate) => void;
   /** When set, the "+ session" button is replaced by this dim note. */
   disabledText?: string;
 }) {
   const t = useT();
+  const templates = useSessionTemplates();
   return (
     <div className="flex-1 space-y-2">
       {sessions.map((s) =>
@@ -70,9 +80,29 @@ export function SessionList({
       {disabledText ? (
         <span className="text-xs text-textDim italic">{disabledText}</span>
       ) : (
-        <button onClick={onAdd} className="text-xs text-textDim hover:text-accent">
-          {t('+ session')}
-        </button>
+        <span className="flex flex-wrap items-center gap-3">
+          <button onClick={onAdd} className="text-xs text-textDim hover:text-accent">
+            {t('+ session')}
+          </button>
+          {onInsertTemplate && templates.length > 0 && (
+            <select
+              className="max-w-40 cursor-pointer border-none bg-transparent p-0 text-xs text-textDim hover:text-accent"
+              value=""
+              title={t('Insert a saved session template here')}
+              onChange={(e) => {
+                const tpl = templates.find((x) => x.id === e.target.value);
+                if (tpl) onInsertTemplate(tpl);
+              }}
+            >
+              <option value="">{t('+ from template')}</option>
+              {templates.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </span>
       )}
     </div>
   );
@@ -242,9 +272,19 @@ function SessionEditor({
           onChange={(e) => onChange({ sessionType: e.target.value })}
         />
       </div>
-      <div className="flex items-center justify-between pt-1">
+      <div className="flex items-center justify-between gap-3 pt-1">
         <button onClick={onDelete} className="text-red text-sm">
           {t('Delete')}
+        </button>
+        <button
+          onClick={() => {
+            const name = prompt(tr('Template name'), session.label.trim());
+            if (name !== null) saveSessionTemplate(name, session);
+          }}
+          className="ml-auto text-xs text-textDim hover:text-accent"
+          title={t('Save this whole session (exercises, doses, notes) for one-click reuse via + from template')}
+        >
+          {t('Save as template')}
         </button>
         <button
           onClick={onClose}

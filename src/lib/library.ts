@@ -12,7 +12,15 @@
  * tab and the builder's picker stay in sync.
  */
 import { useSyncExternalStore } from 'react';
-import { normDose, uid, type DosePart } from './e08plan';
+import {
+  normDose,
+  uid,
+  type BuilderSession,
+  type BuilderWeek,
+  type DosePart,
+  type Intensity,
+  type PlanMode,
+} from './e08plan';
 import { dropCategoryColor, moveCategoryColor } from './categoryColor';
 
 /** Max categories an exercise can carry. */
@@ -63,9 +71,43 @@ export interface ExerciseBlock {
   exerciseIds: string[];
 }
 
+/** A reusable whole session: label, notes, mode/type, exercises with doses.
+ *  Applied into a plan day via "+ from template" (fresh ids on every use). */
+export interface SessionTemplate {
+  id: string;
+  name: string;
+  label: string;
+  body: string;
+  mode: PlanMode;
+  sessionType: string;
+  exercises: { description: string; dose?: DosePart[] }[];
+  /** How many times it's been dropped into a plan. */
+  useCount?: number;
+}
+
+/** A reusable whole week: focus/intensity/notes plus sessions on weekdays. */
+export interface WeekTemplate {
+  id: string;
+  name: string;
+  focus: string;
+  intensity: Intensity;
+  notes: string;
+  sessions: {
+    dayOfWeek: number;
+    label: string;
+    body: string;
+    mode: PlanMode;
+    sessionType: string;
+    exercises: { description: string; dose?: DosePart[] }[];
+  }[];
+  useCount?: number;
+}
+
 const EX_KEY = 'element08.coach.library';
 const CAT_KEY = 'element08.coach.exerciseCategories';
 const BLK_KEY = 'element08.coach.exerciseBlocks';
+const STPL_KEY = 'element08.coach.sessionTemplates';
+const WTPL_KEY = 'element08.coach.weekTemplates';
 
 /** Pre-shipped categories (editable). A practical freediving starter set. */
 export const DEFAULT_CATEGORIES = ['Warm-up', 'CO₂', 'O₂', 'Technique', 'Depth', 'Pool', 'Dry'];
@@ -136,9 +178,75 @@ function readBlocks(): ExerciseBlock[] {
   }
 }
 
+function tplExercises(input: unknown): { description: string; dose?: DosePart[] }[] {
+  if (!Array.isArray(input)) return [];
+  return input
+    .filter((x): x is { description: string } => !!x && typeof (x as { description?: unknown }).description === 'string')
+    .map((x) => {
+      const dose = normDose((x as { dose?: unknown }).dose);
+      return { description: x.description, ...(dose ? { dose } : {}) };
+    });
+}
+
+function readSessionTemplates(): SessionTemplate[] {
+  try {
+    const raw = localStorage.getItem(STPL_KEY);
+    if (!raw) return [];
+    const arr: unknown = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((x): x is SessionTemplate => !!x && typeof (x as SessionTemplate).name === 'string')
+      .map((x) => ({
+        id: x.id || uid('stpl'),
+        name: x.name,
+        label: typeof x.label === 'string' ? x.label : '',
+        body: typeof x.body === 'string' ? x.body : '',
+        mode: x.mode ?? 'general',
+        sessionType: typeof x.sessionType === 'string' ? x.sessionType : '',
+        exercises: tplExercises(x.exercises),
+        ...(typeof x.useCount === 'number' && x.useCount > 0 ? { useCount: Math.floor(x.useCount) } : {}),
+      }));
+  } catch {
+    return [];
+  }
+}
+
+function readWeekTemplates(): WeekTemplate[] {
+  try {
+    const raw = localStorage.getItem(WTPL_KEY);
+    if (!raw) return [];
+    const arr: unknown = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr
+      .filter((x): x is WeekTemplate => !!x && typeof (x as WeekTemplate).name === 'string')
+      .map((x) => ({
+        id: x.id || uid('wtpl'),
+        name: x.name,
+        focus: typeof x.focus === 'string' ? x.focus : '',
+        intensity: x.intensity ?? 'medium',
+        notes: typeof x.notes === 'string' ? x.notes : '',
+        sessions: Array.isArray(x.sessions)
+          ? x.sessions.map((s) => ({
+              dayOfWeek: typeof s.dayOfWeek === 'number' ? Math.min(6, Math.max(0, s.dayOfWeek)) : 0,
+              label: typeof s.label === 'string' ? s.label : '',
+              body: typeof s.body === 'string' ? s.body : '',
+              mode: s.mode ?? 'general',
+              sessionType: typeof s.sessionType === 'string' ? s.sessionType : '',
+              exercises: tplExercises(s.exercises),
+            }))
+          : [],
+        ...(typeof x.useCount === 'number' && x.useCount > 0 ? { useCount: Math.floor(x.useCount) } : {}),
+      }));
+  } catch {
+    return [];
+  }
+}
+
 let exercises: LibraryExercise[] = readExercises();
 let categories: string[] = readCategories();
 let blocks: ExerciseBlock[] = readBlocks();
+let sessionTemplates: SessionTemplate[] = readSessionTemplates();
+let weekTemplates: WeekTemplate[] = readWeekTemplates();
 const listeners = new Set<() => void>();
 
 function emit() {
@@ -176,6 +284,24 @@ function commitBlocks(next: ExerciseBlock[]) {
   }
   emit();
 }
+function commitSessionTemplates(next: SessionTemplate[]) {
+  sessionTemplates = next;
+  try {
+    localStorage.setItem(STPL_KEY, JSON.stringify(next));
+  } catch {
+    /* storage blocked */
+  }
+  emit();
+}
+function commitWeekTemplates(next: WeekTemplate[]) {
+  weekTemplates = next;
+  try {
+    localStorage.setItem(WTPL_KEY, JSON.stringify(next));
+  } catch {
+    /* storage blocked */
+  }
+  emit();
+}
 
 // ── reactive reads ─────────────────────────────────────────────────────────
 
@@ -187,6 +313,12 @@ export function useCategories(): string[] {
 }
 export function useBlocks(): ExerciseBlock[] {
   return useSyncExternalStore(subscribe, () => blocks);
+}
+export function useSessionTemplates(): SessionTemplate[] {
+  return useSyncExternalStore(subscribe, () => sessionTemplates);
+}
+export function useWeekTemplates(): WeekTemplate[] {
+  return useSyncExternalStore(subscribe, () => weekTemplates);
 }
 
 /** Resolve a block's exercise ids to current library exercises, in order,
@@ -451,6 +583,136 @@ export function removeExerciseFromBlock(blockId: string, exerciseId: string): vo
   commitBlocks(
     blocks.map((b) => (b.id === blockId ? { ...b, exerciseIds: b.exerciseIds.filter((x) => x !== exerciseId) } : b)),
   );
+}
+
+// ── session + week templates ─────────────────────────────────────────────────
+
+const copyDose = (dose?: DosePart[]) => (dose?.length ? dose.map((p) => ({ ...p })) : undefined);
+const copyTplExercises = (exs: { description: string; dose?: DosePart[] }[]) =>
+  exs
+    .filter((e) => e.description.trim() || e.dose?.length)
+    .map((e) => {
+      const dose = copyDose(e.dose);
+      return { description: e.description, ...(dose ? { dose } : {}) };
+    });
+
+/** Snapshot a built session as a reusable template. */
+export function saveSessionTemplate(name: string, from: BuilderSession): string {
+  const id = uid('stpl');
+  commitSessionTemplates([
+    ...sessionTemplates,
+    {
+      id,
+      name: name.trim() || from.label.trim() || 'Session template',
+      label: from.label,
+      body: from.body,
+      mode: from.mode,
+      sessionType: from.sessionType,
+      exercises: copyTplExercises(from.exercises),
+    },
+  ]);
+  return id;
+}
+
+export function removeSessionTemplate(id: string): void {
+  commitSessionTemplates(sessionTemplates.filter((t) => t.id !== id));
+}
+
+/** Snapshot a built week (focus/intensity/notes + all sessions) as a template. */
+export function saveWeekTemplate(name: string, from: BuilderWeek): string {
+  const id = uid('wtpl');
+  commitWeekTemplates([
+    ...weekTemplates,
+    {
+      id,
+      name: name.trim() || from.focus.trim() || 'Week template',
+      focus: from.focus,
+      intensity: from.intensity,
+      notes: from.notes,
+      sessions: from.sessions.map((s) => ({
+        dayOfWeek: s.dayOfWeek,
+        label: s.label,
+        body: s.body,
+        mode: s.mode,
+        sessionType: s.sessionType,
+        exercises: copyTplExercises(s.exercises),
+      })),
+    },
+  ]);
+  return id;
+}
+
+export function removeWeekTemplate(id: string): void {
+  commitWeekTemplates(weekTemplates.filter((t) => t.id !== id));
+}
+
+/** Turn a session template into a live session (fresh ids) at a weekday. */
+export function materializeSessionTemplate(tpl: SessionTemplate, dayOfWeek: number): BuilderSession {
+  commitSessionTemplates(
+    sessionTemplates.map((t) => (t.id === tpl.id ? { ...t, useCount: (t.useCount ?? 0) + 1 } : t)),
+  );
+  recordUseByDescription(tpl.exercises.map((e) => e.description));
+  return {
+    id: uid('sess'),
+    dayOfWeek,
+    label: tpl.label,
+    body: tpl.body,
+    mode: tpl.mode,
+    sessionType: tpl.sessionType,
+    exercises: tpl.exercises.map((e) => {
+      const dose = copyDose(e.dose);
+      return { id: uid('ex'), description: e.description, ...(dose ? { dose } : {}) };
+    }),
+  };
+}
+
+/** Merge a week template into an existing week: sessions append; focus,
+ *  intensity, and notes only fill in when the target's are still empty. */
+export function applyWeekTemplate(tpl: WeekTemplate, week: BuilderWeek): BuilderWeek {
+  commitWeekTemplates(weekTemplates.map((t) => (t.id === tpl.id ? { ...t, useCount: (t.useCount ?? 0) + 1 } : t)));
+  recordUseByDescription(tpl.sessions.flatMap((s) => s.exercises.map((e) => e.description)));
+  return {
+    focus: week.focus.trim() ? week.focus : tpl.focus,
+    intensity: week.sessions.length === 0 ? tpl.intensity : week.intensity,
+    notes: week.notes.trim() ? week.notes : tpl.notes,
+    sessions: [
+      ...week.sessions,
+      ...tpl.sessions.map((s) => ({
+        id: uid('sess'),
+        dayOfWeek: s.dayOfWeek,
+        label: s.label,
+        body: s.body,
+        mode: s.mode,
+        sessionType: s.sessionType,
+        exercises: s.exercises.map((e) => {
+          const dose = copyDose(e.dose);
+          return { id: uid('ex'), description: e.description, ...(dose ? { dose } : {}) };
+        }),
+      })),
+    ],
+  };
+}
+
+/** A block is a proto-session: promote it to a session template in one click. */
+export function blockToSessionTemplate(block: ExerciseBlock): string {
+  const items = blockExercises(block);
+  const id = uid('stpl');
+  commitSessionTemplates([
+    ...sessionTemplates,
+    {
+      id,
+      name: block.name,
+      label: block.name,
+      body: '',
+      mode: 'general',
+      sessionType: '',
+      exercises: items.map((e) => {
+        const dose = copyDose(e.defaultDose);
+        return { description: e.description, ...(dose ? { dose } : {}) };
+      }),
+    },
+  ]);
+  return id;
 }
 
 // ── import / export ────────────────────────────────────────────────────────

@@ -23,7 +23,7 @@ import {
   type PlanStructure,
 } from '../lib/e08plan';
 import { ExercisePalette, type AssignTarget } from '../components/ExercisePalette';
-import { defaultDoseFor, recordUseByDescription } from '../lib/library';
+import { defaultDoseFor, materializeSessionTemplate, recordUseByDescription } from '../lib/library';
 import { Labeled, SessionList } from '../components/sessions';
 import { WeekCard } from '../components/WeekCard';
 import { PhaseCard } from '../components/PhaseCard';
@@ -590,6 +590,11 @@ function DaySessions({
       onAdd={add}
       onChange={(id, patch) => onChange({ sessions: day.sessions.map((s) => (s.id === id ? { ...s, ...patch } : s)) })}
       onRemove={(id) => onChange({ sessions: day.sessions.filter((s) => s.id !== id) })}
+      onInsertTemplate={(tpl) => {
+        const s = materializeSessionTemplate(tpl, 0);
+        onChange({ sessions: [...day.sessions, s] });
+        setEditing(s.id);
+      }}
     />
   );
 }
