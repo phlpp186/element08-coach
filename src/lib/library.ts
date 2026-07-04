@@ -13,6 +13,7 @@
  */
 import { useSyncExternalStore } from 'react';
 import { uid } from './e08plan';
+import { dropCategoryColor, moveCategoryColor } from './categoryColor';
 
 /** Max categories an exercise can carry. */
 export const MAX_CATEGORIES = 3;
@@ -23,6 +24,15 @@ export interface LibraryExercise {
   /** Up to MAX_CATEGORIES category names from the coach's list. Empty/undefined
    *  = uncategorized. */
   categories?: string[];
+  /** How many times this exercise has been placed into a plan session. */
+  useCount?: number;
+  /** ISO timestamp of the last time it was placed into a plan session. */
+  lastUsedAt?: string;
+  /** Pinned exercises surface in the builder palette's Pinned shelf. */
+  pinned?: boolean;
+  /** Archived exercises leave every picker/list but keep their history.
+   *  They live under the library's Archived view and can be restored. */
+  archived?: boolean;
 }
 
 /** Trim, drop empties, de-dupe (case-insensitive), and cap at MAX_CATEGORIES. */
@@ -71,10 +81,15 @@ function readExercises(): LibraryExercise[] {
         // Migrate the legacy single `category` string into the `categories` array.
         const legacy = (x as { category?: unknown }).category;
         const cats = normCats((x as LibraryExercise).categories ?? legacy);
+        const use = typeof x.useCount === 'number' && x.useCount > 0 ? Math.floor(x.useCount) : 0;
         return {
           id: x.id || uid('lib'),
           description: x.description,
           ...(cats.length ? { categories: cats } : {}),
+          ...(use ? { useCount: use } : {}),
+          ...(typeof x.lastUsedAt === 'string' && x.lastUsedAt ? { lastUsedAt: x.lastUsedAt } : {}),
+          ...(x.pinned ? { pinned: true } : {}),
+          ...(x.archived ? { archived: true } : {}),
         };
       });
   } catch {
@@ -233,9 +248,114 @@ export function updateExercise(id: string, patch: Partial<Omit<LibraryExercise, 
 }
 
 export function removeExercise(id: string): void {
-  commitExercises(exercises.filter((e) => e.id !== id));
-  if (blocks.some((b) => b.exerciseIds.includes(id))) {
-    commitBlocks(blocks.map((b) => ({ ...b, exerciseIds: b.exerciseIds.filter((x) => x !== id) })));
+  removeExercises([id]);
+}
+
+export function removeExercises(ids: string[]): void {
+  const drop = new Set(ids);
+  commitExercises(exercises.filter((e) => !drop.has(e.id)));
+  if (blocks.some((b) => b.exerciseIds.some((x) => drop.has(x)))) {
+    commitBlocks(blocks.map((b) => ({ ...b, exerciseIds: b.exerciseIds.filter((x) => !drop.has(x)) })));
+  }
+}
+
+// ── usage, pinning, archive, bulk ops ────────────────────────────────────────
+
+/** Record that these exercises were just placed into a plan session. The
+ *  builder works with description strings (chips, drag payloads, autocomplete),
+ *  so usage is matched case-insensitively on the description. */
+export function recordUseByDescription(descriptions: string[]): void {
+  if (!descriptions.length) return;
+  const wanted = new Set(descriptions.map((d) => d.trim().toLowerCase()).filter(Boolean));
+  if (!wanted.size) return;
+  let hit = false;
+  const now = new Date().toISOString();
+  const next = exercises.map((e) => {
+    if (!wanted.has(e.description.trim().toLowerCase())) return e;
+    hit = true;
+    return { ...e, useCount: (e.useCount ?? 0) + 1, lastUsedAt: now };
+  });
+  if (hit) commitExercises(next);
+}
+
+export function togglePinned(id: string): void {
+  commitExercises(
+    exercises.map((e) => {
+      if (e.id !== id) return e;
+      const next = { ...e };
+      if (next.pinned) delete next.pinned;
+      else next.pinned = true;
+      return next;
+    }),
+  );
+}
+
+export function setArchived(ids: string[], archived: boolean): void {
+  const want = new Set(ids);
+  commitExercises(
+    exercises.map((e) => {
+      if (!want.has(e.id)) return e;
+      const next = { ...e };
+      if (archived) {
+        next.archived = true;
+        delete next.pinned; // archived exercises leave the palette shelves
+      } else delete next.archived;
+      return next;
+    }),
+  );
+}
+
+/** Add one category to every given exercise (existing categories kept, capped). */
+export function addCategoryToExercises(ids: string[], category: string): void {
+  const want = new Set(ids);
+  commitExercises(
+    exercises.map((e) => {
+      if (!want.has(e.id)) return e;
+      const cats = normCats([...(e.categories ?? []), category]);
+      return cats.length ? { ...e, categories: cats } : e;
+    }),
+  );
+}
+
+export function addExercisesToBlockBulk(blockId: string, ids: string[]): void {
+  commitBlocks(
+    blocks.map((b) =>
+      b.id === blockId
+        ? { ...b, exerciseIds: [...b.exerciseIds, ...ids.filter((id) => !b.exerciseIds.includes(id))] }
+        : b,
+    ),
+  );
+}
+
+/** Merge look-alike exercises into one: block references move to the keeper,
+ *  usage adds up, categories union (capped), pin survives; the rest delete. */
+export function mergeExercises(keepId: string, dropIds: string[]): void {
+  const keep = exercises.find((e) => e.id === keepId);
+  if (!keep) return;
+  const drop = new Set(dropIds.filter((id) => id !== keepId));
+  if (!drop.size) return;
+  const dropped = exercises.filter((e) => drop.has(e.id));
+  const merged: LibraryExercise = { ...keep };
+  merged.useCount = dropped.reduce((n, e) => n + (e.useCount ?? 0), keep.useCount ?? 0) || undefined;
+  const lastUsed = [keep.lastUsedAt, ...dropped.map((e) => e.lastUsedAt)].filter((x): x is string => !!x).sort().pop();
+  if (lastUsed) merged.lastUsedAt = lastUsed;
+  if (!merged.useCount) delete merged.useCount;
+  if (dropped.some((e) => e.pinned) || keep.pinned) merged.pinned = true;
+  const cats = normCats([...(keep.categories ?? []), ...dropped.flatMap((e) => e.categories ?? [])]);
+  if (cats.length) merged.categories = cats;
+  commitExercises(exercises.filter((e) => !drop.has(e.id)).map((e) => (e.id === keepId ? merged : e)));
+  if (blocks.some((b) => b.exerciseIds.some((x) => drop.has(x)))) {
+    commitBlocks(
+      blocks.map((b) => {
+        if (!b.exerciseIds.some((x) => drop.has(x))) return b;
+        const ids: string[] = [];
+        for (const x of b.exerciseIds) {
+          const mapped = drop.has(x) ? keepId : x;
+          if (!ids.includes(mapped)) ids.push(mapped);
+        }
+        return { ...b, exerciseIds: ids };
+      }),
+    );
   }
 }
 
@@ -251,6 +371,7 @@ export function renameCategory(oldName: string, newName: string): void {
   const n = newName.trim();
   if (!n || oldName === n) return;
   if (categories.some((c) => c.toLowerCase() === n.toLowerCase() && c !== oldName)) return;
+  moveCategoryColor(oldName, n);
   commitCategories(categories.map((c) => (c === oldName ? n : c)));
   commitExercises(
     exercises.map((e) =>
@@ -263,6 +384,7 @@ export function renameCategory(oldName: string, newName: string): void {
 
 /** Remove a category; it's dropped from any exercise that used it. */
 export function removeCategory(name: string): void {
+  dropCategoryColor(name);
   commitCategories(categories.filter((c) => c !== name));
   if (exercises.some((e) => e.categories?.includes(name))) {
     commitExercises(

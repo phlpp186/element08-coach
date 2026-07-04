@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { uid, type BuilderSession, type PlanMode } from '../lib/e08plan';
 import { ExerciseInput } from './ExerciseInput';
+import { recordUseByDescription } from '../lib/library';
 import { useT } from '../i18n';
 
 const SESSION_MODES: PlanMode[] = ['depth', 'pool', 'dry', 'general'];
@@ -140,7 +141,10 @@ function SessionEditor({
           e.preventDefault();
           setDropping(false);
           const d = e.dataTransfer.getData('text/plain');
-          if (d) onChange({ exercises: [...session.exercises, { id: uid('ex'), description: d }] });
+          if (d) {
+            recordUseByDescription([d]);
+            onChange({ exercises: [...session.exercises, { id: uid('ex'), description: d }] });
+          }
         }}
       >
         <span className="block text-xs text-textDim uppercase tracking-wide">

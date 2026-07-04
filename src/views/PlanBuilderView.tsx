@@ -22,7 +22,8 @@ import {
   type PlanMode,
   type PlanStructure,
 } from '../lib/e08plan';
-import { ExercisePalette } from '../components/ExercisePalette';
+import { ExercisePalette, type AssignTarget } from '../components/ExercisePalette';
+import { recordUseByDescription } from '../lib/library';
 import { Labeled, SessionList } from '../components/sessions';
 import { WeekCard } from '../components/WeekCard';
 import { PhaseCard } from '../components/PhaseCard';
@@ -149,6 +150,7 @@ export function PlanBuilderView({
 
   // append one or more library exercises to the open session, wherever it lives
   const appendExercisesToSession = (sessionId: string, descriptions: string[]) => {
+    recordUseByDescription(descriptions);
     const stamp = Date.now().toString(36);
     const exs = descriptions.map((description, i) => ({ id: `ex-${stamp}-${i}-${Math.round(performance.now())}`, description }));
     const mapSessions = (ss: BuilderWeek['sessions']) =>
@@ -164,6 +166,7 @@ export function PlanBuilderView({
   // append exercises to MANY sessions at once (multi-assign)
   const appendExercisesToSessions = (sessionIds: string[], descriptions: string[]) => {
     if (!sessionIds.length || !descriptions.length) return;
+    recordUseByDescription(descriptions);
     const ids = new Set(sessionIds);
     const stamp = Date.now().toString(36);
     const mapSessions = (ss: BuilderWeek['sessions']) =>
@@ -186,9 +189,9 @@ export function PlanBuilderView({
     }));
   };
 
-  // flat list of every session in the plan, with a human label, for multi-assign
+  // flat list of every session in the plan, grouped + labelled, for multi-assign
   const assignTargets = useMemo(() => {
-    const out: { id: string; label: string }[] = [];
+    const out: AssignTarget[] = [];
     const day = (dow: number) => t(DAY_LABELS[dow] ?? 'Mon');
     const suffix = (s: BuilderWeek['sessions'][number]) => (s.label.trim() ? ` · ${s.label.trim()}` : '');
     if (plan.kind === 'season') {
@@ -197,13 +200,24 @@ export function PlanBuilderView({
         const phName = ph.name.trim() || t(MESO_LABEL[ph.type]);
         for (const w of ph.weeks) {
           g++;
-          for (const s of w.sessions) out.push({ id: s.id, label: `${phName} · ${t('Week')} ${g} · ${day(s.dayOfWeek)}${suffix(s)}` });
+          const group = `${phName} · ${t('Week')} ${g}`;
+          for (const s of w.sessions)
+            out.push({ id: s.id, label: `${day(s.dayOfWeek)}${suffix(s)}`, group, dow: s.dayOfWeek });
         }
       }
     } else if (plan.structure === 'days') {
-      plan.days.forEach((d, di) => d.sessions.forEach((s) => out.push({ id: s.id, label: `${t('Day')} ${di + 1}${suffix(s)}` })));
+      plan.days.forEach((d, di) =>
+        d.sessions.forEach((s) =>
+          out.push({ id: s.id, label: `${t('Day')} ${di + 1}${suffix(s)}`, group: `${t('Day')} ${di + 1}`, dow: null }),
+        ),
+      );
     } else {
-      plan.weeks.forEach((w, wi) => w.sessions.forEach((s) => out.push({ id: s.id, label: `${t('Week')} ${wi + 1} · ${day(s.dayOfWeek)}${suffix(s)}` })));
+      plan.weeks.forEach((w, wi) => {
+        const group = `${t('Week')} ${wi + 1}`;
+        w.sessions.forEach((s) =>
+          out.push({ id: s.id, label: `${day(s.dayOfWeek)}${suffix(s)}`, group, dow: s.dayOfWeek }),
+        );
+      });
     }
     return out;
   }, [plan, t]);
