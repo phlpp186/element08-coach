@@ -37,30 +37,32 @@ export function PoolDiveTracks({ data, groupId }: Props) {
         xAxis: t,
         label: {
           formatter: `L${i + 1}`,
-          color: '#00e5cc',
+          color: ct.recover,
           fontSize: 10,
           position: 'insideEndTop' as const,
         },
-        lineStyle: { color: '#00e5cc', type: 'solid' as const, width: 1, opacity: 0.5 },
+        lineStyle: { color: ct.recover, type: 'solid' as const, width: 1, opacity: 0.5 },
       })),
-    [data.lapEndTimes],
+    [data.lapEndTimes, ct],
   );
 
+  // Panel-toned border keeps the pin legible even where the marker and line
+  // hues coincide (Chalk Dark's red and highlight are both pink).
   const contractionMarks = useMemo(
     () =>
       data.contractionTimes.map((t) => ({
         coord: pickValueAt(data.hrSeries, t) ?? [t, 0],
         symbol: 'pin',
         symbolSize: 14,
-        itemStyle: { color: '#ef5350' },
+        itemStyle: { color: ct.red, borderColor: ct.tooltipBg, borderWidth: 1 },
       })),
-    [data.contractionTimes, data.hrSeries],
+    [data.contractionTimes, data.hrSeries, ct],
   );
 
   const hrOption = useMemo(
     () => buildLineOption({
       series: data.hrSeries,
-      color: '#ff5f9e',
+      color: ct.highlight,
       unit: 'bpm',
       startT: data.startT,
       endT: data.endT,
@@ -73,7 +75,7 @@ export function PoolDiveTracks({ data, groupId }: Props) {
   const depthOption = useMemo(
     () => buildLineOption({
       series: data.depthSeries,
-      color: '#4fc3f7',
+      color: ct.accent,
       unit: 'm',
       startT: data.startT,
       endT: data.endT,
@@ -86,7 +88,7 @@ export function PoolDiveTracks({ data, groupId }: Props) {
   const speedOption = useMemo(
     () => buildLineOption({
       series: data.speedSeries,
-      color: '#ffa726',
+      color: ct.amber,
       unit: 'm/s',
       startT: data.startT,
       endT: data.endT,
@@ -184,7 +186,7 @@ function buildLineOption(p: LineOptionParams, ct: ChartTheme) {
     tooltip: {
       backgroundColor: ct.tooltipBg,
       borderColor: ct.axisLine,
-      textStyle: { color: ct.text, fontFamily: 'Inter, system-ui', fontSize: 12 },
+      textStyle: { color: ct.text, fontFamily: ct.fontFamily, fontSize: 12 },
       trigger: 'axis',
       axisPointer: { type: 'line' as const },
       formatter: (params: any) => {

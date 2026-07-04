@@ -21,10 +21,13 @@ export default {
         amber: 'rgb(var(--c-amber) / <alpha-value>)',
         red: 'rgb(var(--c-red) / <alpha-value>)',
       },
+      // Open Water: Nunito everywhere. "mono" contexts (numbers/data) keep
+      // the same family — src/index.css adds weight 700 + tabular figures
+      // to the font-mono utility.
       fontFamily: {
-        body: ['"Inter"', 'system-ui', 'sans-serif'],
-        heading: ['"Barlow Condensed"', 'sans-serif'],
-        mono: ['"Share Tech Mono"', 'ui-monospace', 'monospace'],
+        body: ['"Nunito"', 'system-ui', 'sans-serif'],
+        heading: ['"Nunito"', 'system-ui', 'sans-serif'],
+        mono: ['"Nunito"', 'system-ui', 'sans-serif'],
       },
     },
   },

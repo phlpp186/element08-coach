@@ -2,14 +2,18 @@
  * chartTheme — palette for ECharts options, swapped with the UI theme.
  *
  * ECharts options are plain JS values built at render time, not CSS, so the
- * chart components can't read Tailwind classes directly. The portal swaps themes
- * by toggling a class on <html> (dark / .light / .neon — see ThemeToggle), so we
- * read the resolved CSS custom properties straight off documentElement and hand
- * ECharts `rgb(...)` strings. A MutationObserver on the <html> class re-renders
- * consumers when the theme flips. This mirrors the analyzer's useChartTheme()
- * contract (same field names) so its ported chart components work unchanged.
+ * chart components can't read Tailwind classes directly. The portal swaps
+ * themes by toggling a class on <html> (Chalk Dark default / .light =
+ * Caribbean — see ThemeToggle), so we read the resolved CSS custom properties
+ * straight off documentElement and hand ECharts `rgb(...)` strings. A
+ * MutationObserver on the <html> class re-renders consumers when the theme
+ * flips. This mirrors the analyzer's useChartTheme() contract (same field
+ * names) so its ported chart components work unchanged.
  */
 import { useSyncExternalStore } from 'react';
+
+/** Semantic series tokens — the `--c-*` palette entries charts draw with. */
+export type ChartToken = 'accent' | 'highlight' | 'recover' | 'amber' | 'red';
 
 export interface ChartTheme {
   surface: string;
@@ -20,6 +24,15 @@ export interface ChartTheme {
   text: string;
   textDim: string;
   accent: string;
+  highlight: string;
+  recover: string;
+  amber: string;
+  red: string;
+  /** Chart typography — follows the UI (Nunito). */
+  fontFamily: string;
+  /** A palette token at reduced opacity, e.g. `alpha('accent', 0.1)` for
+   *  area fills and shaded bands. */
+  alpha: (token: ChartToken, a: number) => string;
 }
 
 /** Read a `--c-*` token ("r g b") and return an `rgb()`/`rgba()` string. */
@@ -30,7 +43,7 @@ function cssVar(name: string, alpha = 1): string {
   return alpha < 1 ? `rgba(${parts}, ${alpha})` : `rgb(${parts})`;
 }
 
-// Re-render when the <html> class changes (theme toggle flips dark/light/neon).
+// Re-render when the <html> class changes (theme toggle flips dark/light).
 function subscribe(cb: () => void): () => void {
   const obs = new MutationObserver(cb);
   obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
@@ -53,5 +66,11 @@ export function useChartTheme(): ChartTheme {
     text: cssVar('--c-text'),
     textDim: cssVar('--c-textDim'),
     accent: cssVar('--c-accent'),
+    highlight: cssVar('--c-highlight'),
+    recover: cssVar('--c-recover'),
+    amber: cssVar('--c-amber'),
+    red: cssVar('--c-red'),
+    fontFamily: 'Nunito, system-ui, sans-serif',
+    alpha: (token, a) => cssVar(`--c-${token}`, a),
   };
 }

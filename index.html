@@ -5,17 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark light" />
     <script>
-      // Apply the saved theme before first paint so the page doesn't flash the
-      // default dark theme before flipping to a chosen light/neon theme.
+      // Resolve the theme before first paint so the page doesn't flash the
+      // wrong palette. An explicit choice ('light' = Caribbean, 'dark' =
+      // Chalk Dark) persists in localStorage; anything else — including the
+      // retired 'neon'/'sky' values — counts as no preference, and the OS
+      // color scheme decides.
       (function () {
+        var t = null;
         try {
-          var t = localStorage.getItem('element08.theme');
-          if (t === 'light') document.documentElement.classList.add('light');
-          else if (t === 'neon') document.documentElement.classList.add('neon');
-          else if (t === 'sky') document.documentElement.classList.add('sky');
+          t = localStorage.getItem('element08.theme');
         } catch (e) {
-          /* localStorage blocked — stay on the default */
+          /* localStorage blocked — fall through to the OS preference */
         }
+        if (t !== 'light' && t !== 'dark') {
+          try {
+            t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          } catch (e) {
+            t = 'light';
+          }
+        }
+        if (t === 'light') document.documentElement.classList.add('light');
       })();
     </script>
     <meta
