@@ -6,10 +6,10 @@
     <meta name="color-scheme" content="dark light" />
     <script>
       // Resolve the theme before first paint so the page doesn't flash the
-      // wrong palette. An explicit choice ('light' = Caribbean, 'dark' =
-      // Chalk Dark) persists in localStorage; anything else — including the
-      // retired 'neon'/'sky' values — counts as no preference, and the OS
-      // color scheme decides.
+      // wrong palette. An explicit choice ('light' = Caribbean, 'mid' = Misty,
+      // 'dark' = Chalk Dark) persists in localStorage; anything else —
+      // including the retired 'neon'/'sky' values — counts as no preference,
+      // and the OS color scheme decides light/dark.
       (function () {
         var t = null;
         try {
@@ -17,7 +17,7 @@
         } catch (e) {
           /* localStorage blocked — fall through to the OS preference */
         }
-        if (t !== 'light' && t !== 'dark') {
+        if (t !== 'light' && t !== 'mid' && t !== 'dark') {
           try {
             t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
           } catch (e) {
@@ -25,6 +25,7 @@
           }
         }
         if (t === 'light') document.documentElement.classList.add('light');
+        else if (t === 'mid') document.documentElement.classList.add('mid');
       })();
     </script>
     <meta

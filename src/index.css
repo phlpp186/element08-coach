@@ -49,6 +49,24 @@
   color-scheme: light;
 }
 
+:root.mid {
+  /* Misty — the ELEMENT 08 theme: light-mid muted teal, coral accent, sea
+   * ink text. The middle stop between Caribbean (.light) and Chalk Dark. */
+  --c-deep: 127 160 170; /* page — hazy mid teal */
+  --c-abyss: 220 234 237; /* fields — pale misty, lifts off the page */
+  --c-panel: 234 242 243; /* cards — lightest */
+  --c-border: 166 192 198;
+  --c-text: 18 59 68; /* sea ink */
+  --c-textDim: 78 110 118;
+  --c-accent: 232 98 58; /* coral-orange */
+  --c-highlight: 224 102 153; /* dusk rose */
+  --c-recover: 18 140 106;
+  --c-amber: 227 154 42;
+  --c-red: 226 75 60;
+  --c-ink: 255 255 255;
+  color-scheme: light;
+}
+
 html,
 body,
 #root {
@@ -71,6 +89,16 @@ body,
   background:
     radial-gradient(90% 55% at 50% -8%, rgb(255 255 255 / 0.85), transparent 60%),
     linear-gradient(180deg, rgb(234 249 251) 0%, rgb(205 239 245) 45%, rgb(185 230 239) 100%);
+}
+:root.mid body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(90% 55% at 50% -8%, rgb(255 255 255 / 0.55), transparent 60%),
+    linear-gradient(180deg, rgb(140 172 181) 0%, rgb(127 160 170) 45%, rgb(119 155 165) 100%);
 }
 /* Keep app content above the canvas layer. */
 #root {
@@ -158,6 +186,7 @@ h3 {
   border: 1px solid rgb(var(--c-border));
   box-shadow: 0 8px 26px rgb(0 0 0 / 0.35);
 }
-:root.light .glass-card {
-  box-shadow: 0 6px 22px rgb(12 59 69 / 0.09);
+:root.light .glass-card,
+:root.mid .glass-card {
+  box-shadow: 0 6px 22px rgb(15 48 56 / 0.10);
 }

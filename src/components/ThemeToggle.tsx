@@ -3,15 +3,16 @@ import { useT } from '../i18n';
 
 const KEY = 'element08.theme';
 
-type Theme = 'dark' | 'light';
-const LABEL: Record<Theme, string> = { dark: 'Chalk Dark', light: 'Caribbean' };
+type Theme = 'light' | 'mid' | 'dark';
+const ORDER: Theme[] = ['light', 'mid', 'dark'];
+const LABEL: Record<Theme, string> = { light: 'Caribbean', mid: 'Misty', dark: 'Chalk Dark' };
 
 /** Explicit stored choice, or null when the OS preference should decide.
  *  Retired values ('neon'/'sky') read as no preference. */
 function readStored(): Theme | null {
   try {
     const v = localStorage.getItem(KEY);
-    return v === 'light' || v === 'dark' ? v : null;
+    return v === 'light' || v === 'mid' || v === 'dark' ? v : null;
   } catch {
     return null;
   }
@@ -26,13 +27,15 @@ function osTheme(): Theme {
 }
 
 function applyTheme(t: Theme) {
-  document.documentElement.classList.toggle('light', t === 'light');
+  const cl = document.documentElement.classList;
+  cl.toggle('light', t === 'light');
+  cl.toggle('mid', t === 'mid');
 }
 
-/** Sun/moon switch between Caribbean (light) and Chalk Dark. Toggles the
- *  `light` class on <html>; an explicit click persists the choice, otherwise
- *  the OS color scheme decides (index.html resolves it before first paint to
- *  avoid a flash). */
+/** Cycles Caribbean (light) → Misty (mid) → Chalk Dark. Toggles the `light`
+ *  or `mid` class on <html> (dark = no class); an explicit click persists the
+ *  choice, otherwise the OS color scheme decides light/dark (index.html
+ *  resolves it before first paint to avoid a flash). */
 export function ThemeToggle() {
   const t = useT();
   const [theme, setTheme] = useState<Theme>(() => readStored() ?? osTheme());
@@ -56,7 +59,7 @@ export function ThemeToggle() {
     return () => mq.removeEventListener('change', onChange);
   }, []);
 
-  const next: Theme = theme === 'dark' ? 'light' : 'dark';
+  const next: Theme = ORDER[(ORDER.indexOf(theme) + 1) % ORDER.length];
 
   const pick = () => {
     setTheme(next);
@@ -74,8 +77,17 @@ export function ThemeToggle() {
       title={`${t('Theme:')} ${LABEL[theme]}, ${t('switch to')} ${LABEL[next]}`}
       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-panel/80 text-textDim backdrop-blur transition-colors hover:border-accent hover:text-accent"
     >
-      {theme === 'light' ? <SunIcon /> : <MoonIcon />}
+      {theme === 'light' ? <SunIcon /> : theme === 'mid' ? <MidIcon /> : <MoonIcon />}
     </button>
+  );
+}
+
+function MidIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none" />
+    </svg>
   );
 }
 
