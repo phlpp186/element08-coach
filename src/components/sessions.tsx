@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react';
-import { uid, type BuilderSession, type PlanMode } from '../lib/e08plan';
+import { uid, type BuilderExercise, type BuilderSession, type PlanMode } from '../lib/e08plan';
 import { ExerciseInput } from './ExerciseInput';
-import { recordUseByDescription } from '../lib/library';
+import { defaultDoseFor, recordUseByDescription } from '../lib/library';
+import { DoseChips, DoseEditor } from './dose';
 import { useT } from '../i18n';
 
 const SESSION_MODES: PlanMode[] = ['depth', 'pool', 'dry', 'general'];
@@ -108,11 +109,17 @@ function SessionEditor({
 }) {
   const t = useT();
   const [dropping, setDropping] = useState(false);
+  const [doseOpen, setDoseOpen] = useState<string | null>(null);
   const addExercise = () =>
     onChange({ exercises: [...session.exercises, { id: uid('ex'), description: '' }] });
-  const updateExercise = (id: string, description: string) =>
+  const updateExercise = (id: string, patch: Partial<BuilderExercise>) =>
     onChange({
-      exercises: session.exercises.map((e) => (e.id === id ? { ...e, description } : e)),
+      exercises: session.exercises.map((e) => {
+        if (e.id !== id) return e;
+        const next = { ...e, ...patch };
+        if (patch.dose !== undefined && (!patch.dose || patch.dose.length === 0)) delete next.dose;
+        return next;
+      }),
     });
   const removeExercise = (id: string) =>
     onChange({ exercises: session.exercises.filter((e) => e.id !== id) });
@@ -143,7 +150,8 @@ function SessionEditor({
           const d = e.dataTransfer.getData('text/plain');
           if (d) {
             recordUseByDescription([d]);
-            onChange({ exercises: [...session.exercises, { id: uid('ex'), description: d }] });
+            const dose = defaultDoseFor(d);
+            onChange({ exercises: [...session.exercises, { id: uid('ex'), description: d, ...(dose ? { dose } : {}) }] });
           }
         }}
       >
@@ -151,20 +159,52 @@ function SessionEditor({
           {t('Exercises (optional) · drag from your library')}
         </span>
         {session.exercises.map((ex, i) => (
-          <div key={ex.id} className="flex gap-2 items-center">
-            <span className="text-textDim text-xs font-mono w-4 shrink-0">{i + 1}</span>
-            <ExerciseInput
-              value={ex.description}
-              placeholder={t('e.g. 3×25m bi-fins, 5 min rest')}
-              onChange={(v) => updateExercise(ex.id, v)}
-            />
-            <button
-              onClick={() => removeExercise(ex.id)}
-              className="text-red text-sm px-1"
-              title={t('Remove exercise')}
-            >
-              ✕
-            </button>
+          <div key={ex.id} className="space-y-1">
+            <div className="flex gap-2 items-center">
+              <span className="text-textDim text-xs font-mono w-4 shrink-0">{i + 1}</span>
+              <ExerciseInput
+                value={ex.description}
+                placeholder={t('e.g. 3×25m bi-fins, 5 min rest')}
+                onChange={(v) => updateExercise(ex.id, { description: v })}
+                onPick={(v) => {
+                  const dose = defaultDoseFor(v);
+                  updateExercise(ex.id, { description: v, ...(dose && !ex.dose?.length ? { dose } : {}) });
+                }}
+              />
+              {!ex.dose?.length && doseOpen !== ex.id && (
+                <button
+                  onClick={() => {
+                    if (!ex.dose?.length) updateExercise(ex.id, { dose: [{ unit: 'sets', value: '' }] });
+                    setDoseOpen(ex.id);
+                  }}
+                  className="shrink-0 text-xs text-textDim hover:text-accent"
+                  title={t('Add a structured dose (sets, hold, rest, distance…) to this exercise')}
+                >
+                  + {t('dose')}
+                </button>
+              )}
+              <button
+                onClick={() => removeExercise(ex.id)}
+                className="text-red text-sm px-1"
+                title={t('Remove exercise')}
+              >
+                ✕
+              </button>
+            </div>
+            {doseOpen === ex.id ? (
+              <div className="ml-6 space-y-1.5 rounded-lg border border-border bg-panel/50 p-2">
+                <DoseEditor dose={ex.dose ?? []} onChange={(d) => updateExercise(ex.id, { dose: d })} />
+                <div className="flex justify-end">
+                  <button onClick={() => setDoseOpen(null)} className="text-xs text-accent hover:underline">
+                    {t('Done')}
+                  </button>
+                </div>
+              </div>
+            ) : ex.dose?.length ? (
+              <div className="ml-6">
+                <DoseChips dose={ex.dose} onClick={() => setDoseOpen(ex.id)} />
+              </div>
+            ) : null}
           </div>
         ))}
         <button onClick={addExercise} className="text-xs text-accent hover:underline">

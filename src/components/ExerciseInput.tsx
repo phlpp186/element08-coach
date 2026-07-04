@@ -12,10 +12,14 @@ const PAGE = 100;
 export function ExerciseInput({
   value,
   onChange,
+  onPick,
   placeholder,
 }: {
   value: string;
   onChange: (v: string) => void;
+  /** Called instead of onChange when a library suggestion is picked, so the
+   *  caller can also pull the exercise's default dose. */
+  onPick?: (v: string) => void;
   placeholder?: string;
 }) {
   const t = useT();
@@ -35,7 +39,7 @@ export function ExerciseInput({
 
   const pick = (s: string) => {
     recordUseByDescription([s]);
-    onChange(s);
+    (onPick ?? onChange)(s);
     setFocused(false);
     setHighlight(-1);
   };

@@ -12,7 +12,7 @@
  * tab and the builder's picker stay in sync.
  */
 import { useSyncExternalStore } from 'react';
-import { uid } from './e08plan';
+import { normDose, uid, type DosePart } from './e08plan';
 import { dropCategoryColor, moveCategoryColor } from './categoryColor';
 
 /** Max categories an exercise can carry. */
@@ -33,6 +33,9 @@ export interface LibraryExercise {
   /** Archived exercises leave every picker/list but keep their history.
    *  They live under the library's Archived view and can be restored. */
   archived?: boolean;
+  /** Optional default dose, copied onto the exercise when it's placed into a
+   *  session (where the coach tweaks it per week). Any mix of parts. */
+  defaultDose?: DosePart[];
 }
 
 /** Trim, drop empties, de-dupe (case-insensitive), and cap at MAX_CATEGORIES. */
@@ -82,6 +85,7 @@ function readExercises(): LibraryExercise[] {
         const legacy = (x as { category?: unknown }).category;
         const cats = normCats((x as LibraryExercise).categories ?? legacy);
         const use = typeof x.useCount === 'number' && x.useCount > 0 ? Math.floor(x.useCount) : 0;
+        const dose = normDose((x as LibraryExercise).defaultDose);
         return {
           id: x.id || uid('lib'),
           description: x.description,
@@ -90,6 +94,7 @@ function readExercises(): LibraryExercise[] {
           ...(typeof x.lastUsedAt === 'string' && x.lastUsedAt ? { lastUsedAt: x.lastUsedAt } : {}),
           ...(x.pinned ? { pinned: true } : {}),
           ...(x.archived ? { archived: true } : {}),
+          ...(dose ? { defaultDose: dose } : {}),
         };
       });
   } catch {
@@ -242,9 +247,23 @@ export function updateExercise(id: string, patch: Partial<Omit<LibraryExercise, 
         if (cats.length) next.categories = cats;
         else delete next.categories;
       }
+      if (patch.defaultDose !== undefined) {
+        const dose = normDose(patch.defaultDose);
+        if (dose) next.defaultDose = dose;
+        else delete next.defaultDose;
+      }
       return next;
     }),
   );
+}
+
+/** A fresh copy of the library default dose for this description (or none).
+ *  Matched case-insensitively, same as usage recording. */
+export function defaultDoseFor(description: string): DosePart[] | undefined {
+  const key = description.trim().toLowerCase();
+  if (!key) return undefined;
+  const ex = exercises.find((e) => !e.archived && e.description.trim().toLowerCase() === key);
+  return ex?.defaultDose ? ex.defaultDose.map((p) => ({ ...p })) : undefined;
 }
 
 export function removeExercise(id: string): void {
@@ -341,6 +360,10 @@ export function mergeExercises(keepId: string, dropIds: string[]): void {
   if (lastUsed) merged.lastUsedAt = lastUsed;
   if (!merged.useCount) delete merged.useCount;
   if (dropped.some((e) => e.pinned) || keep.pinned) merged.pinned = true;
+  if (!merged.defaultDose) {
+    const dose = dropped.find((e) => e.defaultDose)?.defaultDose;
+    if (dose) merged.defaultDose = dose.map((p) => ({ ...p }));
+  }
   const cats = normCats([...(keep.categories ?? []), ...dropped.flatMap((e) => e.categories ?? [])]);
   if (cats.length) merged.categories = cats;
   commitExercises(exercises.filter((e) => !drop.has(e.id)).map((e) => (e.id === keepId ? merged : e)));

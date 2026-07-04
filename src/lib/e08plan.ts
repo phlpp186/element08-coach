@@ -11,6 +11,7 @@
  *
  * Keep this file in sync if the app bumps PLAN_FILE_VERSION.
  */
+import { tr } from '../i18n';
 
 export const PLAN_FILE_FORMAT = 'e08plan';
 export const PLAN_FILE_VERSION = 1;
@@ -83,9 +84,75 @@ export interface PlanFileV1 {
 
 // ── Builder model (the editor's working state) ───────────────────────────────
 
+/** A dose part: one measured aspect of an exercise. A dose is an ORDERED LIST
+ *  of any mix of parts — hold + distance + rest in one exercise is fine (mixed
+ *  DYN/STA work needs exactly that). Values are free text ("2:00", "8", "50m",
+ *  "moderate"); 'other' carries its own label. Doses are always optional: an
+ *  exercise without one is exactly the free-text exercise it always was. */
+export type DoseUnit = 'sets' | 'reps' | 'hold' | 'rest' | 'distance' | 'depth' | 'time' | 'other';
+
+export interface DosePart {
+  unit: DoseUnit;
+  value: string;
+  /** Custom name shown for 'other' parts (e.g. "charge depth", "effort"). */
+  label?: string;
+}
+
+export const DOSE_UNITS: DoseUnit[] = ['sets', 'reps', 'hold', 'rest', 'distance', 'depth', 'time', 'other'];
+
+/** How a part reads in text (wire format + chips). Unit words go through the
+ *  translator at compose time so the plan reads in the coach's language. */
+export function dosePartText(p: DosePart, t: (s: string) => string = (s) => s): string {
+  const v = p.value.trim();
+  if (!v) return '';
+  const carriesUnit = /[a-z%]/i.test(v);
+  switch (p.unit) {
+    case 'sets':
+      return `${v}×`;
+    case 'reps':
+      return `${v} ${t('reps')}`;
+    case 'hold':
+      return `${t('hold')} ${v}`;
+    case 'rest':
+      return `${t('rest')} ${v}`;
+    case 'distance':
+      return carriesUnit ? v : `${v} m`;
+    case 'depth':
+      return `@ ${carriesUnit ? v : `${v} m`}`;
+    case 'time':
+      return v;
+    case 'other':
+      return p.label?.trim() ? `${p.label.trim()} ${v}` : v;
+  }
+}
+
+export function doseText(dose: DosePart[] | undefined, t: (s: string) => string = (s) => s): string {
+  return (dose ?? [])
+    .map((p) => dosePartText(p, t))
+    .filter(Boolean)
+    .join(' · ');
+}
+
+/** Drop empty parts; return undefined when nothing usable remains. */
+export function normDose(dose: unknown): DosePart[] | undefined {
+  if (!Array.isArray(dose)) return undefined;
+  const out: DosePart[] = [];
+  for (const p of dose) {
+    if (!p || typeof p !== 'object') continue;
+    const { unit, value, label } = p as DosePart;
+    if (typeof value !== 'string' || !value.trim()) continue;
+    if (!DOSE_UNITS.includes(unit)) continue;
+    out.push({ unit, value: value.trim(), ...(unit === 'other' && typeof label === 'string' && label.trim() ? { label: label.trim() } : {}) });
+  }
+  return out.length ? out : undefined;
+}
+
 export interface BuilderExercise {
   id: string;
   description: string;
+  /** Optional structured dose. On export it renders INTO the description text,
+   *  so the .e08plan wire format (and the app that validates it) is unchanged. */
+  dose?: DosePart[];
 }
 
 export interface BuilderSession {
@@ -200,6 +267,14 @@ export const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 // ── Build + validate + download ──────────────────────────────────────────────
 
+/** A builder exercise's full text: description plus its dose, if any. This is
+ *  what the athlete's app receives — the wire shape stays `{id, description}`,
+ *  which is exactly what the app's validator accepts today. */
+export function exerciseText(e: BuilderExercise, t: (s: string) => string = (s) => s): string {
+  const d = doseText(e.dose, t);
+  return d ? `${e.description.trim()} · ${d}` : e.description.trim();
+}
+
 /** One BuilderSession → one wire PlannedSession at the given dayOfWeek + label. */
 function toPlanned(s: BuilderSession, dayOfWeek: number, label: string): PlannedSession {
   return {
@@ -207,8 +282,9 @@ function toPlanned(s: BuilderSession, dayOfWeek: number, label: string): Planned
     dayOfWeek,
     label: label.trim() || 'Session',
     exercises: s.exercises
-      .filter((e) => e.description.trim())
-      .map((e) => ({ id: e.id, description: e.description.trim() })),
+      .filter((e) => e.description.trim() || doseText(e.dose))
+      // tr(): unit words render in the coach's authoring language.
+      .map((e) => ({ id: e.id, description: exerciseText(e, tr) })),
     ...(s.mode ? { mode: s.mode } : {}),
     ...(s.sessionType.trim() ? { sessionType: s.sessionType.trim() } : {}),
     sessionNotes: s.body.trim(),

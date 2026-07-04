@@ -23,7 +23,7 @@ import {
   type PlanStructure,
 } from '../lib/e08plan';
 import { ExercisePalette, type AssignTarget } from '../components/ExercisePalette';
-import { recordUseByDescription } from '../lib/library';
+import { defaultDoseFor, recordUseByDescription } from '../lib/library';
 import { Labeled, SessionList } from '../components/sessions';
 import { WeekCard } from '../components/WeekCard';
 import { PhaseCard } from '../components/PhaseCard';
@@ -152,7 +152,10 @@ export function PlanBuilderView({
   const appendExercisesToSession = (sessionId: string, descriptions: string[]) => {
     recordUseByDescription(descriptions);
     const stamp = Date.now().toString(36);
-    const exs = descriptions.map((description, i) => ({ id: `ex-${stamp}-${i}-${Math.round(performance.now())}`, description }));
+    const exs = descriptions.map((description, i) => {
+      const dose = defaultDoseFor(description);
+      return { id: `ex-${stamp}-${i}-${Math.round(performance.now())}`, description, ...(dose ? { dose } : {}) };
+    });
     const mapSessions = (ss: BuilderWeek['sessions']) =>
       ss.map((s) => (s.id === sessionId ? { ...s, exercises: [...s.exercises, ...exs] } : s));
     mutate((p) => ({
@@ -169,6 +172,7 @@ export function PlanBuilderView({
     recordUseByDescription(descriptions);
     const ids = new Set(sessionIds);
     const stamp = Date.now().toString(36);
+    const withDose = descriptions.map((description) => ({ description, dose: defaultDoseFor(description) }));
     const mapSessions = (ss: BuilderWeek['sessions']) =>
       ss.map((s) =>
         ids.has(s.id)
@@ -176,7 +180,11 @@ export function PlanBuilderView({
               ...s,
               exercises: [
                 ...s.exercises,
-                ...descriptions.map((description, i) => ({ id: `ex-${stamp}-${s.id}-${i}`, description })),
+                ...withDose.map((d, i) => ({
+                  id: `ex-${stamp}-${s.id}-${i}`,
+                  description: d.description,
+                  ...(d.dose ? { dose: d.dose.map((p) => ({ ...p })) } : {}),
+                })),
               ],
             }
           : s,

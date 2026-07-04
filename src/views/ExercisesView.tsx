@@ -45,6 +45,7 @@ import { CatDot, CatDots } from "../components/CatDot";
 import { CategoryPicker } from "../components/CategoryPicker";
 import { InfoTip } from "../components/InfoTip";
 import { LoadMore } from "../components/LoadMore";
+import { DoseChips, DoseEditor } from "../components/dose";
 
 const CREATE_BAR =
   "flex flex-wrap gap-2 rounded-xl border border-accent/25 bg-accent/5 p-3";
@@ -651,6 +652,11 @@ function ExerciseRow({
               ))}
             </span>
           ) : null}
+          {ex.defaultDose?.length ? (
+            <span className="hidden shrink-0 md:block">
+              <DoseChips dose={ex.defaultDose} />
+            </span>
+          ) : null}
           <span className="shrink-0 text-xs text-textDim tabular-nums">
             {usageLabel(ex, t)}
           </span>
@@ -674,6 +680,15 @@ function ExerciseRow({
               selected={ex.categories ?? []}
               categories={categories}
               onChange={(next) => updateExercise(ex.id, { categories: next })}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <span className="text-xs text-textDim">
+              {t("Default dose (optional). Copied into a session when this exercise is added; tweak it there per week. Mix any parts: hold + distance + rest is fine.")}
+            </span>
+            <DoseEditor
+              dose={ex.defaultDose ?? []}
+              onChange={(d) => updateExercise(ex.id, { defaultDose: d })}
             />
           </div>
           <div className="flex items-center gap-4">
