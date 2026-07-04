@@ -29,7 +29,7 @@ export function App() {
         <div className="mx-auto max-w-4xl flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <button onClick={() => navigate('/athletes')} className="text-left">
             <h1 className="text-2xl font-heading tracking-wider">
-              E<span className="text-red">|</span>08{' '}
+              E<span className="text-accent">|</span>08{' '}
               <span className="text-textDim font-body text-base align-middle">{t('Coach')}</span>
             </h1>
           </button>
