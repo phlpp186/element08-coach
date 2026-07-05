@@ -174,10 +174,21 @@ export interface BuilderWeek {
   sessions: BuilderSession[];
 }
 
-/** A single numbered day in a day-based plan (Day 1 = startDate, Day 2 = +1, …). */
+/** A single numbered day in a day-based plan. Without an explicit `date` it
+ *  falls on startDate + its index (Day 1 = startDate, Day 2 = +1, …); the coach
+ *  can override the calendar date per day (no past dates, no duplicates). */
 export interface BuilderDay {
   id: string;
   sessions: BuilderSession[];
+  /** ISO date (YYYY-MM-DD) override. Absent = positional (startDate + index). */
+  date?: string;
+}
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** The effective calendar date of a plan day: its override, or startDate+index. */
+export function dayDate(startDate: string, day: BuilderDay, index: number): string {
+  return day.date && ISO_DATE_RE.test(day.date) ? day.date : addDays(startDate, index);
 }
 
 export type PlanStructure = 'weeks' | 'days';
@@ -317,7 +328,7 @@ function weeksToMicroCycles(plan: BuilderPlan): MicroCycle[] {
 function daysToMicroCycles(plan: BuilderPlan): MicroCycle[] {
   const buckets = new Map<string, PlannedSession[]>();
   plan.days.forEach((d, di) => {
-    const date = addDays(plan.startDate, di);
+    const date = dayDate(plan.startDate, d, di);
     const weekStart = mondayOf(date);
     const dow = dowOf(date);
     const arr = buckets.get(weekStart) ?? [];

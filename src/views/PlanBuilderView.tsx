@@ -3,12 +3,14 @@ import { daysBetween } from '../lib/planHelpers';
 import {
   addDays,
   DAY_LABELS,
+  dayDate,
   downloadPlanFile,
   dowOf,
   emptyDay,
   emptyPhase,
   generateSeasonSkeleton,
   initialPlan,
+  isoDate,
   MESO_LABEL,
   mondayOf,
   normalizePlan,
@@ -54,9 +56,11 @@ const STRUCTURES: { id: PlanStructure; label: string }[] = [
   { id: 'days', label: 'Days' },
 ];
 
-const WEEKDAY_FMT = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
-function dayDateLabel(startDate: string, di: number): string {
-  return WEEKDAY_FMT.format(new Date(`${addDays(startDate, di)}T00:00:00Z`));
+const WEEKDAY_FMT = new Intl.DateTimeFormat(undefined, { weekday: 'long' });
+/** Weekday name (e.g. "Monday") for an ISO date — shown beside the editable
+ *  date picker for quick orientation. */
+function weekdayLabel(isoDay: string): string {
+  return WEEKDAY_FMT.format(new Date(`${isoDay}T00:00:00Z`));
 }
 
 /** Build the initial working plan for this mount: load a saved plan, or start a
@@ -146,24 +150,6 @@ export function PlanBuilderView({
     const phases = generateSeasonSkeleton(genWeeks);
     mutate((p) => ({ ...p, kind: 'season', phases }));
     setOpenPhase(phases[0]?.id ?? null);
-  };
-
-  // append one or more library exercises to the open session, wherever it lives
-  const appendExercisesToSession = (sessionId: string, descriptions: string[]) => {
-    recordUseByDescription(descriptions);
-    const stamp = Date.now().toString(36);
-    const exs = descriptions.map((description, i) => {
-      const dose = defaultDoseFor(description);
-      return { id: `ex-${stamp}-${i}-${Math.round(performance.now())}`, description, ...(dose ? { dose } : {}) };
-    });
-    const mapSessions = (ss: BuilderWeek['sessions']) =>
-      ss.map((s) => (s.id === sessionId ? { ...s, exercises: [...s.exercises, ...exs] } : s));
-    mutate((p) => ({
-      ...p,
-      weeks: p.weeks.map((w) => ({ ...w, sessions: mapSessions(w.sessions) })),
-      days: p.days.map((d) => ({ ...d, sessions: mapSessions(d.sessions) })),
-      phases: p.phases.map((ph) => ({ ...ph, weeks: ph.weeks.map((w) => ({ ...w, sessions: mapSessions(w.sessions) })) })),
-    }));
   };
 
   // append exercises to MANY sessions at once (multi-assign)
@@ -371,13 +357,7 @@ export function PlanBuilderView({
         </p>
       </section>
 
-      <ExercisePalette
-        onUse={(descs) => {
-          if (editing) appendExercisesToSession(editing, descs);
-        }}
-        targets={assignTargets}
-        onAssign={appendExercisesToSessions}
-      />
+      <ExercisePalette targets={assignTargets} onAssign={appendExercisesToSessions} />
 
       {plan.kind === 'season' ? (
         <SeasonSchedule
@@ -410,7 +390,6 @@ export function PlanBuilderView({
           addDay={addDay}
           removeDay={removeDay}
           setDayCount={setDayCount}
-          dayDateLabel={dayDateLabel}
         />
       )}
 
@@ -466,10 +445,12 @@ function TrainingSchedule(props: {
   addDay: () => void;
   removeDay: (di: number) => void;
   setDayCount: (n: number) => void;
-  dayDateLabel: (startDate: string, di: number) => string;
 }) {
   const t = useT();
   const { plan, editing, setEditing, setMeta } = props;
+  const today = isoDate(new Date());
+  // Effective calendar date of every day, for duplicate checks.
+  const dayDates = plan.days.map((d, i) => dayDate(plan.startDate, d, i));
   const newSess = (dayOfWeek: number) => ({
     id: `sess-${Date.now().toString(36)}-${Math.round(performance.now())}`,
     dayOfWeek,
@@ -537,15 +518,15 @@ function TrainingSchedule(props: {
           ))
         : plan.days.map((day, di) => (
             <div key={day.id} className="glass-card rounded-xl p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <span className="font-heading text-accent whitespace-nowrap shrink-0">{t('DAY')} {di + 1}</span>
-                <span className="text-textDim text-sm">{props.dayDateLabel(plan.startDate, di)}</span>
-                {plan.days.length > 1 && (
-                  <button onClick={() => props.removeDay(di)} className="text-red text-sm px-2 shrink-0 ml-auto" title={t('Remove day')}>
-                    ✕
-                  </button>
-                )}
-              </div>
+              <DayHeader
+                index={di}
+                date={dayDates[di]}
+                weekday={weekdayLabel(dayDates[di])}
+                today={today}
+                otherDates={dayDates.filter((_, i) => i !== di)}
+                onDate={(date) => props.updateDay(di, { date })}
+                onRemove={plan.days.length > 1 ? () => props.removeDay(di) : undefined}
+              />
               <DaySessions
                 day={day}
                 editing={editing}
@@ -561,6 +542,70 @@ function TrainingSchedule(props: {
         </button>
       )}
     </section>
+  );
+}
+
+/** Day header with an editable calendar date. The date can't be in the past
+ *  or collide with another day; an invalid pick is rejected with an inline
+ *  note and the field snaps back. Clearing it returns the day to positional. */
+function DayHeader({
+  index,
+  date,
+  weekday,
+  today,
+  otherDates,
+  onDate,
+  onRemove,
+}: {
+  index: number;
+  date: string;
+  weekday: string;
+  today: string;
+  otherDates: string[];
+  onDate: (date: string | undefined) => void;
+  onRemove?: () => void;
+}) {
+  const t = useT();
+  const [err, setErr] = useState<string | null>(null);
+
+  const onChange = (val: string) => {
+    setErr(null);
+    if (!val) {
+      onDate(undefined); // back to positional (startDate + index)
+      return;
+    }
+    if (val < today) {
+      setErr(t('The date can’t be in the past.'));
+      return;
+    }
+    if (otherDates.includes(val)) {
+      setErr(t('Another day already uses this date.'));
+      return;
+    }
+    onDate(val);
+  };
+
+  return (
+    <div className="space-y-1">
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="font-heading text-accent whitespace-nowrap shrink-0">{t('DAY')} {index + 1}</span>
+        <input
+          type="date"
+          value={date}
+          min={today}
+          onChange={(e) => onChange(e.target.value)}
+          className="field w-auto"
+          title={t('Set this day’s date (not in the past, no duplicates)')}
+        />
+        <span className="text-textDim text-sm">{weekday}</span>
+        {onRemove && (
+          <button onClick={onRemove} className="text-red text-sm px-2 shrink-0 ml-auto" title={t('Remove day')}>
+            ✕
+          </button>
+        )}
+      </div>
+      {err && <p className="text-red text-xs">{err}</p>}
+    </div>
   );
 }
 

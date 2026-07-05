@@ -35,11 +35,9 @@ const SHELF_SIZE = 6;
 const CHUNK = 80;
 
 export function ExercisePalette({
-  onUse,
   targets,
   onAssign,
 }: {
-  onUse: (descriptions: string[]) => void;
   targets: AssignTarget[];
   onAssign: (sessionIds: string[], descriptions: string[]) => void;
 }) {
@@ -87,7 +85,8 @@ export function ExercisePalette({
   const pinned = useMemo(() => exercises.filter((e) => !e.archived && e.pinned), [exercises]);
   const shelfBlocks = useMemo(() => blocks.filter((b) => b.exerciseIds.length > 0).slice(0, 4), [blocks]);
 
-  const useBlock = (b: ExerciseBlock) => onUse(blockExercises(b).map((e) => e.description));
+  const assignBlock = (b: ExerciseBlock) =>
+    setAssigning({ name: b.name, descriptions: blockExercises(b).map((e) => e.description) });
 
   return (
     <section className="glass-card rounded-xl p-4 space-y-3">
@@ -130,8 +129,6 @@ export function ExercisePalette({
             <SearchResults
               results={results}
               blockResults={blockResults}
-              onUse={onUse}
-              onUseBlock={useBlock}
               onAssignOne={(name, descriptions) => setAssigning({ name, descriptions })}
             />
           ) : (
@@ -144,10 +141,7 @@ export function ExercisePalette({
                       icon={<span className="text-accent">▦</span>}
                       label={b.name}
                       meta={String(b.exerciseIds.length)}
-                      onAdd={() => useBlock(b)}
-                      onAssign={() =>
-                        setAssigning({ name: b.name, descriptions: blockExercises(b).map((e) => e.description) })
-                      }
+                      onAssign={() => assignBlock(b)}
                     />
                   ))}
                 </Shelf>
@@ -155,14 +149,14 @@ export function ExercisePalette({
               {recent.length > 0 && (
                 <Shelf title={t('Recent')}>
                   {recent.map((ex) => (
-                    <ExerciseShelfRow key={ex.id} ex={ex} onUse={onUse} onAssign={setAssigning} t={t} />
+                    <ExerciseShelfRow key={ex.id} ex={ex} onAssign={setAssigning} t={t} />
                   ))}
                 </Shelf>
               )}
               {pinned.length > 0 && (
                 <Shelf title={t('Pinned')}>
                   {pinned.map((ex) => (
-                    <ExerciseShelfRow key={ex.id} ex={ex} onUse={onUse} onAssign={setAssigning} t={t} />
+                    <ExerciseShelfRow key={ex.id} ex={ex} onAssign={setAssigning} t={t} />
                   ))}
                 </Shelf>
               )}
@@ -182,7 +176,6 @@ export function ExercisePalette({
       {drawer && (
         <BrowseDrawer
           onClose={() => setDrawer(false)}
-          onUse={onUse}
           onAssignOne={(name, descriptions) => setAssigning({ name, descriptions })}
         />
       )}
@@ -214,7 +207,6 @@ function ShelfRow({
   icon,
   label,
   meta,
-  onAdd,
   onAssign,
   draggable,
   dragText,
@@ -222,11 +214,12 @@ function ShelfRow({
   icon: React.ReactNode;
   label: string;
   meta?: string;
-  onAdd: () => void;
+  /** The ＋ button assigns this to one or more plan sessions. */
   onAssign: () => void;
   draggable?: boolean;
   dragText?: string;
 }) {
+  const t = useT();
   return (
     <div className="group flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm odd:bg-abyss/60 hover:bg-abyss">
       <span
@@ -247,12 +240,9 @@ function ShelfRow({
       {meta && <span className="shrink-0 text-xs text-textDim tabular-nums">{meta}</span>}
       <button
         onClick={onAssign}
-        className="shrink-0 px-1 text-textDim opacity-0 group-hover:opacity-100 hover:text-accent"
-        title="⋯"
+        className="shrink-0 px-1 font-heading text-accent"
+        title={t('Add to sessions…')}
       >
-        ⋯
-      </button>
-      <button onClick={onAdd} className="shrink-0 px-1 font-heading text-accent" title="+">
         ＋
       </button>
     </div>
@@ -261,12 +251,10 @@ function ShelfRow({
 
 function ExerciseShelfRow({
   ex,
-  onUse,
   onAssign,
   t,
 }: {
   ex: LibraryExercise;
-  onUse: (d: string[]) => void;
   onAssign: (a: { name: string; descriptions: string[] }) => void;
   t: (s: string) => string;
 }) {
@@ -278,7 +266,6 @@ function ExerciseShelfRow({
       meta={meta}
       draggable
       dragText={ex.description}
-      onAdd={() => onUse([ex.description])}
       onAssign={() => onAssign({ name: ex.description, descriptions: [ex.description] })}
     />
   );
@@ -289,14 +276,10 @@ function ExerciseShelfRow({
 function SearchResults({
   results,
   blockResults,
-  onUse,
-  onUseBlock,
   onAssignOne,
 }: {
   results: LibraryExercise[];
   blockResults: ExerciseBlock[];
-  onUse: (d: string[]) => void;
-  onUseBlock: (b: ExerciseBlock) => void;
   onAssignOne: (name: string, descriptions: string[]) => void;
 }) {
   const t = useT();
@@ -314,7 +297,6 @@ function SearchResults({
           icon={<span className="text-accent">▦</span>}
           label={b.name}
           meta={String(b.exerciseIds.length)}
-          onAdd={() => onUseBlock(b)}
           onAssign={() => onAssignOne(b.name, blockExercises(b).map((e) => e.description))}
         />
       ))}
@@ -326,7 +308,6 @@ function SearchResults({
           meta={ex.useCount ? `${ex.useCount}×` : undefined}
           draggable
           dragText={ex.description}
-          onAdd={() => onUse([ex.description])}
           onAssign={() => onAssignOne(ex.description, [ex.description])}
         />
       ))}
@@ -339,11 +320,9 @@ function SearchResults({
 
 function BrowseDrawer({
   onClose,
-  onUse,
   onAssignOne,
 }: {
   onClose: () => void;
-  onUse: (d: string[]) => void;
   onAssignOne: (name: string, descriptions: string[]) => void;
 }) {
   const t = useT();
@@ -414,7 +393,6 @@ function BrowseDrawer({
                   icon={<span className="text-accent">▦</span>}
                   label={b.name}
                   meta={String(b.exerciseIds.length)}
-                  onAdd={() => onUse(blockExercises(b).map((e) => e.description))}
                   onAssign={() => onAssignOne(b.name, blockExercises(b).map((e) => e.description))}
                 />
               ))}
@@ -426,14 +404,14 @@ function BrowseDrawer({
           ) : (
             <>
               {shown.slice(0, limit).map((ex) => (
-                <DrawerRow key={ex.id} ex={ex} onUse={onUse} onAssignOne={onAssignOne} t={t} />
+                <DrawerRow key={ex.id} ex={ex} onAssignOne={onAssignOne} t={t} />
               ))}
               {shown.length > limit && <LoadMore onMore={() => setLimit((l) => l + CHUNK)} />}
             </>
           )}
         </div>
         <p className="text-xs text-textDim">
-          {t('Drag a row into a session, ＋ adds to the open one, ⋯ assigns to many, ☆ pins.')}
+          {t('Drag a row into a session, ＋ adds it to sessions, ☆ pins.')}
         </p>
       </div>
     </div>
@@ -442,12 +420,10 @@ function BrowseDrawer({
 
 function DrawerRow({
   ex,
-  onUse,
   onAssignOne,
   t,
 }: {
   ex: LibraryExercise;
-  onUse: (d: string[]) => void;
   onAssignOne: (name: string, descriptions: string[]) => void;
   t: (s: string) => string;
 }) {
@@ -474,12 +450,9 @@ function DrawerRow({
       </button>
       <button
         onClick={() => onAssignOne(ex.description, [ex.description])}
-        className="shrink-0 px-0.5 text-textDim opacity-0 group-hover:opacity-100 hover:text-accent"
-        title={t('Assign to sessions…')}
+        className="shrink-0 px-0.5 font-heading text-accent"
+        title={t('Add to sessions…')}
       >
-        ⋯
-      </button>
-      <button onClick={() => onUse([ex.description])} className="shrink-0 px-0.5 font-heading text-accent" title="+">
         ＋
       </button>
     </div>
