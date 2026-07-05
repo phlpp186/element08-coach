@@ -407,5 +407,10 @@
   "Your own system, fully editable": "あなた独自のシステム、完全に編集可能",
   "Your reusable exercise library. Assign them into plan sessions from the builder.": "再利用可能なエクササイズライブラリです。ビルダーからプランのセッションに割り当てられます。",
   "Your roster lives in this browser. Export it to back up or move devices.": "名簿はこのブラウザに保存されます。バックアップやデバイス移行にはエクスポートしてください。",
-  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "名簿はこのブラウザ内にのみ保存されます。エクスポートは名簿（アスリート、メモ、保存したプラン）を .e08coach ファイルに保存し、インポートで別のブラウザや端末に復元できます。バックアップや移行に使います。"
+  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "名簿はこのブラウザ内にのみ保存されます。エクスポートは名簿（アスリート、メモ、保存したプラン）を .e08coach ファイルに保存し、インポートで別のブラウザや端末に復元できます。バックアップや移行に使います。",
+  "Speed per depth band": "深度バンドごとの速度",
+  "hangs excluded": "ハングを除く",
+  "Band": "バンド",
+  "Descent": "下降",
+  "Ascent": "上昇"
 }

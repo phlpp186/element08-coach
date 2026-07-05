@@ -6,9 +6,10 @@
  * this repo. The charts pull in echarts (~1 MB), so they're lazy-loaded — the
  * main bundle stays lean and echarts only downloads when a coach expands a dive.
  */
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { useT } from '../i18n';
 import { extractDiveData } from '../lib/analytics/diveProfile';
+import { SpeedBands } from './SpeedBands';
 import { extractPoolDiveData } from '../lib/analytics/poolDiveProfile';
 import { extractDrySessionData } from '../lib/analytics/drySessionProfile';
 import type { Json } from '../lib/supabase/coachData';
@@ -131,6 +132,11 @@ function DepthDiveRow({ dive, idx, t }: { dive: AnyDive; idx: number; t: (k: str
   const [open, setOpen] = useState(false);
   const profile = dive.profile;
   const hasProfile = Array.isArray(profile) && profile.length > 1;
+  // Extract once when expanded; drives both the tracks and the speed bands.
+  const diveData = useMemo(
+    () => (open && hasProfile ? extractDiveData(dive as never) : null),
+    [open, hasProfile, dive],
+  );
   const depth = typeof dive.depth === 'number' ? dive.depth : null;
   const meta = [
     fmtSec(dive.diveTime as number),
@@ -160,11 +166,11 @@ function DepthDiveRow({ dive, idx, t }: { dive: AnyDive; idx: number; t: (k: str
         </div>
         {hasProfile && <span className="text-textDim">{open ? '▲' : '▾'}</span>}
       </button>
-      {open && hasProfile && (
+      {open && hasProfile && diveData && (
         <div className="border-t border-border bg-deep p-3">
           <Suspense fallback={chartFallback}>
             <DepthDiveTracks
-              data={extractDiveData(dive as never)}
+              data={diveData}
               contractionOnset={(dive.contractionOnset as never) ?? null}
               showAlarms={false}
               speedStep={0}
@@ -172,6 +178,7 @@ function DepthDiveRow({ dive, idx, t }: { dive: AnyDive; idx: number; t: (k: str
               groupId={`att-d${idx}`}
             />
           </Suspense>
+          <SpeedBands data={diveData} />
         </div>
       )}
     </li>

@@ -407,5 +407,10 @@
   "Your own system, fully editable": "ระบบของคุณเอง แก้ไขได้ทั้งหมด",
   "Your reusable exercise library. Assign them into plan sessions from the builder.": "คลังแบบฝึกที่ใช้ซ้ำได้ของคุณ มอบหมายลงในเซสชันของแผนได้จากเครื่องมือสร้างแผน",
   "Your roster lives in this browser. Export it to back up or move devices.": "รายชื่อของคุณเก็บอยู่ในเบราว์เซอร์นี้ ส่งออกเพื่อสำรองข้อมูลหรือย้ายอุปกรณ์",
-  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "รายชื่อของคุณอยู่ในเบราว์เซอร์นี้เท่านั้น ส่งออกจะบันทึก (นักกีฬา บันทึก แผนที่บันทึกไว้) เป็นไฟล์ .e08coach; นำเข้าเพื่อกู้คืนในเบราว์เซอร์หรืออุปกรณ์อื่น ใช้สำรองหรือย้ายข้อมูลของคุณ"
+  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "รายชื่อของคุณอยู่ในเบราว์เซอร์นี้เท่านั้น ส่งออกจะบันทึก (นักกีฬา บันทึก แผนที่บันทึกไว้) เป็นไฟล์ .e08coach; นำเข้าเพื่อกู้คืนในเบราว์เซอร์หรืออุปกรณ์อื่น ใช้สำรองหรือย้ายข้อมูลของคุณ",
+  "Speed per depth band": "ความเร็วต่อช่วงความลึก",
+  "hangs excluded": "ไม่รวมการลอยตัว",
+  "Band": "ช่วง",
+  "Descent": "ลง",
+  "Ascent": "ขึ้น"
 }

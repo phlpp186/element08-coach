@@ -407,5 +407,10 @@
   "Your own system, fully editable": "Votre propre système, entièrement modifiable",
   "Your reusable exercise library. Assign them into plan sessions from the builder.": "Votre bibliothèque d'exercices réutilisables. Assignez-les aux séances de plan depuis le constructeur.",
   "Your roster lives in this browser. Export it to back up or move devices.": "Votre effectif réside dans ce navigateur. Exportez-le pour le sauvegarder ou changer d'appareil.",
-  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "Votre effectif reste uniquement dans ce navigateur. Export l’enregistre (athlètes, notes, plans enregistrés) dans un fichier .e08coach ; Import le restaure sur un autre navigateur ou appareil. Pour sauvegarder ou déplacer vos données."
+  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "Votre effectif reste uniquement dans ce navigateur. Export l’enregistre (athlètes, notes, plans enregistrés) dans un fichier .e08coach ; Import le restaure sur un autre navigateur ou appareil. Pour sauvegarder ou déplacer vos données.",
+  "Speed per depth band": "Vitesse par bande de profondeur",
+  "hangs excluded": "paliers exclus",
+  "Band": "Tranche",
+  "Descent": "Descente",
+  "Ascent": "Remontée"
 }

@@ -407,5 +407,10 @@
   "Your own system, fully editable": "Dein eigenes System, vollständig bearbeitbar",
   "Your reusable exercise library. Assign them into plan sessions from the builder.": "Deine wiederverwendbare Übungsbibliothek. Weise sie aus dem Builder den Plan-Einheiten zu.",
   "Your roster lives in this browser. Export it to back up or move devices.": "Dein Kader liegt in diesem Browser. Exportiere ihn, um ihn zu sichern oder das Gerät zu wechseln.",
-  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "Dein Kader lebt nur in diesem Browser. Export sichert ihn (Athlet:innen, Notizen, gespeicherte Pläne) in eine .e08coach-Datei; Import stellt sie in einem anderen Browser oder Gerät wieder her. Zum Sichern oder Umziehen deiner Daten."
+  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "Dein Kader lebt nur in diesem Browser. Export sichert ihn (Athlet:innen, Notizen, gespeicherte Pläne) in eine .e08coach-Datei; Import stellt sie in einem anderen Browser oder Gerät wieder her. Zum Sichern oder Umziehen deiner Daten.",
+  "Speed per depth band": "Geschwindigkeit pro Tiefenband",
+  "hangs excluded": "ohne Hangs",
+  "Band": "Band",
+  "Descent": "Abstieg",
+  "Ascent": "Aufstieg"
 }

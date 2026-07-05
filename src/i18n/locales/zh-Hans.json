@@ -407,5 +407,10 @@
   "Your own system, fully editable": "你自己的体系，完全可编辑",
   "Your reusable exercise library. Assign them into plan sessions from the builder.": "你可复用的训练库。在编辑器中将它们分配到计划课程里。",
   "Your roster lives in this browser. Export it to back up or move devices.": "你的名单保存在此浏览器中。导出以备份或迁移设备。",
-  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "你的名单只保存在本浏览器中。导出会将其（运动员、笔记、已保存计划）保存为 .e08coach 文件；导入可在其他浏览器或设备上恢复。用于备份或迁移你的数据。"
+  "Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.": "你的名单只保存在本浏览器中。导出会将其（运动员、笔记、已保存计划）保存为 .e08coach 文件；导入可在其他浏览器或设备上恢复。用于备份或迁移你的数据。",
+  "Speed per depth band": "每个深度区间的速度",
+  "hangs excluded": "不含悬停",
+  "Band": "深度带",
+  "Descent": "下降",
+  "Ascent": "上升"
 }
