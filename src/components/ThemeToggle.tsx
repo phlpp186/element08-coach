@@ -5,7 +5,7 @@ const KEY = 'element08.theme';
 
 type Theme = 'light' | 'mid' | 'dark';
 const ORDER: Theme[] = ['light', 'mid', 'dark'];
-const LABEL: Record<Theme, string> = { light: 'Caribbean', mid: 'Misty', dark: 'Chalk Dark' };
+const LABEL: Record<Theme, string> = { light: 'Caribbean', mid: 'Titanium', dark: 'Chalk Dark' };
 
 /** Explicit stored choice, or null when the OS preference should decide.
  *  Retired values ('neon'/'sky') read as no preference. */
@@ -32,7 +32,7 @@ function applyTheme(t: Theme) {
   cl.toggle('mid', t === 'mid');
 }
 
-/** Cycles Caribbean (light) → Misty (mid) → Chalk Dark. Toggles the `light`
+/** Cycles Caribbean (light) → Titanium (mid) → Chalk Dark. Toggles the `light`
  *  or `mid` class on <html> (dark = no class); an explicit click persists the
  *  choice, otherwise the OS color scheme decides light/dark (index.html
  *  resolves it before first paint to avoid a flash). */
