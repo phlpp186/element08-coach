@@ -280,7 +280,7 @@ function SessionRow({
                 </span>
                 {typeof completion?.rating === 'number' && (
                   <span className="text-amber" title={t('Rating')}>
-                    {'★'.repeat(Math.max(0, Math.min(5, completion.rating)))}
+                    ★ {Math.max(0, Math.min(10, completion.rating))}/10
                   </span>
                 )}
               </div>

@@ -102,7 +102,10 @@ function StatHeader({ s, t }: { s: SessionBlob; t: (k: string) => string }) {
     push(t('Cycles'), s.cyclesCount);
   }
   push(t('Duration'), s.duration);
-  if (typeof s.rating === 'number') push(t('Effort'), `${s.rating}/5`);
+  // 1-10 since app build 1.1.3. Sessions attached by older app builds carry
+  // 1-5 values (the blob is unversioned), which then read as the mild end of
+  // the new scale.
+  if (typeof s.rating === 'number') push(t('Effort'), `${s.rating}/10`);
 
   return (
     <div className="flex flex-wrap gap-x-5 gap-y-2 rounded-lg border border-border bg-abyss p-3">
