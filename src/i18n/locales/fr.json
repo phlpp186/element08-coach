@@ -413,5 +413,7 @@
   "Band": "Tranche",
   "Descent": "Descente",
   "Ascent": "Remontée",
-  "Recent notes": "Notes récentes"
+  "Recent notes": "Notes récentes",
+  "Target effort (optional)": "Effort cible (facultatif)",
+  "Target effort": "Effort cible"
 }

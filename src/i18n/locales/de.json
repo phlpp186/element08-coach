@@ -413,5 +413,7 @@
   "Band": "Band",
   "Descent": "Abstieg",
   "Ascent": "Aufstieg",
-  "Recent notes": "Neueste Notizen"
+  "Recent notes": "Neueste Notizen",
+  "Target effort (optional)": "Ziel-Anstrengung (optional)",
+  "Target effort": "Ziel-Anstrengung"
 }

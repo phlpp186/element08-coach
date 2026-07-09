@@ -272,6 +272,34 @@ function SessionEditor({
           onChange={(e) => onChange({ sessionType: e.target.value })}
         />
       </div>
+
+      {/* Coach's target difficulty for this session, 1-10 — the same scale the
+          athlete rates on, so the app can show intended-vs-actual effort. */}
+      <div className="space-y-1">
+        <span className="block text-xs text-textDim uppercase tracking-wide">
+          {t('Target effort (optional)')}
+        </span>
+        <div className="flex flex-wrap gap-1">
+          {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
+            const picked = session.coachTarget === n;
+            return (
+              <button
+                key={n}
+                type="button"
+                onClick={() => onChange({ coachTarget: picked ? undefined : n })}
+                className={`h-8 w-8 rounded-md border text-sm ${
+                  picked
+                    ? 'border-accent bg-accent/15 text-text'
+                    : 'border-border text-textDim hover:border-accent'
+                }`}
+              >
+                {n}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="flex items-center justify-between gap-3 pt-1">
         <button onClick={onDelete} className="text-red text-sm">
           {t('Delete')}

@@ -413,5 +413,7 @@
   "Band": "ช่วง",
   "Descent": "ลง",
   "Ascent": "ขึ้น",
-  "Recent notes": "บันทึกล่าสุด"
+  "Recent notes": "บันทึกล่าสุด",
+  "Target effort (optional)": "ระดับความหนักเป้าหมาย (ไม่บังคับ)",
+  "Target effort": "ระดับความหนักเป้าหมาย"
 }

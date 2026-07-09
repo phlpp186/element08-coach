@@ -35,6 +35,9 @@ export interface PlannedSession {
   exercises: PlannedExercise[];
   mode?: PlanMode;
   sessionType?: string;
+  /** Coach's target perceived effort for this session, 1-10 (same scale the
+   *  athlete rates on). Absent = no target set. */
+  coachTarget?: number;
   /** Free-text body for the session (the coach's full-text plan). */
   sessionNotes?: string;
 }
@@ -165,6 +168,8 @@ export interface BuilderSession {
   exercises: BuilderExercise[];
   mode: PlanMode;
   sessionType: string;
+  /** Coach's target perceived effort for this session, 1-10. 0/undefined = none. */
+  coachTarget?: number;
 }
 
 export interface BuilderWeek {
@@ -298,6 +303,9 @@ function toPlanned(s: BuilderSession, dayOfWeek: number, label: string): Planned
       .map((e) => ({ id: e.id, description: exerciseText(e, tr) })),
     ...(s.mode ? { mode: s.mode } : {}),
     ...(s.sessionType.trim() ? { sessionType: s.sessionType.trim() } : {}),
+    ...(s.coachTarget && s.coachTarget >= 1 && s.coachTarget <= 10
+      ? { coachTarget: Math.round(s.coachTarget) }
+      : {}),
     sessionNotes: s.body.trim(),
   };
 }

@@ -413,5 +413,7 @@
   "Band": "バンド",
   "Descent": "下降",
   "Ascent": "上昇",
-  "Recent notes": "最近のメモ"
+  "Recent notes": "最近のメモ",
+  "Target effort (optional)": "目標のきつさ（任意）",
+  "Target effort": "目標のきつさ"
 }

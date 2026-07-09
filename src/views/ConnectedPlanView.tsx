@@ -33,6 +33,7 @@ interface PlannedSession {
   exercises?: PlannedExercise[];
   mode?: string;
   sessionType?: string;
+  coachTarget?: number;
   sessionNotes?: string;
 }
 interface MicroCycle {
@@ -305,6 +306,11 @@ function SessionRow({
             <span className="text-text">{title}</span>
             {session.sessionType && session.sessionType !== title && (
               <span className="text-xs text-textDim">{session.sessionType}</span>
+            )}
+            {typeof session.coachTarget === 'number' && (
+              <span className="text-xs text-accent" title={t('Target effort')}>
+                ◎ {Math.max(1, Math.min(10, session.coachTarget))}/10
+              </span>
             )}
           </div>
 

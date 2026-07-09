@@ -413,5 +413,7 @@
   "Band": "구간",
   "Descent": "하강",
   "Ascent": "상승",
-  "Recent notes": "최근 메모"
+  "Recent notes": "최근 메모",
+  "Target effort (optional)": "목표 강도 (선택)",
+  "Target effort": "목표 강도"
 }

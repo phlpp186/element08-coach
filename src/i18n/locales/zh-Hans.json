@@ -413,5 +413,7 @@
   "Band": "深度带",
   "Descent": "下降",
   "Ascent": "上升",
-  "Recent notes": "最近的备注"
+  "Recent notes": "最近的备注",
+  "Target effort (optional)": "目标强度（可选）",
+  "Target effort": "目标强度"
 }
