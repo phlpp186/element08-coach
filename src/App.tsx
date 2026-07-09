@@ -3,6 +3,7 @@ import { AthletesView } from './views/AthletesView';
 import { AthleteDetailView } from './views/AthleteDetailView';
 import { ConnectedAthleteView } from './views/ConnectedAthleteView';
 import { ConnectedPlanView } from './views/ConnectedPlanView';
+import { CoachOverview } from './views/CoachOverview';
 import { PlanBuilderView } from './views/PlanBuilderView';
 import { PlansView } from './views/PlansView';
 import { ExercisesView } from './views/ExercisesView';
@@ -14,6 +15,7 @@ import { LanguageSwitcher } from './i18n/LanguageSwitcher';
 
 const NAV: { id: string; label: string; to: string }[] = [
   { id: 'athletes', label: 'Athletes', to: '/athletes' },
+  { id: 'overview', label: 'Overview', to: '/overview' },
   { id: 'exercises', label: 'Exercises', to: '/exercises' },
   { id: 'plan', label: 'Plans', to: '/plan' },
 ];
@@ -61,6 +63,10 @@ export function App() {
 function Outlet() {
   const route = useRoute();
   const [top, second, third, fourth] = route.segments;
+
+  if (top === 'overview') {
+    return <CoachOverview />;
+  }
 
   if (top === 'exercises') {
     return <ExercisesView />;
