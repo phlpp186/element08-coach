@@ -1,6 +1,6 @@
 /** Derived read-only views over an athlete: best PBs, headline marks, next comp. */
 import { DISCIPLINES, disciplineById, formatValue, type Discipline } from './disciplines';
-import { addDays, isoDate, mondayOf, type BuilderPlan } from './e08plan';
+import { addDays, dayDate, isoDate, mondayOf, type BuilderPlan } from './e08plan';
 import { daysBetween } from './planHelpers';
 import type { Athlete, Competition, PBEntry } from './types';
 
@@ -84,8 +84,20 @@ export function planSpan(plan: BuilderPlan): { start: string | null; end: string
   if (!plan.startDate) return { start: null, end: null };
   const start = plan.startDate;
   if (plan.kind !== 'season' && plan.structure === 'days') {
-    const n = plan.days?.length ?? 0;
-    return { start, end: n > 0 ? addDays(start, n - 1) : start };
+    // Days can carry a per-day calendar override (dayDate), so the span is the
+    // MIN/MAX of the days' effective dates — NOT startDate + count. Positional
+    // math ignored an edited day dropped later (e.g. a day added on Jul 10),
+    // leaving the plan stuck reading "ended".
+    const days = plan.days ?? [];
+    if (days.length === 0) return { start, end: start };
+    const dates = days.map((d, i) => dayDate(start, d, i));
+    let lo = dates[0];
+    let hi = dates[0];
+    for (const d of dates) {
+      if (d < lo) lo = d;
+      if (d > hi) hi = d;
+    }
+    return { start: lo, end: hi };
   }
   const w = planWeekCount(plan);
   return { start, end: w > 0 ? addDays(mondayOf(start), w * 7 - 1) : start };
