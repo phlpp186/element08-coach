@@ -9,6 +9,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { navigate } from '../hooks/useHashRoute';
+import { normIntensity } from '../lib/e08plan';
 import { AttachedSessionDetail } from '../components/AttachedSessionDetail';
 import { useT, tr } from '../i18n';
 import { useAuth } from '../lib/supabase/AuthProvider';
@@ -39,7 +40,8 @@ interface PlannedSession {
 interface MicroCycle {
   weekStart?: string;
   focus?: string;
-  intensity?: string;
+  /** 1-10 number (legacy plans may still hold the enum string). */
+  intensity?: number | string;
   notes?: string;
   plannedSessions?: PlannedSession[];
 }
@@ -240,9 +242,9 @@ export function ConnectedPlanView({
               {w.week.weekStart && (
                 <span className="text-xs text-textDim">· {w.week.weekStart}</span>
               )}
-              {w.week.intensity && (
+              {normIntensity(w.week.intensity) != null && (
                 <span className="text-xs text-textDim uppercase tracking-wide">
-                  · {w.week.intensity}
+                  · {t('Intensity')} {normIntensity(w.week.intensity)}/10
                 </span>
               )}
             </div>

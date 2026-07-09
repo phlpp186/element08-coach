@@ -1,9 +1,10 @@
 import {
   DAY_LABELS,
+  DEFAULT_INTENSITY,
   addDays,
   newSession,
+  normIntensity,
   type BuilderWeek,
-  type Intensity,
   type PlanMode,
 } from '../lib/e08plan';
 import {
@@ -15,7 +16,6 @@ import {
 import { SessionList } from './sessions';
 import { useT, tr } from '../i18n';
 
-const INTENSITIES: Intensity[] = ['recovery', 'low', 'medium', 'high', 'max'];
 const DAY_DATE_FMT = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -69,17 +69,20 @@ export function WeekCard({
     >
       <div className="flex items-center gap-3">
         <span className="font-heading text-accent whitespace-nowrap shrink-0">{label}</span>
-        <select
-          className="field w-auto ml-auto"
-          value={week.intensity}
-          onChange={(e) => onChange({ intensity: e.target.value as Intensity })}
-        >
-          {INTENSITIES.map((i) => (
-            <option key={i} value={i}>
-              {t(i)}
-            </option>
-          ))}
-        </select>
+        <label className="ml-auto flex items-center gap-1.5 text-xs text-textDim whitespace-nowrap">
+          {t('Intensity')}
+          <select
+            className="field w-auto"
+            value={normIntensity(week.intensity) ?? DEFAULT_INTENSITY}
+            onChange={(e) => onChange({ intensity: Number(e.target.value) })}
+          >
+            {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+              <option key={n} value={n}>
+                {n}/10
+              </option>
+            ))}
+          </select>
+        </label>
         {onRemove && (
           <button onClick={onRemove} className="text-red text-sm px-2 shrink-0" title={t('Remove week')}>
             ✕

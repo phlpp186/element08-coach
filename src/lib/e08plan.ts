@@ -17,7 +17,34 @@ export const PLAN_FILE_FORMAT = 'e08plan';
 export const PLAN_FILE_VERSION = 1;
 
 export type PlanMode = 'depth' | 'pool' | 'dry' | 'general';
-export type Intensity = 'recovery' | 'low' | 'medium' | 'high' | 'max';
+/** @deprecated Week intensity is now a 1-10 number. This enum only describes /
+ *  maps LEGACY stored values via `normIntensity`. */
+export type LegacyIntensity = 'recovery' | 'low' | 'medium' | 'high' | 'max';
+
+const LEGACY_INTENSITY: Record<LegacyIntensity, number> = {
+  recovery: 2,
+  low: 4,
+  medium: 6,
+  high: 8,
+  max: 10,
+};
+
+/** Default week intensity when none is set (was 'medium'). */
+export const DEFAULT_INTENSITY = 6;
+
+/** Coerce any stored intensity (legacy string enum OR a 1-10 number / numeric
+ *  string) to a 1-10 integer, or null if absent / unrecognized. Matches the
+ *  app's src/lib/season/intensity.ts so both sides read old + new data. */
+export function normIntensity(v: unknown): number | null {
+  if (typeof v === 'number') return v >= 1 && v <= 10 ? Math.round(v) : null;
+  if (typeof v === 'string') {
+    const s = v.trim().toLowerCase();
+    if (s in LEGACY_INTENSITY) return LEGACY_INTENSITY[s as LegacyIntensity];
+    const n = Number(s);
+    if (Number.isFinite(n) && n >= 1 && n <= 10) return Math.round(n);
+  }
+  return null;
+}
 export type MesoType = 'base' | 'build' | 'specific' | 'taper' | 'competition' | 'transition';
 
 // ── Wire types (subset we emit) ──────────────────────────────────────────────
@@ -48,7 +75,7 @@ export interface MicroCycle {
   focus: string;
   targetSessions: number;
   targetMix: Record<string, number>;
-  intensity: Intensity;
+  intensity: number;
   notes: string;
   plannedSessions: PlannedSession[];
 }
@@ -174,7 +201,7 @@ export interface BuilderSession {
 
 export interface BuilderWeek {
   focus: string;
-  intensity: Intensity;
+  intensity: number;
   notes: string;
   sessions: BuilderSession[];
 }
@@ -317,7 +344,7 @@ function weekToMicro(w: BuilderWeek, weekStart: string): MicroCycle {
     focus: w.focus.trim(),
     targetSessions: w.sessions.length,
     targetMix: {},
-    intensity: w.intensity,
+    intensity: normIntensity(w.intensity) ?? DEFAULT_INTENSITY,
     notes: w.notes.trim(),
     plannedSessions: w.sessions.map((s) => toPlanned(s, s.dayOfWeek, s.label)),
   };
@@ -352,7 +379,7 @@ function daysToMicroCycles(plan: BuilderPlan): MicroCycle[] {
       focus: '',
       targetSessions: buckets.get(weekStart)!.length,
       targetMix: {},
-      intensity: 'medium' as Intensity,
+      intensity: DEFAULT_INTENSITY,
       notes: '',
       plannedSessions: buckets.get(weekStart)!,
     }));
@@ -470,7 +497,7 @@ export function downloadPlanFile(plan: BuilderPlan): void {
 // ── Builder-state factories ───────────────────────────────────────────────────
 
 export function emptyWeek(): BuilderWeek {
-  return { focus: '', intensity: 'medium', notes: '', sessions: [] };
+  return { focus: '', intensity: DEFAULT_INTENSITY, notes: '', sessions: [] };
 }
 
 export function emptyDay(): BuilderDay {

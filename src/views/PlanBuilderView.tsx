@@ -16,6 +16,7 @@ import {
   normalizePlan,
   planIssues,
   planStats,
+  DEFAULT_INTENSITY,
   type BuilderDay,
   type BuilderPhase,
   type BuilderPlan,
@@ -117,7 +118,11 @@ export function PlanBuilderView({
   // weeks (training)
   const updateWeek = (wi: number, patch: Partial<BuilderWeek>) =>
     mutate((p) => ({ ...p, weeks: p.weeks.map((w, i) => (i === wi ? { ...w, ...patch } : w)) }));
-  const addWeek = () => mutate((p) => ({ ...p, weeks: [...p.weeks, { focus: '', intensity: 'medium', notes: '', sessions: [] }] }));
+  const addWeek = () =>
+    mutate((p) => ({
+      ...p,
+      weeks: [...p.weeks, { focus: '', intensity: DEFAULT_INTENSITY, notes: '', sessions: [] }],
+    }));
   const removeWeek = (wi: number) => mutate((p) => ({ ...p, weeks: p.weeks.filter((_, i) => i !== wi) }));
 
   // days (training)

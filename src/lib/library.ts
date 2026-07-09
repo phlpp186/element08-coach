@@ -18,9 +18,9 @@ import {
   type BuilderSession,
   type BuilderWeek,
   type DosePart,
-  type Intensity,
   type PlanMode,
 } from './e08plan';
+import { normIntensity, DEFAULT_INTENSITY } from './e08plan';
 import { dropCategoryColor, moveCategoryColor } from './categoryColor';
 
 /** Max categories an exercise can carry. */
@@ -90,7 +90,7 @@ export interface WeekTemplate {
   id: string;
   name: string;
   focus: string;
-  intensity: Intensity;
+  intensity: number;
   notes: string;
   sessions: {
     dayOfWeek: number;
@@ -223,7 +223,7 @@ function readWeekTemplates(): WeekTemplate[] {
         id: x.id || uid('wtpl'),
         name: x.name,
         focus: typeof x.focus === 'string' ? x.focus : '',
-        intensity: x.intensity ?? 'medium',
+        intensity: normIntensity(x.intensity) ?? DEFAULT_INTENSITY,
         notes: typeof x.notes === 'string' ? x.notes : '',
         sessions: Array.isArray(x.sessions)
           ? x.sessions.map((s) => ({
