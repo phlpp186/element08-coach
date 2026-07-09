@@ -129,6 +129,26 @@ export function ConnectedPlanView({
   const pct = totalSessions > 0 ? Math.round((doneCount / totalSessions) * 100) : 0;
   const multiPhase = (plan?.phases?.length ?? 0) > 1 || plan?.kind === 'season';
 
+  // session id → display label, for citing which session a note came from.
+  const sessionLabelById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const w of flat)
+      for (const ses of w.sessions)
+        m.set(ses.id, ses.label?.trim() || ses.sessionType || tr('Session'));
+    return m;
+  }, [flat]);
+
+  // The athlete's most recent notes, newest first, across the whole plan —
+  // surfaced up top so a coach can catch up without scanning every week.
+  const recentNotes = useMemo(
+    () =>
+      completions
+        .filter((c) => c.completed_at && c.remarks && c.remarks.trim())
+        .sort((a, b) => (b.completed_at ?? '').localeCompare(a.completed_at ?? ''))
+        .slice(0, 5),
+    [completions],
+  );
+
   if (!session) {
     return (
       <main className="mx-auto max-w-4xl px-5 py-6">
@@ -166,6 +186,38 @@ export function ConnectedPlanView({
           </div>
         )}
       </div>
+
+      {!loading && recentNotes.length > 0 && (
+        <section className="rounded-lg border border-border bg-panel p-4 space-y-2.5">
+          <h3 className="font-heading tracking-wide text-text text-sm">{t('Recent notes')}</h3>
+          <ul className="space-y-3">
+            {recentNotes.map((c) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    document
+                      .getElementById(`ses-${c.exercise_id}`)
+                      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }
+                  className="w-full text-left group"
+                >
+                  <p className="text-sm text-text">“{c.remarks}”</p>
+                  <p className="mt-0.5 text-xs text-textDim group-hover:text-text">
+                    {sessionLabelById.get(c.exercise_id) ?? t('Session')}
+                    {c.completed_at
+                      ? ` · ${new Date(c.completed_at).toLocaleDateString()}`
+                      : ''}
+                    {typeof c.rating === 'number'
+                      ? ` · ★ ${Math.max(0, Math.min(10, c.rating))}/10`
+                      : ''}
+                  </p>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {loading && <p className="text-textDim text-sm">{t('Loading…')}</p>}
       {error && <p className="text-red text-sm">{error}</p>}
@@ -236,7 +288,8 @@ function SessionRow({
 
   return (
     <div
-      className={`rounded-lg border p-3 ${done ? 'border-recover/50 bg-recover/5' : 'border-border bg-panel'}`}
+      id={`ses-${session.id}`}
+      className={`scroll-mt-4 rounded-lg border p-3 ${done ? 'border-recover/50 bg-recover/5' : 'border-border bg-panel'}`}
     >
       <div className="flex items-start gap-2">
         <span className={`mt-0.5 text-sm ${done ? 'text-recover' : 'text-textDim'}`}>
