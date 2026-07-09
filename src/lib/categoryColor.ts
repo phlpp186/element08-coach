@@ -97,6 +97,21 @@ export function dropCategoryColor(name: string): void {
   commit(next);
 }
 
+/** Snapshot of the assigned-colour map, for cloud backup. */
+export function snapshotCategoryColors(): Record<string, string> {
+  return { ...assigned };
+}
+
+/** Replace the assigned-colour map from a cloud backup (validated). */
+export function restoreCategoryColors(map: unknown): void {
+  if (!map || typeof map !== 'object' || Array.isArray(map)) return;
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(map as Record<string, unknown>)) {
+    if (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v)) out[k] = v;
+  }
+  commit(out);
+}
+
 /** The hash fallback, exposed so the editor can show "default" swatches. */
 export function hashedCategoryColor(name: string): string {
   let h = 0;

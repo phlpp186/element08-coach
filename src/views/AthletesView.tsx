@@ -11,6 +11,7 @@ import { groupStyle } from '../lib/disciplines';
 import { navigate } from '../hooks/useHashRoute';
 import type { Athlete } from '../lib/types';
 import { ConnectedAthletes } from '../components/ConnectedAthletes';
+import { CloudBackup } from '../components/CloudBackup';
 import { InfoTip } from '../components/InfoTip';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import { useT } from '../i18n';
@@ -74,6 +75,8 @@ export function AthletesView() {
       </div>
 
       <ConnectedAthletes />
+
+      <CloudBackup />
 
       {showLocalHeading && (
         <div className="pt-2">

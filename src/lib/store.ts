@@ -208,3 +208,24 @@ export async function importRoster(file: File): Promise<{ athletes: number; plan
   coachNotes.set(Array.isArray(f.connectedNotes) ? f.connectedNotes.filter(isCoachNote) : []);
   return { athletes: a.length, plans: p.length };
 }
+
+// ── Cloud backup snapshot / restore (the local roster half) ───────────────────
+
+export interface RosterSnapshot {
+  athletes: Athlete[];
+  plans: SavedPlan[];
+  connectedNotes: CoachNote[];
+}
+
+/** Snapshot the browser-local roster for cloud backup. */
+export function snapshotRoster(): RosterSnapshot {
+  return { athletes: athletes.get(), plans: plans.get(), connectedNotes: coachNotes.get() };
+}
+
+/** Replace the local roster from a cloud backup (validated per slice). */
+export function restoreRoster(data: Partial<RosterSnapshot> | null | undefined): void {
+  if (!data || typeof data !== 'object') return;
+  athletes.set(Array.isArray(data.athletes) ? data.athletes.filter(isAthlete) : []);
+  plans.set(Array.isArray(data.plans) ? data.plans.filter(isPlan) : []);
+  coachNotes.set(Array.isArray(data.connectedNotes) ? data.connectedNotes.filter(isCoachNote) : []);
+}

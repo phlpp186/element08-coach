@@ -303,6 +303,34 @@ function commitWeekTemplates(next: WeekTemplate[]) {
   emit();
 }
 
+// ── cloud backup snapshot / restore ──────────────────────────────────────────
+
+export interface LibrarySnapshot {
+  exercises: LibraryExercise[];
+  categories: string[];
+  blocks: ExerciseBlock[];
+  sessionTemplates: SessionTemplate[];
+  weekTemplates: WeekTemplate[];
+}
+
+/** Full library snapshot for cloud backup. */
+export function snapshotLibrary(): LibrarySnapshot {
+  return { exercises, categories, blocks, sessionTemplates, weekTemplates };
+}
+
+/** Replace the whole library from a cloud backup. Each slice is optional and
+ *  only overwritten when present + an array, so a partial/old backup is safe. */
+export function restoreLibrary(data: Partial<LibrarySnapshot> | null | undefined): void {
+  if (!data || typeof data !== 'object') return;
+  if (Array.isArray(data.exercises)) commitExercises(data.exercises);
+  if (Array.isArray(data.categories)) {
+    commitCategories(data.categories.filter((c): c is string => typeof c === 'string'));
+  }
+  if (Array.isArray(data.blocks)) commitBlocks(data.blocks);
+  if (Array.isArray(data.sessionTemplates)) commitSessionTemplates(data.sessionTemplates);
+  if (Array.isArray(data.weekTemplates)) commitWeekTemplates(data.weekTemplates);
+}
+
 // ── reactive reads ─────────────────────────────────────────────────────────
 
 export function useExercises(): LibraryExercise[] {
