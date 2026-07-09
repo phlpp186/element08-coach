@@ -8,6 +8,8 @@ import { deletePlan, useAthletes, useSavedPlans } from '../lib/store';
 import { downloadPlanFile } from '../lib/e08plan';
 import { planSpan } from '../lib/athleteStats';
 import { PlanSpan } from '../components/PlanSpan';
+import { getCloudPlanLink } from '../lib/supabase/cloudPlanLinks';
+import { useCoachAssignments } from '../lib/supabase/useCoachAssignments';
 import { navigate } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
 
@@ -15,8 +17,15 @@ export function PlansView() {
   const t = useT();
   const plans = useSavedPlans();
   const athletes = useAthletes();
+  const { namesByCloudPlanId } = useCoachAssignments();
   const nameFor = (id: string | null) =>
     (id && athletes.find((a) => a.id === id)?.name?.trim()) || null;
+  // Who actually has this draft: cloud assignment(s) first (the plan is live on
+  // an athlete's app), else the local-athlete tag, else nothing.
+  const assignedTo = (savedPlanId: string): string[] => {
+    const cloudId = getCloudPlanLink(savedPlanId)?.cloudPlanId;
+    return cloudId ? (namesByCloudPlanId.get(cloudId) ?? []) : [];
+  };
 
   const sorted = [...plans].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 
@@ -47,6 +56,7 @@ export function PlansView() {
       ) : (
         <div className="space-y-2">
           {sorted.map((sp) => {
+            const assigned = assignedTo(sp.id);
             const who = nameFor(sp.athleteId);
             return (
               <div key={sp.id} className="flex items-center gap-3 rounded-lg border border-border bg-panel px-3 py-2.5">
@@ -57,7 +67,14 @@ export function PlansView() {
                   <div className="truncate text-text">{sp.plan.name?.trim() || t('Untitled plan')}</div>
                   <div className="flex flex-wrap items-center gap-x-1.5 text-xs text-textDim">
                     <span>{sp.plan.kind === 'season' ? t('Season') : t('Training')}</span>
-                    <span>· {who ? who : t('Not linked')}</span>
+                    <span>
+                      ·{' '}
+                      {assigned.length > 0
+                        ? `${t('Assigned to')} ${assigned.join(', ')}`
+                        : who
+                          ? who
+                          : t('Not linked')}
+                    </span>
                     {planSpan(sp.plan).end && (
                       <span>
                         · <PlanSpan plan={sp.plan} />
