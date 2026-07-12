@@ -280,6 +280,17 @@ export function uid(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${_idCounter}`;
 }
 
+/** Return a copy of `arr` with the item at `index` swapped one slot in `dir`
+ *  (-1 = up/earlier, +1 = down/later). Out-of-range moves (already at an edge)
+ *  return the SAME array reference unchanged, so callers can no-op safely. */
+export function moveInArray<T>(arr: T[], index: number, dir: -1 | 1): T[] {
+  const to = index + dir;
+  if (index < 0 || index >= arr.length || to < 0 || to >= arr.length) return arr;
+  const next = arr.slice();
+  [next[index], next[to]] = [next[to], next[index]];
+  return next;
+}
+
 // All date math is done in UTC (parse with the `Z` suffix, use the getUTC*/
 // setUTC* accessors, format via toISOString) so a non-UTC machine timezone
 // can't shift a YYYY-MM-DD by a day.

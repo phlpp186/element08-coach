@@ -13,6 +13,7 @@ import {
   isoDate,
   MESO_LABEL,
   mondayOf,
+  moveInArray,
   normalizePlan,
   planIssues,
   planStats,
@@ -640,6 +641,7 @@ function DaySessions({
       onAdd={add}
       onChange={(id, patch) => onChange({ sessions: day.sessions.map((s) => (s.id === id ? { ...s, ...patch } : s)) })}
       onRemove={(id) => onChange({ sessions: day.sessions.filter((s) => s.id !== id) })}
+      onMove={(index, dir) => onChange({ sessions: moveInArray(day.sessions, index, dir) })}
       onInsertTemplate={(tpl) => {
         const s = materializeSessionTemplate(tpl, 0);
         onChange({ sessions: [...day.sessions, s] });

@@ -62,6 +62,21 @@ export function WeekCard({
     onChange({ sessions: week.sessions.map((s) => (s.id === id ? { ...s, ...patch } : s)) });
   const removeSession = (id: string) =>
     onChange({ sessions: week.sessions.filter((s) => s.id !== id) });
+  // Sessions are stored flat but rendered grouped by weekday, so a SessionList
+  // hands us the index WITHIN that day. Map it back to the two full-array slots
+  // to swap (only same-day sessions ever move relative to each other).
+  const moveSession = (day: number, index: number, dir: -1 | 1) => {
+    const dayIdxs = week.sessions.reduce<number[]>((acc, s, i) => {
+      if (s.dayOfWeek === day) acc.push(i);
+      return acc;
+    }, []);
+    const a = dayIdxs[index];
+    const b = dayIdxs[index + dir];
+    if (a === undefined || b === undefined) return;
+    const next = week.sessions.slice();
+    [next[a], next[b]] = [next[b], next[a]];
+    onChange({ sessions: next });
+  };
 
   return (
     <div
@@ -116,6 +131,7 @@ export function WeekCard({
                 onAdd={() => addSession(day)}
                 onChange={updateSession}
                 onRemove={removeSession}
+                onMove={(index, dir) => moveSession(day, index, dir)}
                 onInsertTemplate={(tpl) => {
                   const s = materializeSessionTemplate(tpl, day);
                   onChange({ sessions: [...week.sessions, s] });

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { uid, type BuilderExercise, type BuilderSession, type PlanMode } from '../lib/e08plan';
+import { moveInArray, uid, type BuilderExercise, type BuilderSession, type PlanMode } from '../lib/e08plan';
 import { ExerciseInput } from './ExerciseInput';
 import {
   defaultDoseFor,
@@ -43,6 +43,7 @@ export function SessionList({
   onAdd,
   onChange,
   onRemove,
+  onMove,
   onInsertTemplate,
   disabledText,
 }: {
@@ -52,6 +53,10 @@ export function SessionList({
   onAdd: () => void;
   onChange: (id: string, patch: Partial<BuilderSession>) => void;
   onRemove: (id: string) => void;
+  /** Reorder the session at `index` by `dir` (-1 up, +1 down) within THIS list.
+   *  For weekday-grouped lists the parent maps the local index back into the
+   *  full week array. Omit to hide the session reorder controls. */
+  onMove?: (index: number, dir: -1 | 1) => void;
   /** When given (and templates exist), a "+ from template" picker appears. */
   onInsertTemplate?: (tpl: SessionTemplate) => void;
   /** When set, the "+ session" button is replaced by this dim note. */
@@ -61,7 +66,7 @@ export function SessionList({
   const templates = useSessionTemplates();
   return (
     <div className="flex-1 space-y-2">
-      {sessions.map((s) =>
+      {sessions.map((s, i) =>
         editing === s.id ? (
           <SessionEditor
             key={s.id}
@@ -74,7 +79,33 @@ export function SessionList({
             }}
           />
         ) : (
-          <SessionChip key={s.id} session={s} onEdit={() => setEditing(s.id)} />
+          <div key={s.id} className="flex items-start gap-1.5">
+            <div className="min-w-0 flex-1">
+              <SessionChip session={s} onEdit={() => setEditing(s.id)} />
+            </div>
+            {onMove && sessions.length > 1 && (
+              <div className="flex shrink-0 flex-col leading-none pt-1.5">
+                <button
+                  onClick={() => onMove(i, -1)}
+                  disabled={i === 0}
+                  className="text-[10px] text-textDim hover:text-accent disabled:opacity-25 disabled:hover:text-textDim"
+                  title={t('Move up')}
+                  aria-label={t('Move session up')}
+                >
+                  ▲
+                </button>
+                <button
+                  onClick={() => onMove(i, 1)}
+                  disabled={i === sessions.length - 1}
+                  className="text-[10px] text-textDim hover:text-accent disabled:opacity-25 disabled:hover:text-textDim"
+                  title={t('Move down')}
+                  aria-label={t('Move session down')}
+                >
+                  ▼
+                </button>
+              </div>
+            )}
+          </div>
         ),
       )}
       {disabledText ? (
@@ -153,6 +184,8 @@ function SessionEditor({
     });
   const removeExercise = (id: string) =>
     onChange({ exercises: session.exercises.filter((e) => e.id !== id) });
+  const moveExercise = (index: number, dir: -1 | 1) =>
+    onChange({ exercises: moveInArray(session.exercises, index, dir) });
 
   return (
     <div className="rounded-lg border border-accent bg-abyss p-3 space-y-3">
@@ -212,6 +245,28 @@ function SessionEditor({
                 >
                   + {t('dose')}
                 </button>
+              )}
+              {session.exercises.length > 1 && (
+                <div className="flex shrink-0 flex-col leading-none">
+                  <button
+                    onClick={() => moveExercise(i, -1)}
+                    disabled={i === 0}
+                    className="text-[10px] text-textDim hover:text-accent disabled:opacity-25 disabled:hover:text-textDim"
+                    title={t('Move up')}
+                    aria-label={t('Move exercise up')}
+                  >
+                    ▲
+                  </button>
+                  <button
+                    onClick={() => moveExercise(i, 1)}
+                    disabled={i === session.exercises.length - 1}
+                    className="text-[10px] text-textDim hover:text-accent disabled:opacity-25 disabled:hover:text-textDim"
+                    title={t('Move down')}
+                    aria-label={t('Move exercise down')}
+                  >
+                    ▼
+                  </button>
+                </div>
               )}
               <button
                 onClick={() => removeExercise(ex.id)}
