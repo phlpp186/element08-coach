@@ -65,7 +65,7 @@ export function SessionList({
   const t = useT();
   const templates = useSessionTemplates();
   return (
-    <div className="flex-1 space-y-2">
+    <div className="min-w-0 flex-1 space-y-2">
       {sessions.map((s, i) =>
         editing === s.id ? (
           <SessionEditor
