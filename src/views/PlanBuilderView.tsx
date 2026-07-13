@@ -40,6 +40,7 @@ import {
 } from '../lib/store';
 import type { Athlete } from '../lib/types';
 import { AssignToConnectedButton } from '../components/AssignToConnectedButton';
+import { pushLinkedPlanUpdate } from '../lib/supabase/syncLinkedPlan';
 import { InfoTip } from '../components/InfoTip';
 import { useT } from '../i18n';
 
@@ -228,6 +229,10 @@ export function PlanBuilderView({
     setRecordId(id);
     setDirty(false);
     setSavedTick(true);
+    // If this plan is already assigned (cloud-linked), push the edit up so the
+    // athlete and the coach Overview reflect changes like weeks added later.
+    // No-op + best-effort: never blocks or breaks the local save.
+    void pushLinkedPlanUpdate(id, plan).catch(() => {});
     return id;
   };
   const doDownload = () => {
