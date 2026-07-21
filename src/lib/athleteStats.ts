@@ -73,8 +73,18 @@ export function compColorClass(dateIso: string, ref = today()): string {
 // ── Plan span ──────────────────────────────────────────────────────────────
 
 function planWeekCount(plan: BuilderPlan): number {
-  if (plan.kind === 'season') return plan.phases.reduce((n, p) => n + (p.weeks?.length ?? 0), 0);
-  return plan.weeks?.length ?? 0;
+  // This runs over TWO shapes. The local builder BuilderPlan keeps a training
+  // plan's weeks at the top level (`plan.weeks`). The cloud `plans.definition`
+  // (an app Plan, what the coach Overview reads via getPlan) is ALWAYS phases-
+  // based — even a 'training' plan's weeks are nested under a single phase, with
+  // NO top-level `weeks`. Counting only `plan.weeks` returned 0 for every
+  // assigned weekly plan, so `planSpan` collapsed end→start and the Overview
+  // showed them "ended" no matter how many weeks the coach added. Take whichever
+  // is populated (a local training plan also carries a vestigial default phase,
+  // so max() — not sum — is correct).
+  const phaseWeeks = (plan.phases ?? []).reduce((n, p) => n + (p.weeks?.length ?? 0), 0);
+  if (plan.kind === 'season') return phaseWeeks;
+  return Math.max(plan.weeks?.length ?? 0, phaseWeeks);
 }
 
 /** First + last calendar day a plan covers, from its start date + length.
