@@ -33,6 +33,7 @@ export function PhaseCard({
   setEditing,
   onChange,
   onRemove,
+  onSplit,
 }: {
   phase: BuilderPhase;
   index: number;
@@ -49,6 +50,9 @@ export function PhaseCard({
   setEditing: (id: string | null) => void;
   onChange: (patch: Partial<BuilderPhase>) => void;
   onRemove?: () => void;
+  /** Split this phase so `weeksInFirst` weeks stay and the rest become a new
+   *  phase after it. Absent = splitting not available (e.g. single-week phase). */
+  onSplit?: (weeksInFirst: number) => void;
 }) {
   const t = useT();
   const len = phase.weeks.length;
@@ -100,19 +104,33 @@ export function PhaseCard({
           {phase.weeks.map((week, wi) => {
             const globalIndex = weekOffset + wi;
             return (
-              <WeekCard
-                key={wi}
-                week={week}
-                label={`${t('WEEK')} ${globalIndex + 1}`}
-                mode={mode}
-                editing={editing}
-                setEditing={setEditing}
-                onChange={(patch) => setWeek(wi, patch)}
-                onRemove={phase.weeks.length > 1 ? () => removeWeek(wi) : undefined}
-                partialBeforeDow={globalIndex === 0 ? startDow : undefined}
-                weekStart={addDays(firstMonday, globalIndex * 7)}
-                compact
-              />
+              <div key={wi} className="space-y-3">
+                {onSplit && wi > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 border-t border-dashed border-border" />
+                    <button
+                      onClick={() => onSplit(wi)}
+                      className="text-xs text-textDim hover:text-accent whitespace-nowrap"
+                      title={t('Start a new phase at this week (keeps every session).')}
+                    >
+                      {t('Split into new phase here')}
+                    </button>
+                    <div className="flex-1 border-t border-dashed border-border" />
+                  </div>
+                )}
+                <WeekCard
+                  week={week}
+                  label={`${t('WEEK')} ${globalIndex + 1}`}
+                  mode={mode}
+                  editing={editing}
+                  setEditing={setEditing}
+                  onChange={(patch) => setWeek(wi, patch)}
+                  onRemove={phase.weeks.length > 1 ? () => removeWeek(wi) : undefined}
+                  partialBeforeDow={globalIndex === 0 ? startDow : undefined}
+                  weekStart={addDays(firstMonday, globalIndex * 7)}
+                  compact
+                />
+              </div>
             );
           })}
           <button

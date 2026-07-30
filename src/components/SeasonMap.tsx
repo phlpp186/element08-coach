@@ -18,6 +18,7 @@ import {
   applyIntensityCurve,
   fitPhasesToWeeks,
   generateSeasonSkeleton,
+  repartitionWeeks,
   type BuilderPhase,
   type BuilderPlan,
   type BuilderWeek,
@@ -116,13 +117,10 @@ export function SeasonMap({
   };
 
   const suggest = () => {
-    const sessions = flat.reduce((a, { wk }) => a + wk.sessions.length, 0);
-    if (
-      sessions > 0 &&
-      !window.confirm(t('Replace the current phases with a suggested layout? All sessions in them will be removed.'))
-    )
-      return;
-    const next = generateSeasonSkeleton(compWeeks ?? (totalWeeks || 12));
+    // Non-destructive: keep every existing week (sessions/focus/notes travel)
+    // and just redraw Base→Peak phase boundaries over them. Only a truly empty
+    // season falls back to generating a fresh skeleton sized to the comp date.
+    const next = totalWeeks > 0 ? repartitionWeeks(flat.map((f) => f.wk)) : generateSeasonSkeleton(compWeeks ?? 12);
     setPhases(next);
     setOpenPhase(next[0]?.id ?? null);
   };

@@ -560,17 +560,19 @@ export function normalizePlan(p: Partial<BuilderPlan> | undefined | null): Build
 
 // ── Periodization skeleton ────────────────────────────────────────────────────
 
-/** Suggest a back-to-back phase breakdown for a season of `totalWeeks`, ending in
- *  a Peak/Comp week. Classic freediving periodization weighted Base→Build→Specific
- *  →Taper→Peak; phase widths scale with the season length. The coach edits from
- *  here (rename, resize, drop a phase) rather than facing a blank calendar. */
-export function generateSeasonSkeleton(totalWeeks: number): BuilderPhase[] {
+/** The phase types + week counts of a suggested Base→Peak periodization for a
+ *  season of `totalWeeks`. Classic freediving weighting (Base 40% / Build 35% /
+ *  Specific of the body, plus a one-week taper and a one-week peak); widths
+ *  scale with the season length. Shared by the empty-skeleton generator and the
+ *  non-destructive reslice so both draw the same phase shape. */
+export function skeletonPhaseSizes(totalWeeks: number): { type: MesoType; len: number }[] {
   const n = Math.max(1, Math.min(52, Math.floor(totalWeeks) || 1));
-  // Very short seasons: a couple of phases, then peak.
-  if (n <= 2) return [emptyPhase('specific', n - 1 > 0 ? n - 1 : 1), emptyPhase('competition', 1)].slice(n <= 1 ? 1 : 0);
+  if (n <= 2) {
+    // 1 week → just a peak; 2 weeks → specific + peak.
+    return n <= 1 ? [{ type: 'competition', len: 1 }] : [{ type: 'specific', len: 1 }, { type: 'competition', len: 1 }];
+  }
   if (n <= 4) {
-    const build = Math.max(1, n - 2);
-    return [emptyPhase('build', build), emptyPhase('taper', 1), emptyPhase('competition', 1)];
+    return [{ type: 'build', len: n - 2 }, { type: 'taper', len: 1 }, { type: 'competition', len: 1 }];
   }
   // Distribute the body across base/build/specific, reserve taper(1) + peak(1).
   const body = n - 2;
@@ -578,12 +580,65 @@ export function generateSeasonSkeleton(totalWeeks: number): BuilderPhase[] {
   const build = Math.max(1, Math.round(body * 0.35));
   const specific = Math.max(1, body - base - build);
   return [
-    emptyPhase('base', base),
-    emptyPhase('build', build),
-    emptyPhase('specific', specific),
-    emptyPhase('taper', 1),
-    emptyPhase('competition', 1),
+    { type: 'base', len: base },
+    { type: 'build', len: build },
+    { type: 'specific', len: specific },
+    { type: 'taper', len: 1 },
+    { type: 'competition', len: 1 },
   ];
+}
+
+/** Suggest a back-to-back phase breakdown for a season of `totalWeeks`, ending in
+ *  a Peak/Comp week, with fresh EMPTY weeks. Used when a season starts blank. To
+ *  keep existing week content, use `repartitionWeeks` instead. */
+export function generateSeasonSkeleton(totalWeeks: number): BuilderPhase[] {
+  return skeletonPhaseSizes(totalWeeks).map((s) => emptyPhase(s.type, s.len));
+}
+
+/** Non-destructive "suggest phases": slice a flat run of EXISTING weeks into a
+ *  Base→Peak phase structure. The weeks (and every session, focus, note in them)
+ *  are preserved in order; only the phase boundaries and types are redrawn. This
+ *  is what a coach wants after building many weeks from a template and then
+ *  reaching for periodization — the empty-skeleton generator would discard them. */
+export function repartitionWeeks(weeks: BuilderWeek[]): BuilderPhase[] {
+  if (!weeks.length) return [emptyPhase('base')];
+  const sizes = skeletonPhaseSizes(weeks.length);
+  const phases: BuilderPhase[] = [];
+  let cursor = 0;
+  for (const s of sizes) {
+    phases.push({ id: uid('phase'), name: MESO_LABEL[s.type], type: s.type, weeks: weeks.slice(cursor, cursor + s.len) });
+    cursor += s.len;
+  }
+  // Rounding can leave a remainder; hand any leftover weeks to the last phase so
+  // the week total is exactly preserved.
+  if (cursor < weeks.length && phases.length) {
+    phases[phases.length - 1].weeks = phases[phases.length - 1].weeks.concat(weeks.slice(cursor));
+  }
+  return phases;
+}
+
+/** Split phase `phaseIndex` into two at a week boundary: `weeksInFirst` weeks
+ *  stay in the original phase, the rest move to a new phase inserted right after
+ *  it. Every week (and its sessions) is kept. The new phase defaults to the next
+ *  mesocycle type in the standard progression, so splitting a Base gives a Build,
+ *  a Build gives a Specific, etc. — the coach can retype it. */
+export function splitPhaseAtWeek(phases: BuilderPhase[], phaseIndex: number, weeksInFirst: number): BuilderPhase[] {
+  const ph = phases[phaseIndex];
+  if (!ph) return phases;
+  const w = Math.round(weeksInFirst);
+  if (w < 1 || w >= ph.weeks.length) return phases;
+  const at = MESO_TYPES.indexOf(ph.type);
+  const nextType = MESO_TYPES[Math.min(at + 1, MESO_TYPES.length - 1)] ?? ph.type;
+  const first: BuilderPhase = { ...ph, weeks: ph.weeks.slice(0, w) };
+  const second: BuilderPhase = {
+    id: uid('phase'),
+    name: MESO_LABEL[nextType],
+    type: nextType,
+    weeks: ph.weeks.slice(w),
+  };
+  const next = phases.slice();
+  next.splice(phaseIndex, 1, first, second);
+  return next;
 }
 
 // ── Season map operations ─────────────────────────────────────────────────────

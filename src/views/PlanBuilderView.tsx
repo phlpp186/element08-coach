@@ -17,6 +17,7 @@ import {
   normalizePlan,
   planIssues,
   planStats,
+  splitPhaseAtWeek,
   DEFAULT_INTENSITY,
   type BuilderDay,
   type BuilderPhase,
@@ -154,6 +155,8 @@ export function PlanBuilderView({
     setOpenPhase(ph.id);
   };
   const removePhase = (pi: number) => mutate((p) => ({ ...p, phases: p.phases.filter((_, i) => i !== pi) }));
+  const splitPhase = (pi: number, weeksInFirst: number) =>
+    mutate((p) => ({ ...p, phases: splitPhaseAtWeek(p.phases, pi, weeksInFirst) }));
 
   // append exercises to MANY sessions at once (multi-assign)
   const appendExercisesToSessions = (sessionIds: string[], descriptions: string[]) => {
@@ -380,6 +383,7 @@ export function PlanBuilderView({
           setPhases={setPhases}
           addPhase={addPhase}
           removePhase={removePhase}
+          splitPhase={splitPhase}
           setMeta={setMeta}
         />
       ) : (
@@ -665,6 +669,7 @@ function SeasonSchedule(props: {
   setPhases: (phases: BuilderPhase[]) => void;
   addPhase: () => void;
   removePhase: (pi: number) => void;
+  splitPhase: (pi: number, weeksInFirst: number) => void;
   setMeta: (patch: Partial<BuilderPlan>) => void;
 }) {
   const t = useT();
@@ -715,6 +720,7 @@ function SeasonSchedule(props: {
             setEditing={props.setEditing}
             onChange={(patch) => props.updatePhase(pi, patch)}
             onRemove={plan.phases.length > 1 ? () => props.removePhase(pi) : undefined}
+            onSplit={ph.weeks.length > 1 ? (w) => props.splitPhase(pi, w) : undefined}
           />
         </div>
       ))}
