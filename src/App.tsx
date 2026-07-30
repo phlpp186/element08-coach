@@ -8,6 +8,7 @@ import { PlanBuilderView } from './views/PlanBuilderView';
 import { PlansView } from './views/PlansView';
 import { ExercisesView } from './views/ExercisesView';
 import { AuthBar } from './components/AuthBar';
+import { CompletionBell } from './components/CompletionBell';
 import { ThemeToggle } from './components/ThemeToggle';
 import { AppFooter } from './components/AppFooter';
 import { useT } from './i18n';
@@ -49,6 +50,7 @@ export function App() {
             </nav>
             <LanguageSwitcher />
             <AuthBar />
+            <CompletionBell />
             <ThemeToggle />
           </div>
         </div>

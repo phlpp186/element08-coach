@@ -483,14 +483,7 @@ function TrainingSchedule(props: {
             ))}
           </div>
         </div>
-        {plan.structure === 'weeks' ? (
-          <button
-            onClick={props.addWeek}
-            className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent"
-          >
-            + {t('Add week')}
-          </button>
-        ) : (
+        {plan.structure === 'days' && (
           <div className="flex items-center gap-2 text-sm text-textDim">
             <span>{t('Duration')}</span>
             <input
@@ -541,7 +534,14 @@ function TrainingSchedule(props: {
               />
             </div>
           ))}
-      {plan.structure === 'days' && (
+      {plan.structure === 'weeks' ? (
+        <button
+          onClick={props.addWeek}
+          className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent"
+        >
+          + {t('Add week')}
+        </button>
+      ) : (
         <button onClick={props.addDay} className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent">
           + {t('Add day')}
         </button>
@@ -698,12 +698,7 @@ function SeasonSchedule(props: {
         setPhases={props.setPhases}
       />
 
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg">{t('Phases')}</h2>
-        <button onClick={props.addPhase} className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent">
-          + {t('Add phase')}
-        </button>
-      </div>
+      <h2 className="text-lg">{t('Phases')}</h2>
 
       {plan.phases.map((ph, pi) => (
         <div key={ph.id} id={`phase-${ph.id}`} className="scroll-mt-4">
@@ -723,6 +718,9 @@ function SeasonSchedule(props: {
           />
         </div>
       ))}
+      <button onClick={props.addPhase} className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent">
+        + {t('Add phase')}
+      </button>
     </section>
   );
 }

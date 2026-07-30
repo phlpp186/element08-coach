@@ -243,6 +243,21 @@ export async function listCompletions(assignmentId: string): Promise<CompletionR
   );
 }
 
+/** Recently completed sessions across every assignment the caller can read,
+ *  newest first (the coach notification feed). RLS already scopes rows; the
+ *  bell additionally filters to the coach's own assignment ids so a coach who
+ *  is also somebody's student does not see their own completions here. */
+export async function listRecentCompletions(limit = 30): Promise<CompletionRow[]> {
+  return unwrap(
+    await supabase
+      .from('completions')
+      .select('*')
+      .not('completed_at', 'is', null)
+      .order('completed_at', { ascending: false })
+      .limit(limit),
+  );
+}
+
 export async function getAthleteProfile(studentId: string): Promise<AthleteProfileRow | null> {
   const { data, error } = await supabase
     .from('athlete_profiles')
