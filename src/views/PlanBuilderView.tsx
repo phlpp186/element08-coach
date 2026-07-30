@@ -31,6 +31,7 @@ import { defaultDoseFor, materializeSessionTemplate, recordUseByDescription } fr
 import { Labeled, SessionList } from '../components/sessions';
 import { WeekCard } from '../components/WeekCard';
 import { PhaseCard } from '../components/PhaseCard';
+import { SeasonMap } from '../components/SeasonMap';
 import { navigate } from '../hooks/useHashRoute';
 import {
   newPlanId,
@@ -146,18 +147,13 @@ export function PlanBuilderView({
   // phases (season)
   const updatePhase = (pi: number, patch: Partial<BuilderPhase>) =>
     mutate((p) => ({ ...p, phases: p.phases.map((ph, i) => (i === pi ? { ...ph, ...patch } : ph)) }));
+  const setPhases = (phases: BuilderPhase[]) => mutate((p) => ({ ...p, phases }));
   const addPhase = () => {
     const ph = emptyPhase('build');
     mutate((p) => ({ ...p, phases: [...p.phases, ph] }));
     setOpenPhase(ph.id);
   };
   const removePhase = (pi: number) => mutate((p) => ({ ...p, phases: p.phases.filter((_, i) => i !== pi) }));
-  const [genWeeks, setGenWeeks] = useState(12);
-  const regenerate = () => {
-    const phases = generateSeasonSkeleton(genWeeks);
-    mutate((p) => ({ ...p, kind: 'season', phases }));
-    setOpenPhase(phases[0]?.id ?? null);
-  };
 
   // append exercises to MANY sessions at once (multi-assign)
   const appendExercisesToSessions = (sessionIds: string[], descriptions: string[]) => {
@@ -380,10 +376,8 @@ export function PlanBuilderView({
           startDow={startDow}
           editing={editing}
           setEditing={setEditing}
-          genWeeks={genWeeks}
-          setGenWeeks={setGenWeeks}
-          regenerate={regenerate}
           updatePhase={updatePhase}
+          setPhases={setPhases}
           addPhase={addPhase}
           removePhase={removePhase}
           setMeta={setMeta}
@@ -667,10 +661,8 @@ function SeasonSchedule(props: {
   startDow: number;
   editing: string | null;
   setEditing: (id: string | null) => void;
-  genWeeks: number;
-  setGenWeeks: (n: number) => void;
-  regenerate: () => void;
   updatePhase: (pi: number, patch: Partial<BuilderPhase>) => void;
+  setPhases: (phases: BuilderPhase[]) => void;
   addPhase: () => void;
   removePhase: (pi: number) => void;
   setMeta: (patch: Partial<BuilderPlan>) => void;
@@ -683,45 +675,28 @@ function SeasonSchedule(props: {
 
   return (
     <section className="space-y-4">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="max-w-xs">
         <Labeled label={t('Target competition date')}>
           <input
             type="date"
             className="field"
             value={plan.competitionDate}
             min={plan.startDate}
-            onChange={(e) => {
-              props.setMeta({ competitionDate: e.target.value });
-              if (e.target.value) {
-                props.setGenWeeks(Math.max(1, Math.ceil(daysBetween(plan.startDate, e.target.value) / 7)));
-              }
-            }}
+            onChange={(e) => props.setMeta({ competitionDate: e.target.value })}
           />
           {compWeeks != null && (
             <span className="block text-xs text-textDim mt-1">{compWeeks} {t('weeks out.')}</span>
           )}
         </Labeled>
-        <Labeled label={t('Auto-build periodization')}>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min={1}
-              max={52}
-              value={props.genWeeks}
-              onChange={(e) => props.setGenWeeks(Math.max(1, Math.min(52, Number(e.target.value) || 1)))}
-              className="field w-20 text-center"
-            />
-            <span className="text-sm text-textDim">{t('weeks')}</span>
-            <button
-              onClick={props.regenerate}
-              className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent whitespace-nowrap"
-            >
-              {t('Generate phases')}
-            </button>
-          </div>
-          <span className="block text-xs text-textDim mt-1">{t('Replaces the phases below with a Base→Peak skeleton you then edit.')}</span>
-        </Labeled>
       </div>
+
+      <SeasonMap
+        plan={plan}
+        firstMonday={props.firstMonday}
+        openPhase={props.openPhase}
+        setOpenPhase={props.setOpenPhase}
+        setPhases={props.setPhases}
+      />
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg">{t('Phases')}</h2>
@@ -731,21 +706,22 @@ function SeasonSchedule(props: {
       </div>
 
       {plan.phases.map((ph, pi) => (
-        <PhaseCard
-          key={ph.id}
-          phase={ph}
-          index={pi}
-          mode={plan.mode}
-          open={props.openPhase === ph.id}
-          onToggle={() => props.setOpenPhase(props.openPhase === ph.id ? null : ph.id)}
-          weekOffset={props.phaseOffsets[pi]}
-          firstMonday={props.firstMonday}
-          startDow={props.startDow}
-          editing={props.editing}
-          setEditing={props.setEditing}
-          onChange={(patch) => props.updatePhase(pi, patch)}
-          onRemove={plan.phases.length > 1 ? () => props.removePhase(pi) : undefined}
-        />
+        <div key={ph.id} id={`phase-${ph.id}`} className="scroll-mt-4">
+          <PhaseCard
+            phase={ph}
+            index={pi}
+            mode={plan.mode}
+            open={props.openPhase === ph.id}
+            onToggle={() => props.setOpenPhase(props.openPhase === ph.id ? null : ph.id)}
+            weekOffset={props.phaseOffsets[pi]}
+            firstMonday={props.firstMonday}
+            startDow={props.startDow}
+            editing={props.editing}
+            setEditing={props.setEditing}
+            onChange={(patch) => props.updatePhase(pi, patch)}
+            onRemove={plan.phases.length > 1 ? () => props.removePhase(pi) : undefined}
+          />
+        </div>
       ))}
     </section>
   );

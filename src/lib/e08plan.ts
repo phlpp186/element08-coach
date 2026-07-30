@@ -585,3 +585,118 @@ export function generateSeasonSkeleton(totalWeeks: number): BuilderPhase[] {
     emptyPhase('competition', 1),
   ];
 }
+
+// ── Season map operations ─────────────────────────────────────────────────────
+// Pure helpers behind the visual season editor. They only redistribute existing
+// BuilderWeek objects (sessions, focus and notes travel with their week), so a
+// map interaction can never lose authored content except where the caller
+// explicitly confirms dropping weeks.
+
+/** Resize the boundary between phases[i] and phases[i+1] so phases[i] holds
+ *  `newLen` weeks. The pair's total week count is preserved: growing phase i
+ *  takes weeks from the head of phase i+1, shrinking gives its tail weeks to
+ *  the head of phase i+1. Both phases keep at least one week. */
+export function movePhaseBoundary(phases: BuilderPhase[], i: number, newLen: number): BuilderPhase[] {
+  if (i < 0 || i >= phases.length - 1) return phases;
+  const a = phases[i];
+  const b = phases[i + 1];
+  const pair = a.weeks.length + b.weeks.length;
+  const len = Math.max(1, Math.min(pair - 1, Math.round(newLen)));
+  if (len === a.weeks.length) return phases;
+  const merged = [...a.weeks, ...b.weeks];
+  const next = phases.slice();
+  next[i] = { ...a, weeks: merged.slice(0, len) };
+  next[i + 1] = { ...b, weeks: merged.slice(len) };
+  return next;
+}
+
+export type IntensityPreset = 'linear' | 'wave' | 'double';
+
+/** A whole-season intensity curve (1-10 per week). All presets end in a
+ *  two-week wind-down (5, then 3) so the season lands, not stops. */
+export function intensityPreset(kind: IntensityPreset, totalWeeks: number): number[] {
+  const n = Math.max(1, Math.floor(totalWeeks));
+  const clamp = (v: number) => Math.max(1, Math.min(10, Math.round(v)));
+  const out: number[] = [];
+  for (let i = 0; i < n; i++) {
+    if (kind === 'linear') {
+      out.push(clamp(4 + (i * 5) / Math.max(1, n - 3)));
+    } else if (kind === 'wave') {
+      // 3 weeks on, 1 deload, each block one step higher than the last.
+      const cycle = [0, 1, 2, -2][i % 4];
+      out.push(clamp(5 + Math.floor(i / 4) + cycle));
+    } else {
+      out.push(clamp(4 + 5 * Math.abs(Math.sin((i / Math.max(1, n - 1)) * Math.PI * 1.85))));
+    }
+  }
+  if (n >= 3) {
+    out[n - 2] = 5;
+    out[n - 1] = 3;
+  }
+  return out;
+}
+
+/** Apply a per-week intensity curve across phases in global week order. */
+export function applyIntensityCurve(phases: BuilderPhase[], curve: number[]): BuilderPhase[] {
+  let g = 0;
+  return phases.map((ph) => ({
+    ...ph,
+    weeks: ph.weeks.map((w) => {
+      const v = curve[g++];
+      return v == null ? w : { ...w, intensity: v };
+    }),
+  }));
+}
+
+/** Grow or shrink the season to `target` total weeks. Both directions work on
+ *  the season's BODY (the last phase that is not taper/competition), so a fit
+ *  never silently eats the taper/peak tail: growing appends empty weeks there,
+ *  shrinking removes weeks from the body's end first (later body phases before
+ *  earlier ones), touching the tail phases only when nothing else is left.
+ *  `sessionsDropped` counts sessions in removed weeks so the caller can
+ *  confirm before applying a destructive shrink. */
+export function fitPhasesToWeeks(
+  phases: BuilderPhase[],
+  target: number,
+): { phases: BuilderPhase[]; sessionsDropped: number } {
+  const total = phases.reduce((a, p) => a + p.weeks.length, 0);
+  const want = Math.max(1, Math.min(52, Math.round(target)));
+  if (!phases.length || want === total) return { phases, sessionsDropped: 0 };
+
+  const isTail = (ph: BuilderPhase) => ph.type === 'taper' || ph.type === 'competition';
+
+  if (want > total) {
+    let gi = phases.length - 1;
+    while (gi > 0 && isTail(phases[gi])) gi--;
+    const next = phases.slice();
+    next[gi] = {
+      ...next[gi],
+      weeks: [...next[gi].weeks, ...Array.from({ length: want - total }, emptyWeek)],
+    };
+    return { phases: next, sessionsDropped: 0 };
+  }
+
+  let toDrop = total - want;
+  let sessionsDropped = 0;
+  const next = phases.map((ph) => ({ ...ph, weeks: ph.weeks.slice() }));
+  // Body phases from the end backwards, then tail phases; each keeps >= 1 week.
+  const order = [
+    ...next.map((_, i) => i).filter((i) => !isTail(next[i])).reverse(),
+    ...next.map((_, i) => i).filter((i) => isTail(next[i])).reverse(),
+  ];
+  for (const i of order) {
+    while (toDrop > 0 && next[i].weeks.length > 1) {
+      const w = next[i].weeks.pop()!;
+      sessionsDropped += w.sessions.length;
+      toDrop--;
+    }
+  }
+  // Every phase is at one week and it is still too long: drop whole phases
+  // from the end (never the last remaining one).
+  while (toDrop > 0 && next.length > 1) {
+    const ph = next.pop()!;
+    sessionsDropped += ph.weeks.reduce((a, w) => a + w.sessions.length, 0);
+    toDrop -= ph.weeks.length;
+  }
+  return { phases: next, sessionsDropped };
+}
