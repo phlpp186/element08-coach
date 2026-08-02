@@ -9,7 +9,8 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { navigate } from '../hooks/useHashRoute';
-import { normIntensity } from '../lib/e08plan';
+import { isoDate, normIntensity } from '../lib/e08plan';
+import { splitAtCurrentWeek } from '../lib/planWeekOrder';
 import { AttachedSessionDetail } from '../components/AttachedSessionDetail';
 import { useT, tr } from '../i18n';
 import { useAuth } from '../lib/supabase/AuthProvider';
@@ -127,6 +128,16 @@ export function ConnectedPlanView({
   }, [completions]);
 
   const flat = useMemo(() => flattenPlan(plan), [plan]);
+
+  // Newest week on top. A coach opening an athlete's plan is checking in on the
+  // latest finished session, and Week 1 → N meant scrolling the whole plan to
+  // reach it. Weeks that have STARTED run newest → oldest; weeks still ahead
+  // keep their natural order below, so the next one up reads first.
+  const { pastWeeks, upcomingWeeks, currentKey } = useMemo(
+    () => orderWeeksNewestFirst(flat, doneBySession),
+    [flat, doneBySession],
+  );
+
   const totalSessions = flat.reduce((n, w) => n + w.sessions.length, 0);
   const doneCount = doneBySession.size;
   const pct = totalSessions > 0 ? Math.round((doneCount / totalSessions) * 100) : 0;
@@ -229,47 +240,97 @@ export function ConnectedPlanView({
         <p className="text-textDim text-sm">{t('This plan has no sessions yet.')}</p>
       )}
 
-      {!loading &&
-        flat.map((w) => (
-          <section key={`${w.phaseIdx}-${w.weekIdx}`} className="space-y-2">
-            <div className="flex items-baseline gap-2 flex-wrap">
-              <h3 className="font-heading tracking-wide text-text">
-                {t('Week')} {w.globalWeek}
-              </h3>
-              {multiPhase && w.phaseName && (
-                <span className="text-xs text-accent">· {w.phaseName}</span>
-              )}
-              {w.week.weekStart && (
-                <span className="text-xs text-textDim">· {w.week.weekStart}</span>
-              )}
-              {normIntensity(w.week.intensity) != null && (
-                <span className="text-xs text-textDim uppercase tracking-wide">
-                  · {t('Intensity')} {normIntensity(w.week.intensity)}/10
-                </span>
-              )}
+      {!loading && (
+        <>
+          {pastWeeks.map((w) => (
+            <WeekSection
+              key={weekKey(w)}
+              w={w}
+              isCurrent={weekKey(w) === currentKey}
+              multiPhase={multiPhase}
+              doneBySession={doneBySession}
+              t={t}
+            />
+          ))}
+
+          {pastWeeks.length > 0 && upcomingWeeks.length > 0 && (
+            <div className="flex items-center gap-3">
+              <span className="font-heading tracking-wide text-xs uppercase text-textDim">
+                {t('Upcoming')}
+              </span>
+              <span className="h-px flex-1 bg-border" />
             </div>
-            {(w.week.focus || w.week.notes) && (
-              <p className="text-xs text-textDim">
-                {[w.week.focus, w.week.notes].filter(Boolean).join(' · ')}
-              </p>
-            )}
-            {w.sessions.length === 0 ? (
-              <p className="text-xs text-textDim italic">{t('Rest week.')}</p>
-            ) : (
-              <div className="space-y-2">
-                {w.sessions.map((ses) => (
-                  <SessionRow
-                    key={ses.id}
-                    session={ses}
-                    completion={doneBySession.get(ses.id) ?? null}
-                    t={t}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-        ))}
+          )}
+
+          {upcomingWeeks.map((w) => (
+            <WeekSection
+              key={weekKey(w)}
+              w={w}
+              isCurrent={false}
+              multiPhase={multiPhase}
+              doneBySession={doneBySession}
+              t={t}
+            />
+          ))}
+        </>
+      )}
     </main>
+  );
+}
+
+// ─── One week: heading, focus/notes, its session cards ───────────────────────
+function WeekSection({
+  w,
+  isCurrent,
+  multiPhase,
+  doneBySession,
+  t,
+}: {
+  w: FlatWeek;
+  isCurrent: boolean;
+  multiPhase: boolean;
+  doneBySession: Map<string, CompletionRow>;
+  t: (s: string) => string;
+}) {
+  return (
+    <section className="space-y-2">
+      <div className="flex items-baseline gap-2 flex-wrap">
+        <h3 className="font-heading tracking-wide text-text">
+          {t('Week')} {w.globalWeek}
+        </h3>
+        {isCurrent && (
+          <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs text-accent">
+            {t('This week')}
+          </span>
+        )}
+        {multiPhase && w.phaseName && <span className="text-xs text-accent">· {w.phaseName}</span>}
+        {w.week.weekStart && <span className="text-xs text-textDim">· {w.week.weekStart}</span>}
+        {normIntensity(w.week.intensity) != null && (
+          <span className="text-xs text-textDim uppercase tracking-wide">
+            · {t('Intensity')} {normIntensity(w.week.intensity)}/10
+          </span>
+        )}
+      </div>
+      {(w.week.focus || w.week.notes) && (
+        <p className="text-xs text-textDim">
+          {[w.week.focus, w.week.notes].filter(Boolean).join(' · ')}
+        </p>
+      )}
+      {w.sessions.length === 0 ? (
+        <p className="text-xs text-textDim italic">{t('Rest week.')}</p>
+      ) : (
+        <div className="space-y-2">
+          {w.sessions.map((ses) => (
+            <SessionRow
+              key={ses.id}
+              session={ses}
+              completion={doneBySession.get(ses.id) ?? null}
+              t={t}
+            />
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -401,4 +462,28 @@ function flattenPlan(plan: PlanDef | null): FlatWeek[] {
     });
   });
   return out;
+}
+
+// ─── Newest-first ordering ───────────────────────────────────────────────────
+function weekKey(w: FlatWeek): string {
+  return `${w.phaseIdx}-${w.weekIdx}`;
+}
+
+/** Apply the newest-first split to the flattened plan. Ordering rules live in
+ *  lib/planWeekOrder; this only supplies the week shape and today's date. */
+function orderWeeksNewestFirst(
+  flat: FlatWeek[],
+  doneBySession: Map<string, CompletionRow>,
+): { pastWeeks: FlatWeek[]; upcomingWeeks: FlatWeek[]; currentKey: string | null } {
+  const split = splitAtCurrentWeek(
+    flat,
+    (w) => w.week.weekStart,
+    (w) => w.sessions.some((s) => doneBySession.has(s.id)),
+    isoDate(new Date()),
+  );
+  return {
+    pastWeeks: split.past,
+    upcomingWeeks: split.upcoming,
+    currentKey: split.currentIsThisWeek ? weekKey(flat[split.currentIdx]) : null,
+  };
 }
