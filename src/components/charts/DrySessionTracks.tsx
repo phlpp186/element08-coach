@@ -177,6 +177,8 @@ function BlockStrip({
   const ct = useChartTheme();
   const colors = blockColors(ct);
   const total = Math.max(endT - startT, 1);
+  const holds = blocks.filter((b) => b.type === 'Hold').map((b) => b.endT - b.startT);
+
   // The strip is offset by the chart grid's left axis (56px) + right
   // padding (16px) so that block boundaries line up vertically with the
   // shaded markAreas in the SpO2 and HR charts above. The values mirror
@@ -196,10 +198,14 @@ function BlockStrip({
             >
               {pct > 4 && (
                 <span
-                  className="font-mono text-[10px] uppercase tracking-widest"
+                  className="whitespace-nowrap font-mono text-[10px] uppercase tracking-widest"
                   style={{ color: c.label }}
                 >
-                  {b.type[0]}
+                  {/* The duration, not just the initial. A coach opening an
+                      athlete's STA session is looking for the hold times; before
+                      2026-08-09 they lived only in the bar's hover title, which
+                      is invisible on a tablet and easy to miss anywhere. */}
+                  {pct > 9 ? `${b.type[0]} ${fmtSec(b.endT - b.startT)}` : b.type[0]}
                 </span>
               )}
             </div>
@@ -210,6 +216,26 @@ function BlockStrip({
         <span>{fmtSec(startT)}</span>
         <span>{fmtSec(endT)}</span>
       </div>
+
+      {/* Every hold, spelled out. The strip shows shape and proportion; a coach
+          reviewing a static wants the numbers, and a narrow bar can never carry
+          them. Rests are deliberately left out — they are the gaps between. */}
+      {holds.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-border pt-2">
+          {holds.map((h, i) => (
+            <span key={i} className="font-mono text-[11px] text-textDim">
+              <span className="opacity-60">{t('Hold')} {i + 1}</span>{' '}
+              <span className="font-semibold text-text">{fmtSec(h)}</span>
+            </span>
+          ))}
+          {holds.length > 1 && (
+            <span className="font-mono text-[11px] text-textDim">
+              <span className="opacity-60">{t('Longest')}</span>{' '}
+              <span className="font-semibold text-text">{fmtSec(Math.max(...holds))}</span>
+            </span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
