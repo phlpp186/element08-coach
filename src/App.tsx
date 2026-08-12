@@ -7,6 +7,7 @@ import { CoachOverview } from './views/CoachOverview';
 import { PlanBuilderView } from './views/PlanBuilderView';
 import { PlansView } from './views/PlansView';
 import { ExercisesView } from './views/ExercisesView';
+import { BillingView } from './views/BillingView';
 import { AuthBar } from './components/AuthBar';
 import { CompletionBell } from './components/CompletionBell';
 import { ThemeToggle } from './components/ThemeToggle';
@@ -19,6 +20,7 @@ const NAV: { id: string; label: string; to: string }[] = [
   { id: 'overview', label: 'Overview', to: '/overview' },
   { id: 'exercises', label: 'Exercises', to: '/exercises' },
   { id: 'plan', label: 'Plans', to: '/plan' },
+  { id: 'billing', label: 'Billing', to: '/billing' },
 ];
 
 export function App() {
@@ -72,6 +74,10 @@ function Outlet() {
 
   if (top === 'exercises') {
     return <ExercisesView />;
+  }
+
+  if (top === 'billing') {
+    return <BillingView />;
   }
 
   if (top === 'plan') {
