@@ -6,11 +6,12 @@
  */
 import { useMemo } from 'react';
 import type { OverviewRow } from '../lib/supabase/useCoachOverview';
+import { calendarFormat, formatIso } from '../lib/e08plan';
 import { navigate } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
 
-const FMT = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
-const fmt = (iso: string) => FMT.format(new Date(`${iso}T00:00:00Z`));
+const FMT = calendarFormat({ day: 'numeric', month: 'short' });
+const fmt = (iso: string) => formatIso(FMT, iso);
 const dayNum = (iso: string) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 86_400_000);
 
 function barStyle(status: OverviewRow['status']): { track: string; fill: string } {

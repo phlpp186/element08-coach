@@ -1,11 +1,11 @@
 /** Derived read-only views over an athlete: best PBs, headline marks, next comp. */
 import { DISCIPLINES, disciplineById, formatValue, type Discipline } from './disciplines';
-import { addDays, dayDate, isoDate, mondayOf, type BuilderPlan } from './e08plan';
+import { addDays, dayDate, mondayOf, todayIso, type BuilderPlan } from './e08plan';
 import { daysBetween } from './planHelpers';
 import type { Athlete, Competition, PBEntry } from './types';
 
 export function today(): string {
-  return isoDate(new Date());
+  return todayIso();
 }
 
 /** Best (max — higher is always better) PB entry for a discipline, or undefined. */

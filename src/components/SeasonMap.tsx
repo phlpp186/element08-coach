@@ -11,13 +11,15 @@
  */
 import { useMemo, useRef } from 'react';
 import {
-  MESO_LABEL,
   addDays,
-  movePhaseBoundary,
-  intensityPreset,
   applyIntensityCurve,
+  calendarFormat,
   fitPhasesToWeeks,
+  formatIso,
   generateSeasonSkeleton,
+  intensityPreset,
+  MESO_LABEL,
+  movePhaseBoundary,
   repartitionWeeks,
   type BuilderPhase,
   type BuilderPlan,
@@ -28,7 +30,7 @@ import { daysBetween } from '../lib/planHelpers';
 import { PHASE_HEX, PHASE_INK, hexTint } from '../lib/phaseColor';
 import { useT } from '../i18n';
 
-const MONTH_FMT = new Intl.DateTimeFormat(undefined, { month: 'short' });
+const MONTH_FMT = calendarFormat({ month: 'short' });
 const PRESETS: { id: IntensityPreset; label: string }[] = [
   { id: 'linear', label: 'Linear build' },
   { id: 'wave', label: 'Wave 3:1' },
@@ -158,7 +160,7 @@ export function SeasonMap({
   const monthLabels: (string | null)[] = [];
   let prevMonth = '';
   for (let w = 0; w < totalWeeks; w++) {
-    const label = MONTH_FMT.format(new Date(`${addDays(firstMonday, w * 7)}T00:00:00Z`));
+    const label = formatIso(MONTH_FMT, addDays(firstMonday, w * 7));
     monthLabels.push(label === prevMonth ? null : label);
     prevMonth = label;
   }

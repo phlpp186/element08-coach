@@ -86,7 +86,12 @@ function StatHeader({ s, t }: { s: SessionBlob; t: (k: string) => string }) {
     if (value === null || value === undefined || value === '') return;
     stats.push({ label, value: `${value}${suffix}` });
   };
-  if (typeof s.date === 'string') push(t('Date'), new Date(s.date).toLocaleDateString());
+  // A session date is a CALENDAR date (YYYY-MM-DD), which JS parses as UTC
+  // midnight — so it has to be read back in UTC too, or a coach west of
+  // Greenwich sees the day before the one the athlete trained.
+  if (typeof s.date === 'string') {
+    push(t('Date'), new Date(`${s.date}T00:00:00Z`).toLocaleDateString(undefined, { timeZone: 'UTC' }));
+  }
   push(t('Type'), s.mode);
   if (s.mode === 'depth') {
     push(t('Max depth'), s.maxDepth, ' m');

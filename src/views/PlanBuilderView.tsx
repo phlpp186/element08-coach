@@ -2,15 +2,17 @@ import { useMemo, useState } from 'react';
 import { daysBetween } from '../lib/planHelpers';
 import {
   addDays,
+  calendarFormat,
   DAY_LABELS,
   dayDate,
+  DEFAULT_INTENSITY,
   downloadPlanFile,
   dowOf,
   emptyDay,
   emptyPhase,
+  formatIso,
   generateSeasonSkeleton,
   initialPlan,
-  isoDate,
   MESO_LABEL,
   mondayOf,
   moveInArray,
@@ -18,7 +20,7 @@ import {
   planIssues,
   planStats,
   splitPhaseAtWeek,
-  DEFAULT_INTENSITY,
+  todayIso,
   type BuilderDay,
   type BuilderPhase,
   type BuilderPlan,
@@ -61,11 +63,11 @@ const STRUCTURES: { id: PlanStructure; label: string }[] = [
   { id: 'days', label: 'Days' },
 ];
 
-const WEEKDAY_FMT = new Intl.DateTimeFormat(undefined, { weekday: 'long' });
+const WEEKDAY_FMT = calendarFormat({ weekday: 'long' });
 /** Weekday name (e.g. "Monday") for an ISO date — shown beside the editable
  *  date picker for quick orientation. */
 function weekdayLabel(isoDay: string): string {
-  return WEEKDAY_FMT.format(new Date(`${isoDay}T00:00:00Z`));
+  return formatIso(WEEKDAY_FMT, isoDay);
 }
 
 /** Build the initial working plan for this mount: load a saved plan, or start a
@@ -457,7 +459,7 @@ function TrainingSchedule(props: {
 }) {
   const t = useT();
   const { plan, editing, setEditing, setMeta } = props;
-  const today = isoDate(new Date());
+  const today = todayIso();
   // Effective calendar date of every day, for duplicate checks.
   const dayDates = plan.days.map((d, i) => dayDate(plan.startDate, d, i));
   const newSess = (dayOfWeek: number) => ({

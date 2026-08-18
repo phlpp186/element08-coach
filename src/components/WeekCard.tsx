@@ -1,7 +1,9 @@
 import {
+  addDays,
+  calendarFormat,
   DAY_LABELS,
   DEFAULT_INTENSITY,
-  addDays,
+  formatIso,
   newSession,
   normIntensity,
   type BuilderWeek,
@@ -16,7 +18,7 @@ import {
 import { SessionList } from './sessions';
 import { useT, tr } from '../i18n';
 
-const DAY_DATE_FMT = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
+const DAY_DATE_FMT = calendarFormat({ day: 'numeric', month: 'short' });
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** One week: intensity + focus, a Mon–Sun session grid, and notes. Used for both
@@ -116,7 +118,7 @@ export function WeekCard({
           const beforeStart = partialBeforeDow != null && day < partialBeforeDow;
           const daySessions = week.sessions.filter((s) => s.dayOfWeek === day);
           const dayDate = hasDates
-            ? DAY_DATE_FMT.format(new Date(`${addDays(weekStart!, day)}T00:00:00Z`))
+            ? formatIso(DAY_DATE_FMT, addDays(weekStart!, day))
             : null;
           return (
             <div key={day} className={`flex gap-3 items-start ${beforeStart ? 'opacity-40' : ''}`}>

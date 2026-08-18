@@ -298,6 +298,25 @@ export function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * TODAY, on the coach's own calendar.
+ *
+ * `isoDate(new Date())` is today in UTC, which is the wrong question: a coach
+ * in Sydney opening the builder at 08:00 on Monday the 17th is at 22:00 Sunday
+ * the 16th in UTC, so a new plan defaulted to STARTING on the 16th — and since
+ * every week is snapped to its Monday, the whole plan then sat in the week
+ * before the one they meant. The mirror error is a coach in Los Angeles at
+ * 18:00, whose "today" would be tomorrow.
+ *
+ * A wall calendar is a local thing. Only the arithmetic ON dates is UTC.
+ */
+export function todayIso(): string {
+  const d = new Date();
+  const m = `${d.getMonth() + 1}`.padStart(2, '0');
+  const day = `${d.getDate()}`.padStart(2, '0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
 export function addDays(iso: string, n: number): string {
   const d = new Date(`${iso}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + n);
@@ -315,6 +334,27 @@ export function mondayOf(iso: string): string {
 /** Day-of-week index for an ISO date: 0 = Mon … 6 = Sun (matches dayOfWeek). */
 export function dowOf(iso: string): number {
   return (new Date(`${iso}T00:00:00Z`).getUTCDay() + 6) % 7;
+}
+
+/**
+ * A formatter for CALENDAR dates — always UTC, never the viewer's zone.
+ *
+ * Every date in a plan is a bare YYYY-MM-DD, and all the math above parses it
+ * at UTC midnight. Formatting that instant with the default (local) zone hands
+ * a viewer west of Greenwich the day BEFORE the one stored, while the weekday
+ * labels next to it do not move — so a plan starting Monday 17 Aug drew
+ * "Mon 16" and every day of the week read one off (reported 2026-08-18).
+ *
+ * Use this for anything that came out of a date field. Real timestamps
+ * (updatedAt, completed_at) are moments, not calendar dates, and stay local.
+ */
+export function calendarFormat(opts: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+  return new Intl.DateTimeFormat(undefined, { ...opts, timeZone: 'UTC' });
+}
+
+/** Format a YYYY-MM-DD with a formatter from calendarFormat(). */
+export function formatIso(fmt: Intl.DateTimeFormat, iso: string): string {
+  return fmt.format(new Date(`${iso}T00:00:00Z`));
 }
 
 export const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -535,7 +575,7 @@ export function initialPlan(): BuilderPlan {
     description: '',
     mode: 'depth',
     kind: 'training',
-    startDate: isoDate(new Date()),
+    startDate: todayIso(),
     competitionDate: '',
     structure: 'weeks',
     weeks: [emptyWeek()],

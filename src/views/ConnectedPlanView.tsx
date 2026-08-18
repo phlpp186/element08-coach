@@ -9,7 +9,7 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { navigate } from '../hooks/useHashRoute';
-import { isoDate, normIntensity } from '../lib/e08plan';
+import { normIntensity, todayIso } from '../lib/e08plan';
 import { splitAtCurrentWeek } from '../lib/planWeekOrder';
 import { AttachedSessionDetail } from '../components/AttachedSessionDetail';
 import { useT, tr } from '../i18n';
@@ -479,7 +479,7 @@ function orderWeeksNewestFirst(
     flat,
     (w) => w.week.weekStart,
     (w) => w.sessions.some((s) => doneBySession.has(s.id)),
-    isoDate(new Date()),
+    todayIso(),
   );
   return {
     pastWeeks: split.past,

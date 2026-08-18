@@ -1,8 +1,10 @@
 import {
-  MESO_TYPES,
-  MESO_LABEL,
   addDays,
+  calendarFormat,
   emptyWeek,
+  formatIso,
+  MESO_LABEL,
+  MESO_TYPES,
   type BuilderPhase,
   type BuilderWeek,
   type MesoType,
@@ -11,9 +13,9 @@ import {
 import { WeekCard } from './WeekCard';
 import { useT } from '../i18n';
 
-const RANGE_FMT = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
+const RANGE_FMT = calendarFormat({ day: 'numeric', month: 'short' });
 function fmt(iso: string): string {
-  return RANGE_FMT.format(new Date(`${iso}T00:00:00Z`));
+  return formatIso(RANGE_FMT, iso);
 }
 
 /** One mesocycle in a season: a collapsible block of weeks with a type and name.

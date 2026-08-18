@@ -3,12 +3,12 @@
  * status hint: an amber "ending soon" when it wraps up within 2 weeks, or a dim
  * "ended" once it's past, so a coach can see who needs a fresh or updated plan.
  */
-import type { BuilderPlan } from '../lib/e08plan';
+import { calendarFormat, formatIso, type BuilderPlan } from '../lib/e08plan';
 import { planEndStatus, planSpan, relativeDays } from '../lib/athleteStats';
 import { useT } from '../i18n';
 
-const FMT = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' });
-const fmt = (iso: string) => FMT.format(new Date(`${iso}T00:00:00Z`));
+const FMT = calendarFormat({ day: 'numeric', month: 'short' });
+const fmt = (iso: string) => formatIso(FMT, iso);
 
 export function PlanSpan({ plan }: { plan: BuilderPlan }) {
   const t = useT();
