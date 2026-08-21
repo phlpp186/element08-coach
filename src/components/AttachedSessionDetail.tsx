@@ -12,6 +12,7 @@ import { extractDiveData } from '../lib/analytics/diveProfile';
 import { SpeedBands } from './SpeedBands';
 import { extractPoolDiveData } from '../lib/analytics/poolDiveProfile';
 import { extractDrySessionData } from '../lib/analytics/drySessionProfile';
+import { poolLengthLabel, poolMeters } from '../lib/poolLength';
 import type { Json } from '../lib/supabase/coachData';
 
 const DepthDiveTracks = lazy(() =>
@@ -38,7 +39,12 @@ interface SessionBlob {
   waterTemp?: number | null;
   // pool
   totalDistance?: number;
+  /** Legacy label; `'-'` for any pool that is neither 25 nor 50 m. Read the
+   *  length with `poolMeters`, never from this. */
   poolType?: string;
+  /** Pool length in metres, authoritative since the app's 2026-08-09 build.
+   *  Absent on sessions attached before then. */
+  poolLengthM?: number;
   // dry
   cyclesCount?: number;
   dryActivity?: string | null;
@@ -101,7 +107,7 @@ function StatHeader({ s, t }: { s: SessionBlob; t: (k: string) => string }) {
   } else if (s.mode === 'pool') {
     push(t('Distance'), s.totalDistance, ' m');
     if (Array.isArray(s.dives)) push(t('Dives'), s.dives.length);
-    push(t('Pool'), s.poolType && s.poolType !== '-' ? s.poolType : undefined);
+    push(t('Pool'), poolMeters(s) > 0 ? poolLengthLabel(s) : undefined);
   } else if (s.mode === 'dry') {
     push(t('Activity'), s.dryActivity);
     push(t('Cycles'), s.cyclesCount);
