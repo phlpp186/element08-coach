@@ -9,6 +9,7 @@
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { useT } from '../i18n';
 import { extractDiveData } from '../lib/analytics/diveProfile';
+import { formatSessionDate } from '../lib/sessionDate';
 import { SpeedBands } from './SpeedBands';
 import { extractPoolDiveData } from '../lib/analytics/poolDiveProfile';
 import { extractDrySessionData } from '../lib/analytics/drySessionProfile';
@@ -92,12 +93,13 @@ function StatHeader({ s, t }: { s: SessionBlob; t: (k: string) => string }) {
     if (value === null || value === undefined || value === '') return;
     stats.push({ label, value: `${value}${suffix}` });
   };
-  // A session date is a CALENDAR date (YYYY-MM-DD), which JS parses as UTC
-  // midnight — so it has to be read back in UTC too, or a coach west of
-  // Greenwich sees the day before the one the athlete trained.
-  if (typeof s.date === 'string') {
-    push(t('Date'), new Date(`${s.date}T00:00:00Z`).toLocaleDateString(undefined, { timeZone: 'UTC' }));
-  }
+  // A session date is a full ISO INSTANT, not a calendar date: the app stores
+  // when the session happened, not just the day. This used to append
+  // `T00:00:00Z` to it — right for a plan date, nonsense for an instant — and
+  // every session an athlete uploaded showed the coach the words "Invalid
+  // Date". See lib/sessionDate: it handles both shapes and returns null rather
+  // than ever rendering that string again, which `push` drops.
+  push(t('Date'), formatSessionDate(s.date));
   push(t('Type'), s.mode);
   if (s.mode === 'depth') {
     push(t('Max depth'), s.maxDepth, ' m');
