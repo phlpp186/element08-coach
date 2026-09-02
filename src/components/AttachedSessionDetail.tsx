@@ -12,6 +12,7 @@ import { extractDiveData } from '../lib/analytics/diveProfile';
 import { formatSessionDate } from '../lib/sessionDate';
 import { SpeedBands } from './SpeedBands';
 import { extractPoolDiveData } from '../lib/analytics/poolDiveProfile';
+import { extractPoolTraceData } from '../lib/analytics/poolTrace';
 import { extractDrySessionData } from '../lib/analytics/drySessionProfile';
 import { poolLengthLabel, poolMeters } from '../lib/poolLength';
 import type { Json } from '../lib/supabase/coachData';
@@ -24,6 +25,9 @@ const PoolDiveTracks = lazy(() =>
 );
 const DrySessionTracks = lazy(() =>
   import('./charts/DrySessionTracks').then((m) => ({ default: m.DrySessionTracks })),
+);
+const PoolSignalTracks = lazy(() =>
+  import('./charts/PoolSignalTracks').then((m) => ({ default: m.PoolSignalTracks })),
 );
 
 type AnyDive = Record<string, unknown>;
@@ -217,9 +221,19 @@ function PoolDiveRow({ dive, idx, t }: { dive: AnyDive; idx: number; t: (k: stri
   const [open, setOpen] = useState(false);
   const profile = dive.profile;
   const hrProfile = dive.hrProfile;
+  // The motion trace counts as expandable content in its own right. On a DNF
+  // it is often the ONLY thing there — watch imports carry no `profile`, and a
+  // dive with no HR strap would otherwise render as a dead row with the whole
+  // swim sitting unread inside it.
+  const traceData = useMemo(() => extractPoolTraceData(dive as never), [dive]);
+  const diveData = useMemo(() => (open ? extractPoolDiveData(dive as never) : null), [open, dive]);
+  // PoolDiveTracks owns an empty state of its own; rendering it beside a trace
+  // would tell the coach there is no data directly above the data.
+  const hasTracks = diveData != null && (diveData.hasHR || diveData.hasDepth || diveData.hasSpeed);
   const hasProfile =
     (Array.isArray(profile) && profile.length > 1) ||
-    (Array.isArray(hrProfile) && hrProfile.length > 1);
+    (Array.isArray(hrProfile) && hrProfile.length > 1) ||
+    traceData != null;
   const disc = typeof dive.discipline === 'string' ? dive.discipline : '';
   const isSta = disc === 'STA';
   const primary = isSta
@@ -255,10 +269,22 @@ function PoolDiveRow({ dive, idx, t }: { dive: AnyDive; idx: number; t: (k: stri
         {hasProfile && <span className="text-textDim">{open ? '▲' : '▾'}</span>}
       </button>
       {open && hasProfile && (
-        <div className="border-t border-border bg-deep p-3">
-          <Suspense fallback={chartFallback}>
-            <PoolDiveTracks data={extractPoolDiveData(dive as never)} groupId={`att-p${idx}`} />
-          </Suspense>
+        <div className="space-y-5 border-t border-border bg-deep p-3">
+          {hasTracks && diveData && (
+            <Suspense fallback={chartFallback}>
+              <PoolDiveTracks data={diveData} groupId={`att-p${idx}`} />
+            </Suspense>
+          )}
+          {traceData && (
+            <Suspense fallback={chartFallback}>
+              <PoolSignalTracks data={traceData} groupId={`att-sig${idx}`} />
+            </Suspense>
+          )}
+          {!hasTracks && !traceData && (
+            <p className="py-6 text-center text-sm text-textDim">
+              {t('No profile data recorded for this dive.')}
+            </p>
+          )}
         </div>
       )}
     </li>

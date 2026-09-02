@@ -25,6 +25,14 @@ if (previewName === 'billing') {
       </StrictMode>,
     );
   });
+} else if (previewName === 'pooltrace') {
+  void import('./dev/PoolTracePreview').then(({ PoolTracePreview }) => {
+    createRoot(document.getElementById('root')!).render(
+      <StrictMode>
+        <PoolTracePreview />
+      </StrictMode>,
+    );
+  });
 } else {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
