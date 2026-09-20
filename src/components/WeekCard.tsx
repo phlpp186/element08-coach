@@ -8,17 +8,19 @@ import {
   normIntensity,
   type BuilderWeek,
   type PlanMode,
-} from '../lib/e08plan';
+} from "../lib/e08plan";
 import {
   applyWeekTemplate,
   materializeSessionTemplate,
   saveWeekTemplate,
   useWeekTemplates,
-} from '../lib/library';
-import { SessionList } from './sessions';
-import { useT, tr } from '../i18n';
+} from "../lib/library";
+import { SessionList } from "./sessions";
+import { useT, tr } from "../i18n";
+import { TemplatePicker } from "./TemplatePicker";
+import { dominantMode } from "../lib/templateGroups";
 
-const DAY_DATE_FMT = calendarFormat({ day: 'numeric', month: 'short' });
+const DAY_DATE_FMT = calendarFormat({ day: "numeric", month: "short" });
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 /** One week: intensity + focus, a Mon–Sun session grid, and notes. Used for both
@@ -60,8 +62,15 @@ export function WeekCard({
     onChange({ sessions: [...week.sessions, s] });
     setEditing(s.id);
   };
-  const updateSession = (id: string, patch: Partial<BuilderWeek['sessions'][number]>) =>
-    onChange({ sessions: week.sessions.map((s) => (s.id === id ? { ...s, ...patch } : s)) });
+  const updateSession = (
+    id: string,
+    patch: Partial<BuilderWeek["sessions"][number]>,
+  ) =>
+    onChange({
+      sessions: week.sessions.map((s) =>
+        s.id === id ? { ...s, ...patch } : s,
+      ),
+    });
   const removeSession = (id: string) =>
     onChange({ sessions: week.sessions.filter((s) => s.id !== id) });
   // Sessions are stored flat but rendered grouped by weekday, so a SessionList
@@ -82,12 +91,14 @@ export function WeekCard({
 
   return (
     <div
-      className={`rounded-xl p-4 space-y-3 ${compact ? 'border border-border bg-abyss' : 'glass-card'}`}
+      className={`rounded-xl p-4 space-y-3 ${compact ? "border border-border bg-abyss" : "glass-card"}`}
     >
       <div className="flex items-center gap-3">
-        <span className="font-heading text-accent whitespace-nowrap shrink-0">{label}</span>
+        <span className="font-heading text-accent whitespace-nowrap shrink-0">
+          {label}
+        </span>
         <label className="ml-auto flex items-center gap-1.5 text-xs text-textDim whitespace-nowrap">
-          {t('Intensity')}
+          {t("Intensity")}
           <select
             className="field w-auto"
             value={normIntensity(week.intensity) ?? DEFAULT_INTENSITY}
@@ -101,30 +112,40 @@ export function WeekCard({
           </select>
         </label>
         {onRemove && (
-          <button onClick={onRemove} className="text-red text-sm px-2 shrink-0" title={t('Remove week')}>
+          <button
+            onClick={onRemove}
+            className="text-red text-sm px-2 shrink-0"
+            title={t("Remove week")}
+          >
             ✕
           </button>
         )}
       </div>
       <input
         className="field"
-        placeholder={t('Week focus (optional), e.g. CO₂ capacity')}
+        placeholder={t("Week focus (optional), e.g. CO₂ capacity")}
         value={week.focus}
         onChange={(e) => onChange({ focus: e.target.value })}
       />
 
       <div className="space-y-2">
         {DAY_LABELS.map((dayLabel, day) => {
-          const beforeStart = partialBeforeDow != null && day < partialBeforeDow;
+          const beforeStart =
+            partialBeforeDow != null && day < partialBeforeDow;
           const daySessions = week.sessions.filter((s) => s.dayOfWeek === day);
           const dayDate = hasDates
             ? formatIso(DAY_DATE_FMT, addDays(weekStart!, day))
             : null;
           return (
-            <div key={day} className={`flex gap-3 items-start ${beforeStart ? 'opacity-40' : ''}`}>
+            <div
+              key={day}
+              className={`flex gap-3 items-start ${beforeStart ? "opacity-40" : ""}`}
+            >
               <div className="w-16 shrink-0 pt-2 font-mono text-sm leading-tight text-textDim">
                 <div>{t(dayLabel)}</div>
-                {dayDate && <div className="text-[10px] opacity-70">{dayDate}</div>}
+                {dayDate && (
+                  <div className="text-[10px] opacity-70">{dayDate}</div>
+                )}
               </div>
               <SessionList
                 sessions={daySessions}
@@ -139,7 +160,7 @@ export function WeekCard({
                   onChange({ sessions: [...week.sessions, s] });
                   setEditing(s.id);
                 }}
-                disabledText={beforeStart ? t('before plan start') : undefined}
+                disabledText={beforeStart ? t("before plan start") : undefined}
               />
             </div>
           );
@@ -148,7 +169,7 @@ export function WeekCard({
 
       <input
         className="field"
-        placeholder={t('Week notes (optional)')}
+        placeholder={t("Week notes (optional)")}
         value={week.notes}
         onChange={(e) => onChange({ notes: e.target.value })}
       />
@@ -156,32 +177,36 @@ export function WeekCard({
       <div className="flex flex-wrap items-center gap-3">
         <button
           onClick={() => {
-            const name = prompt(tr('Template name'), week.focus.trim() || label);
+            const name = prompt(
+              tr("Template name"),
+              week.focus.trim() || label,
+            );
             if (name !== null) saveWeekTemplate(name, week);
           }}
           className="text-xs text-textDim hover:text-accent"
-          title={t('Save this whole week (all sessions, doses, focus) for one-click reuse')}
+          title={t(
+            "Save this whole week (all sessions, doses, focus) for one-click reuse",
+          )}
         >
-          {t('Save week as template')}
+          {t("Save week as template")}
         </button>
-        {weekTemplates.length > 0 && (
-          <select
-            className="ml-auto max-w-48 cursor-pointer border-none bg-transparent p-0 text-xs text-textDim hover:text-accent"
-            value=""
-            title={t('Fill this week from a saved week template (sessions append)')}
-            onChange={(e) => {
-              const tpl = weekTemplates.find((x) => x.id === e.target.value);
-              if (tpl) onChange(applyWeekTemplate(tpl, week));
-            }}
-          >
-            <option value="">{t('+ week from template')}</option>
-            {weekTemplates.map((x) => (
-              <option key={x.id} value={x.id}>
-                {x.name}
-              </option>
-            ))}
-          </select>
-        )}
+        <TemplatePicker
+          className="ml-auto"
+          triggerLabel={t("+ week from template")}
+          title={t("Week templates")}
+          items={weekTemplates.map((x) => ({
+            id: x.id,
+            name: x.name,
+            mode: dominantMode(x.sessions),
+            sub: x.focus,
+            count: x.sessions.length,
+            useCount: x.useCount,
+          }))}
+          onPick={(id) => {
+            const tpl = weekTemplates.find((x) => x.id === id);
+            if (tpl) onChange(applyWeekTemplate(tpl, week));
+          }}
+        />
       </div>
     </div>
   );
