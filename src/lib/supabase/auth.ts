@@ -1,8 +1,10 @@
 /**
  * Portal auth + profile helpers over the shared Supabase project. Same accounts
- * as the app. The coach ROLE (`profiles.is_coach`) is Pro-gated and granted
- * in-app (RevenueCat) — the portal only READS it, never sets it, so the paywall
- * isn't bypassable from the website.
+ * as the app. The coach ROLE (`profiles.is_coach`) is Pro-gated: it is written
+ * only by the `coach-role` edge function, which checks RevenueCat Pro on the
+ * server (app audit 2026-10-02 #4; until migration 0017 the column was still
+ * client-writable). The portal only READS it. Anything that costs money (Live
+ * Sessions) must re-check Pro server-side, never trust this flag alone.
  */
 import { supabase } from './client';
 import { tr } from '../../i18n';
