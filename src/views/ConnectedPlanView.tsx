@@ -7,7 +7,7 @@
  * (the app marks completion at the session level). Student-owned, coach-readable;
  * live via the same completions Realtime channel the roster uses.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { navigate } from '../hooks/useHashRoute';
 import { normIntensity, todayIso } from '../lib/e08plan';
 import { splitAtCurrentWeek } from '../lib/planWeekOrder';
@@ -67,9 +67,13 @@ const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 export function ConnectedPlanView({
   studentId,
   assignmentId,
+  focusSessionId = null,
 }: {
   studentId: string;
   assignmentId: string;
+  /** Session to scroll to (and open) once the plan has loaded, e.g. from the
+   *  Activity feed's "Open session". */
+  focusSessionId?: string | null;
 }) {
   const t = useT();
   const { session } = useAuth();
@@ -119,6 +123,17 @@ export function ConnectedPlanView({
     const ch = subscribeToTables(['completions'], () => load());
     return () => unsubscribeChannel(ch);
   }, [userId, load]);
+
+  // Scroll once per requested session, after the cards exist. Live reloads keep
+  // `loading` false, so they do not yank the page back.
+  const scrolledTo = useRef<string | null>(null);
+  useEffect(() => {
+    if (loading || !focusSessionId || scrolledTo.current === focusSessionId) return;
+    const el = document.getElementById(`ses-${focusSessionId}`);
+    if (!el) return;
+    scrolledTo.current = focusSessionId;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [loading, focusSessionId]);
 
   // exercise_id (session id) → its completion row, done-only.
   const doneBySession = useMemo(() => {
@@ -249,6 +264,7 @@ export function ConnectedPlanView({
               isCurrent={weekKey(w) === currentKey}
               multiPhase={multiPhase}
               doneBySession={doneBySession}
+              focusSessionId={focusSessionId}
               t={t}
             />
           ))}
@@ -269,6 +285,7 @@ export function ConnectedPlanView({
               isCurrent={false}
               multiPhase={multiPhase}
               doneBySession={doneBySession}
+              focusSessionId={focusSessionId}
               t={t}
             />
           ))}
@@ -284,12 +301,14 @@ function WeekSection({
   isCurrent,
   multiPhase,
   doneBySession,
+  focusSessionId,
   t,
 }: {
   w: FlatWeek;
   isCurrent: boolean;
   multiPhase: boolean;
   doneBySession: Map<string, CompletionRow>;
+  focusSessionId: string | null;
   t: (s: string) => string;
 }) {
   return (
@@ -325,6 +344,7 @@ function WeekSection({
               key={ses.id}
               session={ses}
               completion={doneBySession.get(ses.id) ?? null}
+              focused={ses.id === focusSessionId}
               t={t}
             />
           ))}
@@ -338,13 +358,19 @@ function WeekSection({
 function SessionRow({
   session,
   completion,
+  focused,
   t,
 }: {
   session: PlannedSession;
   completion: CompletionRow | null;
+  focused: boolean;
   t: (s: string) => string;
 }) {
-  const [open, setOpen] = useState(false);
+  // Arriving from the feed means "show me what she logged": open it.
+  const [open, setOpen] = useState(focused);
+  useEffect(() => {
+    if (focused) setOpen(true);
+  }, [focused]);
   const done = !!completion?.completed_at;
   const day = typeof session.dayOfWeek === 'number' ? DAY_LABELS[session.dayOfWeek] : null;
   const title = session.label?.trim() || session.sessionType || t('Session');
@@ -353,7 +379,7 @@ function SessionRow({
   return (
     <div
       id={`ses-${session.id}`}
-      className={`scroll-mt-4 rounded-lg border p-3 ${done ? 'border-recover/50 bg-recover/5' : 'border-border bg-panel'}`}
+      className={`scroll-mt-4 rounded-lg border p-3 ${done ? 'border-recover/50 bg-recover/5' : 'border-border bg-panel'} ${focused ? 'ring-2 ring-accent' : ''}`}
     >
       <div className="flex items-start gap-2">
         <span className={`mt-0.5 text-sm ${done ? 'text-recover' : 'text-textDim'}`}>

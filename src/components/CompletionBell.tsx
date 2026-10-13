@@ -1,72 +1,37 @@
 /**
  * CompletionBell — header notification bell for coaches: "your athlete marked
- * a session done". Feeds from the completions the coach can already read
- * (listRecentCompletions, RLS-scoped, filtered to their own assignments),
+ * a session done". Feeds from completion events on the coach's own
+ * assignments (listCompletionEvents),
  * resolves each entry to athlete + session label + plan title via the cached
  * cloud plan definitions, and goes live over the same completions Realtime
- * channel the roster uses. Unread = completed after the locally stored
- * last-seen stamp (element08.coach.completionsSeen); opening the panel marks
- * everything read, clicking an entry jumps into the athlete's plan view.
+ * channel the roster uses. Unread = an event (completed, or the attached
+ * session edited later) after the shared seen stamp (lib/completionsSeen, also
+ * used by the Activity page); opening the panel marks everything read,
+ * clicking an entry jumps into the athlete's plan view.
  * Renders nothing when signed out or not a coach.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import {
-  getPlan,
+  getPlanDefinitions,
   listCoachAssignments,
-  listRecentCompletions,
+  listCompletionEvents,
   subscribeToTables,
   unsubscribeChannel,
 } from '../lib/supabase/coachData';
+import { isUnread, relTime, toFeedEntries, type FeedEntry } from '../lib/activity';
+import { markAllSeen, useCompletionsSeen } from '../lib/completionsSeen';
 import { navigate } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
 
-const SEEN_KEY = 'element08.coach.completionsSeen';
 const FEED_LIMIT = 30;
-
-interface FeedEntry {
-  id: string;
-  assignmentId: string;
-  studentId: string;
-  studentName: string;
-  planTitle: string;
-  sessionLabel: string;
-  completedAt: string;
-  rating: number | null;
-  hasRemarks: boolean;
-}
-
-/** Session label from a stored cloud plan definition (the app Plan shape:
- *  phases → weeks → plannedSessions), same fallback chain the plan view uses. */
-function sessionLabelIn(definition: unknown, sessionId: string): string | null {
-  const phases =
-    (definition as { phases?: { weeks?: { plannedSessions?: { id?: string; label?: string; sessionType?: string }[] }[] }[] })
-      ?.phases ?? [];
-  for (const ph of phases) {
-    for (const w of ph.weeks ?? []) {
-      for (const s of w.plannedSessions ?? []) {
-        if (s.id === sessionId) return s.label?.trim() || s.sessionType || null;
-      }
-    }
-  }
-  return null;
-}
-
-const REL_FMT = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
-function relTime(iso: string): string {
-  const mins = Math.round((Date.parse(iso) - Date.now()) / 60000);
-  if (Math.abs(mins) < 60) return REL_FMT.format(mins, 'minute');
-  const hours = Math.round(mins / 60);
-  if (Math.abs(hours) < 24) return REL_FMT.format(hours, 'hour');
-  return REL_FMT.format(Math.round(hours / 24), 'day');
-}
 
 export function CompletionBell() {
   const t = useT();
   const { session, isCoach } = useAuth();
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [open, setOpen] = useState(false);
-  const [seenAt, setSeenAt] = useState<string>(() => localStorage.getItem(SEEN_KEY) ?? '');
+  const seenAt = useCompletionsSeen();
   // What "new" means inside an open panel: the seen stamp from before opening.
   const [openSnapshot, setOpenSnapshot] = useState<string>('');
   const rootRef = useRef<HTMLDivElement>(null);
@@ -77,38 +42,19 @@ export function CompletionBell() {
       return;
     }
     try {
-      const [assignments, completions] = await Promise.all([
-        listCoachAssignments(),
-        listRecentCompletions(FEED_LIMIT),
+      const assignments = await listCoachAssignments();
+      const [rows, defs] = await Promise.all([
+        listCompletionEvents(
+          assignments.map((a) => a.id),
+          { limit: FEED_LIMIT },
+        ),
+        getPlanDefinitions(assignments.map((a) => a.planId)),
       ]);
-      const byAssignment = new Map(assignments.map((a) => [a.id, a]));
-      const planCache = new Map<string, unknown>();
-      const definitionFor = async (planId: string): Promise<unknown> => {
-        if (!planCache.has(planId)) planCache.set(planId, (await getPlan(planId))?.definition ?? null);
-        return planCache.get(planId);
-      };
-      const out: FeedEntry[] = [];
-      for (const c of completions) {
-        const a = byAssignment.get(c.assignment_id);
-        if (!a || !c.completed_at) continue;
-        const label = sessionLabelIn(await definitionFor(a.planId), c.exercise_id) ?? t('Session');
-        out.push({
-          id: c.id,
-          assignmentId: a.id,
-          studentId: a.studentId,
-          studentName: a.studentName,
-          planTitle: a.planTitle,
-          sessionLabel: label,
-          completedAt: c.completed_at,
-          rating: c.rating,
-          hasRemarks: !!c.remarks?.trim(),
-        });
-      }
-      setEntries(out);
+      setEntries(toFeedEntries(rows, new Map(assignments.map((a) => [a.id, a])), defs));
     } catch {
       // Keep whatever we had; the next Realtime tick or mount retries.
     }
-  }, [session, isCoach, t]);
+  }, [session, isCoach]);
 
   useEffect(() => {
     refresh();
@@ -138,7 +84,7 @@ export function CompletionBell() {
   }, [open]);
 
   const unread = useMemo(
-    () => entries.filter((e) => !seenAt || e.completedAt > seenAt).length,
+    () => entries.filter((e) => isUnread(e.at, seenAt)).length,
     [entries, seenAt],
   );
 
@@ -147,9 +93,7 @@ export function CompletionBell() {
   const toggle = () => {
     if (!open) {
       setOpenSnapshot(seenAt);
-      const now = new Date().toISOString();
-      localStorage.setItem(SEEN_KEY, now);
-      setSeenAt(now);
+      markAllSeen();
     }
     setOpen(!open);
   };
@@ -182,7 +126,7 @@ export function CompletionBell() {
             <div className="px-2 pb-2 text-sm text-textDim">{t('No completed sessions yet.')}</div>
           ) : (
             entries.map((e) => {
-              const isNew = !openSnapshot || e.completedAt > openSnapshot;
+              const isNew = isUnread(e.at, openSnapshot);
               return (
                 <button
                   key={e.id}
@@ -195,17 +139,29 @@ export function CompletionBell() {
                   <div className="flex items-center gap-2 text-sm">
                     {isNew && <span className="w-1.5 h-1.5 rounded-full bg-accent shrink-0" />}
                     <span className="font-medium truncate">{e.studentName}</span>
-                    <span className="text-textDim truncate flex-1">{e.sessionLabel}</span>
+                    <span className="text-textDim truncate flex-1">
+                      {e.kind === 'updated' && <span className="text-highlight">{t('updated')} · </span>}
+                      {e.sessionLabel ?? t('Session')}
+                    </span>
                     {e.rating != null && <span className="text-amber text-xs shrink-0">★ {e.rating}</span>}
                   </div>
                   <div className="text-xs text-textDim mt-0.5 truncate">
-                    {e.planTitle} · {relTime(e.completedAt)}
-                    {e.hasRemarks && <span> · ✎</span>}
+                    {e.planTitle} · {relTime(e.at)}
+                    {e.remarks && <span> · ✎</span>}
                   </div>
                 </button>
               );
             })
           )}
+          <button
+            onClick={() => {
+              setOpen(false);
+              navigate('/activity');
+            }}
+            className="mt-1 w-full border-t border-border px-2 pt-2 pb-1 text-center text-sm text-accent hover:underline"
+          >
+            {t('See all')}
+          </button>
         </div>
       )}
     </div>

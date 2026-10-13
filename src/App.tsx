@@ -4,6 +4,7 @@ import { AthleteDetailView } from './views/AthleteDetailView';
 import { ConnectedAthleteView } from './views/ConnectedAthleteView';
 import { ConnectedPlanView } from './views/ConnectedPlanView';
 import { CoachOverview } from './views/CoachOverview';
+import { ActivityView } from './views/ActivityView';
 import { PlanBuilderView } from './views/PlanBuilderView';
 import { PlansView } from './views/PlansView';
 import { ExercisesView } from './views/ExercisesView';
@@ -17,6 +18,7 @@ import { LanguageSwitcher } from './i18n/LanguageSwitcher';
 
 const NAV: { id: string; label: string; to: string }[] = [
   { id: 'athletes', label: 'Athletes', to: '/athletes' },
+  { id: 'activity', label: 'Activity', to: '/activity' },
   { id: 'overview', label: 'Overview', to: '/overview' },
   { id: 'exercises', label: 'Exercises', to: '/exercises' },
   { id: 'plan', label: 'Plans', to: '/plan' },
@@ -72,6 +74,10 @@ function Outlet() {
     return <CoachOverview />;
   }
 
+  if (top === 'activity') {
+    return <ActivityView />;
+  }
+
   if (top === 'exercises') {
     return <ExercisesView />;
   }
@@ -99,12 +105,14 @@ function Outlet() {
   // Cloud (paired) athlete — distinct from the local notebook detail below.
   if (top === 'connected' && second) {
     // /connected/:studentId/plan/:assignmentId → one assigned plan + completions
+    //   ?session=ID scrolls to that session's card and opens what was attached
     if (third === 'plan' && fourth) {
       return (
         <ConnectedPlanView
           key={fourth}
           studentId={second}
           assignmentId={fourth}
+          focusSessionId={route.query.get('session')}
         />
       );
     }

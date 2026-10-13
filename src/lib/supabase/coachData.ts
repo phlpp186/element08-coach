@@ -131,6 +131,18 @@ export async function getPlan(id: string): Promise<PlanRow | null> {
   return data;
 }
 
+/** Definitions of several plans in one round trip, keyed by plan id. */
+export async function getPlanDefinitions(ids: string[]): Promise<Map<string, Json>> {
+  const out = new Map<string, Json>();
+  const uniq = [...new Set(ids)];
+  if (!uniq.length) return out;
+  const rows = unwrap(
+    await supabase.from('plans').select('id, definition').in('id', uniq),
+  ) as { id: string; definition: Json }[];
+  for (const r of rows) out.set(r.id, r.definition);
+  return out;
+}
+
 export async function createPlan(title: string, definition: Json): Promise<PlanRow> {
   const uid = await currentUserId();
   if (!uid) throw new Error('Not signed in.');
@@ -188,6 +200,8 @@ export interface CoachAssignment {
   studentId: string;
   studentName: string;
   doneCount: number;
+  /** When the plan was assigned (assignments.created_at). */
+  assignedAt: string | null;
 }
 
 /** Who the coach has assigned which plan to, with completion counts. Scoped to
@@ -199,7 +213,7 @@ export async function listCoachAssignments(): Promise<CoachAssignment[]> {
   const rows = unwrap(
     await supabase
       .from('assignments')
-      .select('id, plan_id, student_id, student:profiles!assignments_student_id_fkey(display_name)')
+      .select('id, plan_id, student_id, created_at, student:profiles!assignments_student_id_fkey(display_name)')
       .in(
         'plan_id',
         plans.map((p) => p.id),
@@ -209,6 +223,7 @@ export async function listCoachAssignments(): Promise<CoachAssignment[]> {
     id: string;
     plan_id: string;
     student_id: string;
+    created_at: string | null;
     student: { display_name: string } | null;
   }[];
 
@@ -232,6 +247,7 @@ export async function listCoachAssignments(): Promise<CoachAssignment[]> {
     studentId: r.student_id,
     studentName: r.student?.display_name?.trim() || 'Athlete',
     doneCount: counts.get(r.id) ?? 0,
+    assignedAt: r.created_at ?? null,
   }));
 }
 
@@ -243,18 +259,36 @@ export async function listCompletions(assignmentId: string): Promise<CompletionR
   );
 }
 
-/** Recently completed sessions across every assignment the caller can read,
- *  newest first (the coach notification feed). RLS already scopes rows; the
- *  bell additionally filters to the coach's own assignment ids so a coach who
- *  is also somebody's student does not see their own completions here. */
-export async function listRecentCompletions(limit = 30): Promise<CompletionRow[]> {
+/** Completion EVENTS on the given assignments, newest first: a session marked
+ *  done, or an attached session edited afterwards (the app then bumps only
+ *  `session` + `updated_at`). Ordered by updated_at so edits surface too; see
+ *  lib/activity completionEvent for how a row reads as one or the other. */
+export async function listCompletionEvents(
+  assignmentIds: string[],
+  opts: { since?: string; limit?: number } = {},
+): Promise<CompletionRow[]> {
+  if (!assignmentIds.length) return [];
+  let q = supabase
+    .from('completions')
+    .select('*')
+    .in('assignment_id', assignmentIds)
+    .not('completed_at', 'is', null);
+  if (opts.since) q = q.or(`updated_at.gte.${opts.since},completed_at.gte.${opts.since}`);
+  return unwrap(await q.order('updated_at', { ascending: false }).limit(opts.limit ?? 30));
+}
+
+/** Every completion on the given assignments WITHOUT the attached session blob
+ *  (which carries 1 Hz profiles and can be large): enough for done-sets,
+ *  ratings and last-activity times. */
+export async function listCompletionSummaries(
+  assignmentIds: string[],
+): Promise<Omit<CompletionRow, 'session' | 'remarks'>[]> {
+  if (!assignmentIds.length) return [];
   return unwrap(
     await supabase
       .from('completions')
-      .select('*')
-      .not('completed_at', 'is', null)
-      .order('completed_at', { ascending: false })
-      .limit(limit),
+      .select('id, assignment_id, exercise_id, completed_at, rating, updated_at')
+      .in('assignment_id', assignmentIds),
   );
 }
 
