@@ -551,6 +551,26 @@ export function emptyWeek(): BuilderWeek {
   return { focus: '', intensity: DEFAULT_INTENSITY, notes: '', sessions: [] };
 }
 
+/** A deep copy of `week` with fresh session + exercise ids, so the copy is a
+ *  new week to the app (completions key on session id) and editing one week
+ *  never reaches into the other. */
+export function copyWeek(week: BuilderWeek): BuilderWeek {
+  return {
+    focus: week.focus,
+    intensity: week.intensity,
+    notes: week.notes,
+    sessions: week.sessions.map((s) => ({
+      ...s,
+      id: uid('sess'),
+      exercises: s.exercises.map((e) => ({
+        ...e,
+        id: uid('ex'),
+        ...(e.dose ? { dose: e.dose.map((p) => ({ ...p })) } : {}),
+      })),
+    })),
+  };
+}
+
 export function emptyDay(): BuilderDay {
   return { id: uid('day'), sessions: [] };
 }

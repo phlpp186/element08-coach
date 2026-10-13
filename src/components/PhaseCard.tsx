@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
   addDays,
   calendarFormat,
@@ -63,7 +64,20 @@ export function PhaseCard({
 
   const setWeek = (wi: number, patch: Partial<BuilderWeek>) =>
     onChange({ weeks: phase.weeks.map((w, i) => (i === wi ? { ...w, ...patch } : w)) });
-  const addWeek = () => onChange({ weeks: [...phase.weeks, emptyWeek()] });
+  // Scroll the new week into view once it has rendered; a long phase otherwise
+  // leaves it below the fold with nothing on screen having changed.
+  const [pendingScroll, setPendingScroll] = useState<number | null>(null);
+  useEffect(() => {
+    if (pendingScroll == null) return;
+    const el = document.getElementById(`phase-${phase.id}-week-${pendingScroll}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setPendingScroll(null);
+  }, [pendingScroll, phase.id, len]);
+  const addWeek = () => {
+    setPendingScroll(phase.weeks.length);
+    onChange({ weeks: [...phase.weeks, emptyWeek()] });
+  };
   const removeWeek = (wi: number) => onChange({ weeks: phase.weeks.filter((_, i) => i !== wi) });
 
   return (
@@ -106,7 +120,7 @@ export function PhaseCard({
           {phase.weeks.map((week, wi) => {
             const globalIndex = weekOffset + wi;
             return (
-              <div key={wi} className="space-y-3">
+              <div key={wi} id={`phase-${phase.id}-week-${wi}`} className="scroll-mt-4 space-y-3">
                 {onSplit && wi > 0 && (
                   <div className="flex items-center gap-2">
                     <div className="flex-1 border-t border-dashed border-border" />

@@ -438,5 +438,11 @@
   "weeks": "週",
   "weeks out.": "週前。",
   "wk": "週",
-  "Longest": "最長"
+  "Longest": "最長",
+  "Hold {n}": "ホールド {n}",
+  "Weeks {from} to {to}": "第{from}〜{to}週",
+  "Fold older weeks": "過去の週を折りたたむ",
+  "No sessions": "セッションなし",
+  "Copy last week": "最終週をコピー",
+  "Append a copy of the last week, with all its sessions": "最終週をすべてのセッションごとコピーして末尾に追加"
 }

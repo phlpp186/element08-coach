@@ -438,5 +438,11 @@
   "weeks": "semaines",
   "weeks out.": "semaines avant.",
   "wk": "sem.",
-  "Longest": "Le plus long"
+  "Longest": "Le plus long",
+  "Hold {n}": "Statique {n}",
+  "Weeks {from} to {to}": "Semaines {from} à {to}",
+  "Fold older weeks": "Replier les semaines précédentes",
+  "No sessions": "Aucune séance",
+  "Copy last week": "Copier la dernière semaine",
+  "Append a copy of the last week, with all its sessions": "Ajouter une copie de la dernière semaine avec toutes ses séances"
 }

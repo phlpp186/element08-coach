@@ -43,6 +43,14 @@ if (previewName === "billing") {
       </StrictMode>,
     );
   });
+} else if (previewName === "attachednotes") {
+  void import("./dev/AttachedNotesPreview").then(({ AttachedNotesPreview }) => {
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <AttachedNotesPreview />
+      </StrictMode>,
+    );
+  });
 } else if (previewName === "pooltrace") {
   void import("./dev/PoolTracePreview").then(({ PoolTracePreview }) => {
     createRoot(document.getElementById("root")!).render(

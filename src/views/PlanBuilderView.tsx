@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { daysBetween } from '../lib/planHelpers';
 import {
   addDays,
   calendarFormat,
+  copyWeek,
   DAY_LABELS,
   dayDate,
   DEFAULT_INTENSITY,
@@ -46,7 +47,8 @@ import type { Athlete } from '../lib/types';
 import { AssignToConnectedButton } from '../components/AssignToConnectedButton';
 import { pushLinkedPlanUpdate } from '../lib/supabase/syncLinkedPlan';
 import { InfoTip } from '../components/InfoTip';
-import { useT } from '../i18n';
+import { fill, useT } from '../i18n';
+import { currentWeekIndex, hasFolded, weekSlots } from '../lib/weekNav';
 
 const MODES: { id: PlanMode; label: string }[] = [
   { id: 'depth', label: 'Depth' },
@@ -129,6 +131,8 @@ export function PlanBuilderView({
       ...p,
       weeks: [...p.weeks, { focus: '', intensity: DEFAULT_INTENSITY, notes: '', sessions: [] }],
     }));
+  const copyLastWeek = () =>
+    mutate((p) => (p.weeks.length ? { ...p, weeks: [...p.weeks, copyWeek(p.weeks[p.weeks.length - 1])] } : p));
   const removeWeek = (wi: number) => mutate((p) => ({ ...p, weeks: p.weeks.filter((_, i) => i !== wi) }));
 
   // days (training)
@@ -396,6 +400,7 @@ export function PlanBuilderView({
           setMeta={setMeta}
           updateWeek={updateWeek}
           addWeek={addWeek}
+          copyLastWeek={copyLastWeek}
           removeWeek={removeWeek}
           updateDay={updateDay}
           addDay={addDay}
@@ -451,6 +456,7 @@ function TrainingSchedule(props: {
   setMeta: (patch: Partial<BuilderPlan>) => void;
   updateWeek: (wi: number, patch: Partial<BuilderWeek>) => void;
   addWeek: () => void;
+  copyLastWeek: () => void;
   removeWeek: (wi: number) => void;
   updateDay: (di: number, patch: Partial<BuilderDay>) => void;
   addDay: () => void;
@@ -471,6 +477,44 @@ function TrainingSchedule(props: {
     mode: plan.mode,
     sessionType: '',
   });
+
+  // Long plans: older weeks fold away (see lib/weekNav), the toolbar jumps to
+  // any week, and a freshly added week scrolls into view once it has rendered.
+  const [showAll, setShowAll] = useState(false);
+  const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
+  const [pendingScroll, setPendingScroll] = useState<number | null>(null);
+  const currentWeek = currentWeekIndex(plan.startDate, plan.weeks.length, today);
+  const slots = useMemo(
+    () => weekSlots(plan.weeks.length, { current: currentWeek, expanded, showAll }),
+    [plan.weeks.length, currentWeek, expanded, showAll],
+  );
+  const canFold = useMemo(
+    () => hasFolded(weekSlots(plan.weeks.length, { current: currentWeek, expanded: new Set(), showAll: false })),
+    [plan.weeks.length, currentWeek],
+  );
+  const visibleWeeks = useMemo(
+    () => new Set(slots.flatMap((sl) => (sl.kind === 'week' ? [sl.index] : []))),
+    [slots],
+  );
+  const foldedSessions = (from: number, to: number) =>
+    plan.weeks.slice(from, to + 1).reduce((n, w) => n + w.sessions.length, 0);
+
+  useEffect(() => {
+    if (pendingScroll == null) return;
+    const el = document.getElementById(`plan-week-${pendingScroll}`);
+    if (!el) return; // not rendered yet; runs again when the slots change
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setPendingScroll(null);
+  }, [pendingScroll, slots]);
+
+  const jumpToWeek = (wi: number) => {
+    if (!visibleWeeks.has(wi)) setExpanded((prev) => new Set(prev).add(wi));
+    setPendingScroll(wi);
+  };
+  const addWeekAndScroll = () => {
+    setPendingScroll(plan.weeks.length);
+    props.addWeek();
+  };
 
   return (
     <section className="space-y-4">
@@ -505,21 +549,67 @@ function TrainingSchedule(props: {
         )}
       </div>
 
+      {plan.structure === 'weeks' && (
+        <WeekToolbar
+          weeks={plan.weeks}
+          current={currentWeek}
+          visible={visibleWeeks}
+          onJump={jumpToWeek}
+          onCopyLast={() => {
+            setPendingScroll(plan.weeks.length);
+            props.copyLastWeek();
+          }}
+          onAdd={addWeekAndScroll}
+        />
+      )}
+
+      {plan.structure === 'weeks' && showAll && canFold && (
+        <button
+          onClick={() => {
+            setShowAll(false);
+            setExpanded(new Set());
+          }}
+          className="text-xs text-textDim hover:text-accent"
+        >
+          {t('Fold older weeks')}
+        </button>
+      )}
+
       {plan.structure === 'weeks'
-        ? plan.weeks.map((week, wi) => (
-            <WeekCard
-              key={wi}
-              week={week}
-              label={`${t('WEEK')} ${wi + 1}`}
-              mode={plan.mode}
-              editing={editing}
-              setEditing={setEditing}
-              onChange={(patch) => props.updateWeek(wi, patch)}
-              onRemove={plan.weeks.length > 1 ? () => props.removeWeek(wi) : undefined}
-              partialBeforeDow={wi === 0 ? dowOf(plan.startDate) : undefined}
-              weekStart={plan.startDate ? addDays(mondayOf(plan.startDate), wi * 7) : undefined}
-            />
-          ))
+        ? slots.map((slot) =>
+            slot.kind === 'folded' ? (
+              <button
+                key={`f${slot.from}`}
+                onClick={() => setShowAll(true)}
+                className="flex w-full items-center gap-3 rounded-xl border border-dashed border-border bg-panel/60 px-4 py-3 text-left hover:border-accent"
+              >
+                <span className="text-textDim">▸</span>
+                <span className="font-heading text-accent">
+                  {slot.from === slot.to
+                    ? `${t('Week')} ${slot.from + 1}`
+                    : fill(t('Weeks {from} to {to}'), { from: slot.from + 1, to: slot.to + 1 })}
+                </span>
+                <span className="ml-auto text-xs text-textDim">
+                  {foldedSessions(slot.from, slot.to)}{' '}
+                  {t(foldedSessions(slot.from, slot.to) === 1 ? 'session' : 'sessions')}
+                </span>
+              </button>
+            ) : (
+              <div key={slot.index} id={`plan-week-${slot.index}`} className="scroll-mt-28">
+                <WeekCard
+                  week={plan.weeks[slot.index]}
+                  label={`${t('WEEK')} ${slot.index + 1}`}
+                  mode={plan.mode}
+                  editing={editing}
+                  setEditing={setEditing}
+                  onChange={(patch) => props.updateWeek(slot.index, patch)}
+                  onRemove={plan.weeks.length > 1 ? () => props.removeWeek(slot.index) : undefined}
+                  partialBeforeDow={slot.index === 0 ? dowOf(plan.startDate) : undefined}
+                  weekStart={plan.startDate ? addDays(mondayOf(plan.startDate), slot.index * 7) : undefined}
+                />
+              </div>
+            ),
+          )
         : plan.days.map((day, di) => (
             <div key={day.id} className="glass-card rounded-xl p-4 space-y-3">
               <DayHeader
@@ -542,7 +632,7 @@ function TrainingSchedule(props: {
           ))}
       {plan.structure === 'weeks' ? (
         <button
-          onClick={props.addWeek}
+          onClick={addWeekAndScroll}
           className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent"
         >
           + {t('Add week')}
@@ -553,6 +643,64 @@ function TrainingSchedule(props: {
         </button>
       )}
     </section>
+  );
+}
+
+/** Sticky bar over a weekly plan: one button per week (jump there), plus the
+ *  two ways to grow the plan, so a coach deep in week 18 never has to scroll to
+ *  the bottom to add week 19. Sticks to the top of the window while the
+ *  schedule section is on screen (no ancestor of it scrolls or clips). */
+function WeekToolbar({
+  weeks,
+  current,
+  visible,
+  onJump,
+  onCopyLast,
+  onAdd,
+}: {
+  weeks: BuilderWeek[];
+  current: number;
+  visible: ReadonlySet<number>;
+  onJump: (wi: number) => void;
+  onCopyLast: () => void;
+  onAdd: () => void;
+}) {
+  const t = useT();
+  return (
+    <div className="sticky top-0 z-20 -mx-2 flex flex-wrap items-center gap-2 rounded-b-xl border-b border-border bg-deep/95 px-2 py-2 backdrop-blur">
+      <div className="flex w-full min-w-0 gap-1 overflow-x-auto py-1 pl-0.5 sm:w-auto sm:flex-1">
+        {weeks.map((w, wi) => {
+          const empty = w.sessions.length === 0;
+          return (
+            <button
+              key={wi}
+              onClick={() => onJump(wi)}
+              title={`${t('Week')} ${wi + 1}${wi === current ? ` · ${t('This week')}` : ''}${empty ? ` · ${t('No sessions')}` : ''}`}
+              className={`h-7 min-w-[1.75rem] shrink-0 rounded-md border px-1.5 font-mono text-xs ${
+                empty ? 'border-dashed border-border text-textDim' : 'border-border bg-panel text-text'
+              } ${wi === current ? 'ring-2 ring-accent' : ''} ${visible.has(wi) ? '' : 'opacity-60'} hover:border-accent`}
+            >
+              {wi + 1}
+            </button>
+          );
+        })}
+      </div>
+      <div className="ml-auto flex shrink-0 items-center gap-2">
+        <button
+          onClick={onCopyLast}
+          title={t('Append a copy of the last week, with all its sessions')}
+          className="rounded-lg border border-border px-3 py-1.5 text-sm text-text hover:border-accent"
+        >
+          {t('Copy last week')}
+        </button>
+        <button
+          onClick={onAdd}
+          className="rounded-lg border border-border px-3 py-1.5 text-sm text-accent hover:border-accent"
+        >
+          + {t('Add week')}
+        </button>
+      </div>
+    </div>
   );
 }
 

@@ -7,7 +7,7 @@
  * main bundle stays lean and echarts only downloads when a coach expands a dive.
  */
 import { lazy, Suspense, useMemo, useState } from 'react';
-import { useT } from '../i18n';
+import { fill, useT } from '../i18n';
 import { extractDiveData } from '../lib/analytics/diveProfile';
 import { formatSessionDate } from '../lib/sessionDate';
 import { SpeedBands } from './SpeedBands';
@@ -15,6 +15,7 @@ import { extractPoolDiveData } from '../lib/analytics/poolDiveProfile';
 import { extractPoolTraceData } from '../lib/analytics/poolTrace';
 import { extractDrySessionData } from '../lib/analytics/drySessionProfile';
 import { poolLengthLabel, poolMeters } from '../lib/poolLength';
+import { holdNotes } from '../lib/sessionNotes';
 import type { Json } from '../lib/supabase/coachData';
 
 const DepthDiveTracks = lazy(() =>
@@ -54,6 +55,7 @@ interface SessionBlob {
   cyclesCount?: number;
   dryActivity?: string | null;
   dives?: AnyDive[];
+  blockTimeline?: unknown[];
 }
 
 function fmtSec(s?: number | null): string {
@@ -83,6 +85,7 @@ export function AttachedSessionDetail({ blob }: { blob: Json }) {
           <DrySessionTracks data={extractDrySessionData(s as never)} groupId="att-dry" />
         </Suspense>
       )}
+      {mode === 'dry' && <HoldNotes blockTimeline={s.blockTimeline} t={t} />}
 
       {typeof s.remarks === 'string' && s.remarks.trim() !== '' && (
         <p className="text-sm text-textDim italic">{s.remarks}</p>
@@ -136,6 +139,35 @@ function StatHeader({ s, t }: { s: SessionBlob; t: (k: string) => string }) {
   );
 }
 
+/** The athlete's own note on this one dive (the app's per-dive remarks), as a
+ *  wrapping line under the stats so it stays readable on a phone. */
+function DiveRemark({ remarks }: { remarks: unknown }) {
+  if (typeof remarks !== 'string' || remarks.trim() === '') return null;
+  return <p className="mt-1 break-words text-sm italic text-text">“{remarks.trim()}”</p>;
+}
+
+/** Per-hold notes from a dry session's block timeline. Hold numbers count Hold
+ *  blocks only, matching the app's hold-detail screen. */
+function HoldNotes({ blockTimeline, t }: { blockTimeline: unknown; t: (k: string) => string }) {
+  const notes = holdNotes(blockTimeline);
+  if (notes.length === 0) return null;
+  return (
+    <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+      {notes.map((h) => (
+        <li key={h.holdNumber} className="flex gap-4 bg-panel px-4 py-3">
+          <div className="w-16 shrink-0">
+            <div className="text-[10px] uppercase tracking-widest text-textDim">
+              {fill(t('Hold {n}'), { n: h.holdNumber })}
+            </div>
+            <div className="font-heading tracking-wide text-accent">{fmtSec(h.seconds)}</div>
+          </div>
+          <p className="min-w-0 flex-1 break-words text-sm italic text-text">“{h.text}”</p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function DepthDives({ dives, t }: { dives: AnyDive[]; t: (k: string) => string }) {
   if (dives.length === 0)
     return <p className="text-sm text-textDim">{t('No dives recorded.')}</p>;
@@ -183,6 +215,7 @@ function DepthDiveRow({ dive, idx, t }: { dive: AnyDive; idx: number; t: (k: str
             {depth != null ? `${depth}m` : '–'}
           </div>
           <div className="text-xs text-textDim">{meta}</div>
+          <DiveRemark remarks={dive.remarks} />
         </div>
         {hasProfile && <span className="text-textDim">{open ? '▲' : '▾'}</span>}
       </button>
@@ -265,6 +298,7 @@ function PoolDiveRow({ dive, idx, t }: { dive: AnyDive; idx: number; t: (k: stri
             {primary}
           </div>
           <div className="text-xs text-textDim">{meta}</div>
+          <DiveRemark remarks={dive.remarks} />
         </div>
         {hasProfile && <span className="text-textDim">{open ? '▲' : '▾'}</span>}
       </button>

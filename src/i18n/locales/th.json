@@ -438,5 +438,11 @@
   "weeks": "สัปดาห์",
   "weeks out.": "สัปดาห์ก่อนถึง",
   "wk": "สัปดาห์",
-  "Longest": "นานที่สุด"
+  "Longest": "นานที่สุด",
+  "Hold {n}": "กลั้นหายใจ {n}",
+  "Weeks {from} to {to}": "สัปดาห์ที่ {from} ถึง {to}",
+  "Fold older weeks": "ย่อสัปดาห์ก่อนหน้า",
+  "No sessions": "ไม่มีเซสชัน",
+  "Copy last week": "คัดลอกสัปดาห์สุดท้าย",
+  "Append a copy of the last week, with all its sessions": "เพิ่มสำเนาของสัปดาห์สุดท้ายพร้อมทุกเซสชันต่อท้าย"
 }

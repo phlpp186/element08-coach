@@ -56,3 +56,10 @@ export function tr(s: string): string {
 }
 
 export { setLang, useLangValue, LANGS, type Lang } from "./useLang";
+
+/** Fill `{name}` slots in an already-translated string. Word order differs per
+ *  language ("Weeks 1 to 14" vs "第1〜14週"), so the number goes INSIDE the key
+ *  instead of being concatenated around it. */
+export function fill(s: string, vars: Record<string, string | number>): string {
+  return s.replace(/\{(\w+)\}/g, (m, k: string) => (k in vars ? String(vars[k]) : m));
+}

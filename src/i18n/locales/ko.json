@@ -438,5 +438,11 @@
   "weeks": "주",
   "weeks out.": "주 전.",
   "wk": "주",
-  "Longest": "최장"
+  "Longest": "최장",
+  "Hold {n}": "숨참기 {n}",
+  "Weeks {from} to {to}": "{from}~{to}주차",
+  "Fold older weeks": "이전 주 접기",
+  "No sessions": "세션 없음",
+  "Copy last week": "마지막 주 복사",
+  "Append a copy of the last week, with all its sessions": "마지막 주를 모든 세션과 함께 복사해 끝에 추가"
 }

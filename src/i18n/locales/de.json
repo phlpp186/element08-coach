@@ -438,5 +438,11 @@
   "weeks": "Wochen",
   "weeks out.": "Wochen entfernt.",
   "wk": "Wo.",
-  "Longest": "Längster"
+  "Longest": "Längster",
+  "Hold {n}": "Statik {n}",
+  "Weeks {from} to {to}": "Wochen {from} bis {to}",
+  "Fold older weeks": "Ältere Wochen einklappen",
+  "No sessions": "Keine Einheiten",
+  "Copy last week": "Letzte Woche kopieren",
+  "Append a copy of the last week, with all its sessions": "Eine Kopie der letzten Woche mit all ihren Einheiten anhängen"
 }

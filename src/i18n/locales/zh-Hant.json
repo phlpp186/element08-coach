@@ -438,5 +438,11 @@
   "weeks": "週",
   "weeks out.": "週後。",
   "wk": "週",
-  "Longest": "最長"
+  "Longest": "最長",
+  "Hold {n}": "閉氣 {n}",
+  "Weeks {from} to {to}": "第 {from} 至 {to} 週",
+  "Fold older weeks": "摺疊較早的週",
+  "No sessions": "無課程",
+  "Copy last week": "複製最後一週",
+  "Append a copy of the last week, with all its sessions": "在末尾追加最後一週的副本（含全部課程）"
 }
