@@ -200,7 +200,7 @@ export interface CoachAssignment {
   studentId: string;
   studentName: string;
   doneCount: number;
-  /** When the plan was assigned (assignments.created_at). */
+  /** When the plan was assigned (assignments.assigned_at). */
   assignedAt: string | null;
 }
 
@@ -213,7 +213,7 @@ export async function listCoachAssignments(): Promise<CoachAssignment[]> {
   const rows = unwrap(
     await supabase
       .from('assignments')
-      .select('id, plan_id, student_id, created_at, student:profiles!assignments_student_id_fkey(display_name)')
+      .select('id, plan_id, student_id, assigned_at, student:profiles!assignments_student_id_fkey(display_name)')
       .in(
         'plan_id',
         plans.map((p) => p.id),
@@ -223,7 +223,7 @@ export async function listCoachAssignments(): Promise<CoachAssignment[]> {
     id: string;
     plan_id: string;
     student_id: string;
-    created_at: string | null;
+    assigned_at: string | null;
     student: { display_name: string } | null;
   }[];
 
@@ -247,7 +247,7 @@ export async function listCoachAssignments(): Promise<CoachAssignment[]> {
     studentId: r.student_id,
     studentName: r.student?.display_name?.trim() || 'Athlete',
     doneCount: counts.get(r.id) ?? 0,
-    assignedAt: r.created_at ?? null,
+    assignedAt: r.assigned_at ?? null,
   }));
 }
 
