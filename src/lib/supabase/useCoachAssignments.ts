@@ -51,5 +51,12 @@ export function useCoachAssignments() {
     return m;
   }, [assignments]);
 
-  return { namesByCloudPlanId };
+  /** cloud plan id → its active assignments. */
+  const byCloudPlanId = useMemo(() => {
+    const m = new Map<string, CoachAssignment[]>();
+    for (const a of assignments) m.set(a.planId, [...(m.get(a.planId) ?? []), a]);
+    return m;
+  }, [assignments]);
+
+  return { namesByCloudPlanId, byCloudPlanId, refresh };
 }

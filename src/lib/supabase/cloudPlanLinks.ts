@@ -27,6 +27,19 @@ export function getCloudPlanLink(savedPlanId: string): CloudPlanLink | null {
   return readAll()[savedPlanId] ?? null;
 }
 
+export function getCloudPlanLinks(): Record<string, CloudPlanLink> {
+  return readAll();
+}
+
+export function removeCloudPlanLink(savedPlanId: string): void {
+  try {
+    const { [savedPlanId]: _gone, ...rest } = readAll();
+    localStorage.setItem(KEY, JSON.stringify(rest));
+  } catch {
+    /* storage blocked */
+  }
+}
+
 export function setCloudPlanLink(savedPlanId: string, link: CloudPlanLink): void {
   try {
     const all = readAll();

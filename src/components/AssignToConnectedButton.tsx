@@ -1,32 +1,27 @@
 /**
- * AssignToConnectedButton — in the plan builder's bottom bar, pushes the current
- * plan to the cloud and assigns it to a connected (paired) athlete, who receives
- * it live in the app. Coach-only; renders nothing when signed out / not a coach.
+ * AssignToConnectedButton — in the plan builder's bottom bar, assigns the plan
+ * to a connected (paired) athlete, who receives it live in the app.
+ * Coach-only; renders nothing when signed out / not a coach.
  *
- * Flow: ensure the plan is saved locally (stable record id) → build the .e08plan
- * file → convert to the app's Plan definition → create-or-update the cloud plan
- * (deduped via cloudPlanLinks) → upsert the assignment. The .e08plan download
- * stays as the account-free fallback.
+ * Flow: the builder saves the plan and sends it to the plan library (which may
+ * ask who of its current athletes gets this version) → assign the plan's
+ * library row. The .e08plan download stays as the account-free fallback.
  */
 import { useState } from 'react';
 import { useT } from '../i18n';
-import type { BuilderPlan } from '../lib/e08plan';
-import { buildPlanFile } from '../lib/e08plan';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import { useRoster } from '../lib/supabase/useRoster';
-import { createPlan, updatePlan, assignPlan } from '../lib/supabase/coachData';
-import { planFileToDefinition } from '../lib/supabase/planDefinition';
-import { getCloudPlanLink, setCloudPlanLink } from '../lib/supabase/cloudPlanLinks';
+import { assignPlan } from '../lib/supabase/coachData';
+import { getCloudPlanLink } from '../lib/supabase/cloudPlanLinks';
 
 export function AssignToConnectedButton({
-  plan,
   ready,
-  ensureSaved,
+  ensurePublished,
 }: {
-  plan: BuilderPlan;
   ready: boolean;
-  /** Persist the plan locally and return its stable SavedPlan id. */
-  ensureSaved: () => string;
+  /** Save the plan and send it to the library. Its saved-plan id, or null
+   *  when it could not reach the library (clash or offline). */
+  ensurePublished: () => Promise<string | null>;
 }) {
   const t = useT();
   const { session, isCoach } = useAuth();
@@ -41,21 +36,12 @@ export function AssignToConnectedButton({
     setBusy(studentId);
     setMsg(null);
     try {
-      const recId = ensureSaved();
-      const file = buildPlanFile(plan);
-      const link = getCloudPlanLink(recId);
-      const defId = link?.defId ?? Date.now() + Math.floor(Math.random() * 1000);
-      const definition = planFileToDefinition(file, defId);
-      let cloudId = link?.cloudPlanId;
-      if (cloudId) {
-        // The linked cloud plan may have been deleted (stale local link) — updatePlan then
-        // matches 0 rows and returns null. Recreate it instead of erroring ("Cannot coerce
-        // the result to a single JSON object"). Server-side defId dedup avoids a duplicate.
-        const updated = await updatePlan(cloudId, { title: file.metadata.title, definition });
-        if (!updated) cloudId = undefined;
+      const recId = await ensurePublished();
+      const cloudId = recId ? getCloudPlanLink(recId)?.cloudPlanId : undefined;
+      if (!cloudId) {
+        setMsg({ text: t('Could not reach the library. Check your connection and try again.'), ok: false });
+        return;
       }
-      if (!cloudId) cloudId = (await createPlan(file.metadata.title, definition)).id;
-      setCloudPlanLink(recId, { cloudPlanId: cloudId, defId });
       await assignPlan(cloudId, studentId);
       setMsg({ text: `${t('Assigned to')} ${name} ✓`, ok: true });
       setOpen(false);

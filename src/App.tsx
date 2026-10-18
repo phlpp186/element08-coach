@@ -14,6 +14,8 @@ import { CompletionBell } from './components/CompletionBell';
 import { ThemeToggle } from './components/ThemeToggle';
 import { AppFooter } from './components/AppFooter';
 import { useT } from './i18n';
+import { useAuth } from './lib/supabase/AuthProvider';
+import { useLibrarySync } from './lib/supabase/planLibrary';
 import { LanguageSwitcher } from './i18n/LanguageSwitcher';
 
 const NAV: { id: string; label: string; to: string }[] = [
@@ -21,12 +23,14 @@ const NAV: { id: string; label: string; to: string }[] = [
   { id: 'activity', label: 'Activity', to: '/activity' },
   { id: 'overview', label: 'Overview', to: '/overview' },
   { id: 'exercises', label: 'Exercises', to: '/exercises' },
-  { id: 'plan', label: 'Plans', to: '/plan' },
+  { id: 'plan', label: 'Library', to: '/plan' },
   { id: 'billing', label: 'Billing', to: '/billing' },
 ];
 
 export function App() {
   const route = useRoute();
+  const { session, isCoach } = useAuth();
+  useLibrarySync(!!session && isCoach);
   const top = route.segments[0] ?? 'athletes';
   const t = useT();
 

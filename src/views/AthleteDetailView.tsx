@@ -14,7 +14,6 @@ import { bestEntry, pbHistory, planSpan, today } from '../lib/athleteStats';
 import { PlanSpan } from '../components/PlanSpan';
 import {
   deleteAthlete,
-  deletePlan,
   updateAthlete,
   useAthlete,
   useSavedPlans,
@@ -22,6 +21,7 @@ import {
 import { Sparkline } from '../components/Sparkline';
 import { CoachNotesEditor } from '../components/CoachNotesEditor';
 import { IntakeEditor } from '../components/IntakeEditor';
+import { deleteFromLibrary } from '../lib/supabase/planLibrary';
 import { navigate } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
 import type { Athlete, GoalEntry, PBEntry, ProgressNote } from '../lib/types';
@@ -122,7 +122,9 @@ export function AthleteDetailView({ athleteId }: { athleteId: string }) {
                   {t('Download')}
                 </button>
                 <button
-                  onClick={() => confirm(t('Delete this saved plan?')) && deletePlan(sp.id)}
+                  onClick={() =>
+                    confirm(t('Delete this plan from your library?')) && void deleteFromLibrary(sp.id)
+                  }
                   className="text-red text-sm shrink-0"
                   title={t('Delete plan')}
                 >

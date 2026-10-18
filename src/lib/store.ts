@@ -154,6 +154,22 @@ export function upsertPlan(record: SavedPlan): SavedPlan {
   return stored;
 }
 
+/** The saved plans right now (outside React). */
+export function getSavedPlans(): SavedPlan[] {
+  return plans.get();
+}
+
+/** Store a plan as the plan library delivered it: its updatedAt is the
+ *  library's, not this save's. */
+export function putLibraryPlan(record: SavedPlan): void {
+  const existing = plans.get();
+  plans.set(
+    existing.some((p) => p.id === record.id)
+      ? existing.map((p) => (p.id === record.id ? record : p))
+      : [...existing, record],
+  );
+}
+
 export function deletePlan(id: string): void {
   plans.set(plans.get().filter((p) => p.id !== id));
 }

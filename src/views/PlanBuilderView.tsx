@@ -45,7 +45,7 @@ import {
 } from '../lib/store';
 import type { Athlete } from '../lib/types';
 import { AssignToConnectedButton } from '../components/AssignToConnectedButton';
-import { pushLinkedPlanUpdate } from '../lib/supabase/syncLinkedPlan';
+import { useLibrarySave } from '../components/LibrarySave';
 import { InfoTip } from '../components/InfoTip';
 import { fill, useT } from '../i18n';
 import { currentWeekIndex, hasFolded, weekSlots } from '../lib/weekNav';
@@ -110,6 +110,13 @@ export function PlanBuilderView({
   const [openPhase, setOpenPhase] = useState<string | null>(plan.phases[0]?.id ?? null);
   const [dirty, setDirty] = useState(false);
   const [savedTick, setSavedTick] = useState(false);
+  const library = useLibrarySave();
+  // The library can bring in a newer copy of this plan (saved in the app, or
+  // the version picked after a clash). Take it unless there are unsaved edits.
+  const storedPlan = useSavedPlan(recordId)?.plan;
+  useEffect(() => {
+    if (storedPlan && !dirty) setPlan((cur) => (cur === storedPlan ? cur : normalizePlan(storedPlan)));
+  }, [storedPlan, dirty]);
 
   const issues = useMemo(() => planIssues(plan), [plan]);
   const stats = useMemo(() => planStats(plan), [plan]);
@@ -228,20 +235,25 @@ export function PlanBuilderView({
     return out;
   }, [plan, t]);
 
-  const doSave = (): string => {
+  /** Save here only (the assign button sends the plan itself). */
+  const saveLocal = (): string => {
     const id = recordId ?? newPlanId();
     upsertPlan({ id, athleteId, plan, updatedAt: '' });
     setRecordId(id);
     setDirty(false);
     setSavedTick(true);
-    // If this plan is already assigned (cloud-linked), push the edit up so the
-    // athlete and the coach Overview reflect changes like weeks added later.
-    // No-op + best-effort: never blocks or breaks the local save.
-    void pushLinkedPlanUpdate(id, plan).catch(() => {});
     return id;
   };
+  /** Save here and send it to the library, which may first ask who of the
+   *  plan's athletes gets the new version. */
+  const doSave = () => library.publish(saveLocal(), plan);
+  /** For the assign button: saved and in the library, or null with why not. */
+  const ensurePublished = async () => {
+    const id = saveLocal();
+    return (await library.publish(id, plan)) === 'ok' ? id : null;
+  };
   const doDownload = () => {
-    doSave();
+    void doSave();
     downloadPlanFile(plan);
   };
 
@@ -274,8 +286,7 @@ export function PlanBuilderView({
           )}
           <button
             onClick={() => {
-              doSave();
-              navigate('/plan');
+              void doSave().then(() => navigate('/plan'));
             }}
             title={t('Save and return to Plans')}
             className="rounded-lg border border-border px-3 py-1.5 text-sm text-text hover:border-accent"
@@ -409,6 +420,8 @@ export function PlanBuilderView({
         />
       )}
 
+      {library.dialogs}
+
       {/* Export bar */}
       <div className="fixed bottom-0 inset-x-0 border-t border-border bg-abyss/95 backdrop-blur px-5 py-3">
         <div className="mx-auto max-w-4xl flex items-center gap-4">
@@ -416,17 +429,25 @@ export function PlanBuilderView({
             {stats.units} {t(stats.units === 1 ? stats.unitLabel : stats.unitLabel + 's')} ·{' '}
             {stats.sessions} {t(stats.sessions === 1 ? 'session' : 'sessions')}
             {!ready && <span className="text-amber ml-2">· {t(issues[0])}</span>}
-            {ready && savedTick && <span className="text-recover ml-2">· {t('Saved')} ✓</span>}
+            {ready && savedTick && (
+              <span className="text-recover ml-2">
+                · {t('Saved')} ✓
+                {library.status === 'synced' && ` · ${t('synced to your app')}`}
+              </span>
+            )}
+            {library.status === 'offline' && (
+              <span className="text-amber ml-2">· {t('Not synced yet')}</span>
+            )}
             {ready && dirty && !savedTick && <span className="text-textDim ml-2">· {t('Unsaved changes')}</span>}
           </div>
           <button
-            onClick={doSave}
-            title={t('Save this plan as a draft in this browser. Find it later under Plans.')}
+            onClick={() => void doSave()}
+            title={t('Save this plan to your library. It shows up in the app too.')}
             className="rounded-lg px-4 py-2 font-heading tracking-wide border border-border text-text hover:border-accent"
           >
             {t('Save')}
           </button>
-          <AssignToConnectedButton plan={plan} ready={ready} ensureSaved={doSave} />
+          <AssignToConnectedButton ready={ready} ensurePublished={ensurePublished} />
           <div className="flex items-center gap-1.5">
             <button
               disabled={!ready}
