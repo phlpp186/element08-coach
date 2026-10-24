@@ -213,7 +213,7 @@ export function BlockComposer({
                 <p className="text-xs text-recover">
                   {fill(t('Saved "{name}" as a session template.'), { name: saved })}{' '}
                   <button onClick={onTemplates} className="font-bold underline">
-                    {t('See templates')}
+                    {t('See builder templates')}
                   </button>
                 </p>
               )}

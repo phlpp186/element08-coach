@@ -571,6 +571,20 @@ export function copyWeek(week: BuilderWeek): BuilderWeek {
   };
 }
 
+/** A deep copy of a whole plan under a new name, with fresh phase, day,
+ *  session and exercise ids (copyWeek), so the copy is a separate plan to the
+ *  app and to the library. */
+export function copyPlan(plan: BuilderPlan, name: string): BuilderPlan {
+  const copySessions = (sessions: BuilderSession[]) => copyWeek({ ...emptyWeek(), sessions }).sessions;
+  return {
+    ...plan,
+    name,
+    weeks: plan.weeks.map(copyWeek),
+    days: plan.days.map((d) => ({ ...d, id: uid('day'), sessions: copySessions(d.sessions) })),
+    phases: plan.phases.map((ph) => ({ ...ph, id: uid('phase'), weeks: ph.weeks.map(copyWeek) })),
+  };
+}
+
 export function emptyDay(): BuilderDay {
   return { id: uid('day'), sessions: [] };
 }

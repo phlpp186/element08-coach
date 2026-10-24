@@ -304,7 +304,7 @@ export function ExercisesView() {
           {railRow(
             <>
               <span className="text-accent">▤</span>
-              {t("Templates")}
+              {t("Builder templates")}
             </>,
             sessionTemplates.length + weekTemplates.length,
             view.kind === "templates",

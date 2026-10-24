@@ -1,5 +1,5 @@
 /**
- * TemplatesPanel — the Exercises page's Templates view: every saved session
+ * TemplatesPanel — the Exercises page's Builder templates view: every saved session
  * and week template as a card that opens to show what is inside (exercises
  * with doses, notes; a week as a Mon–Sun strip), with rename and delete.
  * Templates are made in the plan builder ("Save as template" on a session or
@@ -187,17 +187,24 @@ export function TemplatesPanel() {
   const weekTemplates = useWeekTemplates();
 
   const help = (
-    <p className="text-xs text-textDim">
-      {t(
-        'Make templates in the plan builder: "Save as template" on a session, or save a whole week from its card. A block can be saved as a session template too. Use them in the builder via + from template on any day, or + week from template on a week card.',
-      )}
-    </p>
+    <div className="space-y-1 text-xs text-textDim">
+      <p>
+        {t(
+          'Make templates in the plan builder: "Save as template" on a session, or save a whole week from its card. A block can be saved as a session template too. Use them in the builder via + from template on any day, or + week from template on a week card.',
+        )}
+      </p>
+      <p>
+        {t(
+          'Builder templates help you write plans. They are not the App templates in the Library, which you make in the app and send to athletes.',
+        )}
+      </p>
+    </div>
   );
 
   if (sessionTemplates.length === 0 && weekTemplates.length === 0) {
     return (
       <div className="min-w-0 space-y-2 rounded-xl border border-dashed border-border p-6">
-        <p className="text-sm text-text">{t('No templates yet.')}</p>
+        <p className="text-sm text-text">{t('No builder templates yet.')}</p>
         {help}
       </div>
     );

@@ -17,8 +17,12 @@ import { getCloudPlanLink } from '../lib/supabase/cloudPlanLinks';
 export function AssignToConnectedButton({
   ready,
   ensurePublished,
+  menuBelow = false,
 }: {
   ready: boolean;
+  /** Open the athlete list below the button (it opens upward from the
+   *  builder's bottom bar). */
+  menuBelow?: boolean;
   /** Save the plan and send it to the library. Its saved-plan id, or null
    *  when it could not reach the library (clash or offline). */
   ensurePublished: () => Promise<string | null>;
@@ -67,14 +71,14 @@ export function AssignToConnectedButton({
 
       {msg && !open && (
         <div
-          className={`absolute bottom-full right-0 mb-2 whitespace-nowrap text-xs ${msg.ok ? 'text-recover' : 'text-red'}`}
+          className={`absolute right-0 whitespace-nowrap text-xs ${menuBelow ? 'top-full mt-2' : 'bottom-full mb-2'} ${msg.ok ? 'text-recover' : 'text-red'}`}
         >
           {msg.text}
         </div>
       )}
 
       {open && (
-        <div className="board absolute bottom-full right-0 mb-2 w-64 p-2">
+        <div className={`board absolute right-0 z-30 w-64 p-2 ${menuBelow ? 'top-full mt-2' : 'bottom-full mb-2'}`}>
           <p className="px-2 py-1 text-xs text-textDim">{t('Assign to a connected athlete:')}</p>
           {loading ? (
             <p className="px-2 py-2 text-sm text-textDim">{t('Loading…')}</p>
