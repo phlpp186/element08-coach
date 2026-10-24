@@ -534,5 +534,21 @@
   "Active plans": "진행 중인 플랜",
   "Sessions due, last 4 weeks": "예정된 세션, 최근 4주",
   "Done, last 4 weeks": "완료율, 최근 4주",
-  "Ending within 14 days": "14일 내 종료"
+  "Ending within 14 days": "14일 내 종료",
+  "New": "새 항목",
+  "With remarks": "메모 있음",
+  "Effort 7+": "강도 7+",
+  "Nothing matches this filter.": "이 필터에 맞는 항목이 없어요.",
+  "Show all": "모두 보기",
+  "PB": "PB",
+  "Mark seen": "확인함",
+  "New PB": "새 PB",
+  "New PBs": "새 PB",
+  "Remark to read": "읽을 메모",
+  "Remarks to read": "읽을 메모",
+  "Hard session (effort 7+)": "힘든 세션 (강도 7+)",
+  "Hard sessions (effort 7+)": "힘든 세션 (강도 7+)",
+  "None": "없음",
+  "Since you last looked": "마지막 확인 이후",
+  "Nothing new: the last 7 days": "새 항목 없음: 최근 7일"
 }

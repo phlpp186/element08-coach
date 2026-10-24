@@ -534,5 +534,21 @@
   "Active plans": "แผนที่ใช้งานอยู่",
   "Sessions due, last 4 weeks": "เซสชันที่ถึงกำหนด 4 สัปดาห์ล่าสุด",
   "Done, last 4 weeks": "ทำแล้ว 4 สัปดาห์ล่าสุด",
-  "Ending within 14 days": "จบภายใน 14 วัน"
+  "Ending within 14 days": "จบภายใน 14 วัน",
+  "New": "ใหม่",
+  "With remarks": "มีหมายเหตุ",
+  "Effort 7+": "ความเหนื่อย 7+",
+  "Nothing matches this filter.": "ไม่มีรายการที่ตรงกับตัวกรองนี้",
+  "Show all": "แสดงทั้งหมด",
+  "PB": "PB",
+  "Mark seen": "อ่านแล้ว",
+  "New PB": "PB ใหม่",
+  "New PBs": "PB ใหม่",
+  "Remark to read": "หมายเหตุที่ต้องอ่าน",
+  "Remarks to read": "หมายเหตุที่ต้องอ่าน",
+  "Hard session (effort 7+)": "เซสชันหนัก (ความเหนื่อย 7+)",
+  "Hard sessions (effort 7+)": "เซสชันหนัก (ความเหนื่อย 7+)",
+  "None": "ไม่มี",
+  "Since you last looked": "ตั้งแต่ที่คุณดูครั้งล่าสุด",
+  "Nothing new: the last 7 days": "ไม่มีอะไรใหม่: 7 วันล่าสุด"
 }

@@ -292,6 +292,12 @@ export async function listCompletionSummaries(
   );
 }
 
+/** Several athletes' profiles in one query (the Activity page's PB check). */
+export async function listAthleteProfiles(studentIds: string[]): Promise<AthleteProfileRow[]> {
+  if (!studentIds.length) return [];
+  return unwrap(await supabase.from('athlete_profiles').select('*').in('student_id', studentIds));
+}
+
 export async function getAthleteProfile(studentId: string): Promise<AthleteProfileRow | null> {
   const { data, error } = await supabase
     .from('athlete_profiles')

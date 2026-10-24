@@ -4,6 +4,7 @@ import { ActivityBody } from '../views/ActivityView';
 import { needsALook, remarkedThisWeek, thisWeekSummary, toFeedEntries, type FeedRow } from '../lib/activity';
 import { sessionNoteLines } from '../lib/sessionNotes';
 import { addDays, mondayOf, todayIso } from '../lib/e08plan';
+import { useSeenState } from '../lib/completionsSeen';
 
 const today = todayIso();
 const mon = mondayOf(today);
@@ -32,9 +33,10 @@ const rows: FeedRow[] = [
   {
     id: 'c1', assignment_id: 'a1', exercise_id: 'd3', completed_at: ago(2), updated_at: ago(2), rating: 7,
     remarks: 'Felt strong, the second dive was easy.',
-    session: { mode: 'depth', maxDepth: 42, dives: [{ depth: 30 }, { depth: 38, remarks: 'Squeeze feeling at 35 m' }, { depth: 42, remarks: 'Clean' }, { depth: 20, remarks: 'Fun dive' }, { depth: 10, remarks: 'Hang' }] },
+    session: { mode: 'depth', maxDepth: 42, dives: [{ depth: 30, discipline: 'FIM' }, { depth: 38, discipline: 'FIM', remarks: 'Squeeze feeling at 35 m' }, { depth: 42, discipline: 'FIM', remarks: 'Clean' }, { depth: 20, discipline: 'CWT', remarks: 'Fun dive' }, { depth: 10, discipline: 'CWT', remarks: 'Hang' }] },
   },
-  { id: 'c2', assignment_id: 'a2', exercise_id: 'p3', completed_at: ago(26), updated_at: ago(26), rating: null, remarks: null },
+  { id: 'c2', assignment_id: 'a2', exercise_id: 'p3', completed_at: ago(26), updated_at: ago(26), rating: 8, remarks: null,
+    session: { mode: 'pool', dives: [{ discipline: 'DYN', distance: 50 }, { discipline: 'DYN', distance: 50 }, { discipline: 'DYN', distance: 75 }, { discipline: 'DYN', distance: 50 }] } },
   {
     id: 'c3', assignment_id: 'a1', exercise_id: 's2', completed_at: ago(24 * 5), updated_at: ago(5), rating: 6, remarks: null,
     session: { mode: 'dry', blockTimeline: [{ type: 'Rest', seconds: 120 }, { type: 'Hold', seconds: 150, note: 'Contractions from 1:40' }, { type: 'Hold', seconds: 212 }] },
@@ -55,7 +57,13 @@ const athletes = [
   { studentId: 's3', name: 'Sofia' },
 ];
 
+const pbsByStudent = new Map([
+  ['s1', [{ discipline: 'FIM', unit: 'm' as const, value: 42 }, { discipline: 'DYN', unit: 'm' as const, value: 125 }]],
+  ['s2', [{ discipline: 'DYN', unit: 'm' as const, value: 75 }]],
+]);
+
 export function ActivityPreview() {
+  const seen = useSeenState();
   return (
     <ActivityBody
       feed={feed}
@@ -66,7 +74,8 @@ export function ActivityPreview() {
       athleteCount={athletes.length}
       loading={false}
       error={null}
-      seenAt={ago(10)}
+      seen={{ at: seen.at || ago(10), ids: seen.ids }}
+      pbsByStudent={pbsByStudent}
     />
   );
 }

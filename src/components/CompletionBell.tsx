@@ -19,8 +19,8 @@ import {
   subscribeToTables,
   unsubscribeChannel,
 } from '../lib/supabase/coachData';
-import { isUnread, relTime, toFeedEntries, type FeedEntry } from '../lib/activity';
-import { markAllSeen, useCompletionsSeen } from '../lib/completionsSeen';
+import { relTime, toFeedEntries, type FeedEntry } from '../lib/activity';
+import { isNewFor, markAllSeen, useSeenState, type SeenState } from '../lib/completionsSeen';
 import { navigate } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
 
@@ -31,9 +31,9 @@ export function CompletionBell() {
   const { session, isCoach } = useAuth();
   const [entries, setEntries] = useState<FeedEntry[]>([]);
   const [open, setOpen] = useState(false);
-  const seenAt = useCompletionsSeen();
-  // What "new" means inside an open panel: the seen stamp from before opening.
-  const [openSnapshot, setOpenSnapshot] = useState<string>('');
+  const seen = useSeenState();
+  // What "new" means inside an open panel: the seen state from before opening.
+  const [openSnapshot, setOpenSnapshot] = useState<SeenState>({ at: '', ids: {} });
   const rootRef = useRef<HTMLDivElement>(null);
 
   const refresh = useCallback(async () => {
@@ -84,15 +84,15 @@ export function CompletionBell() {
   }, [open]);
 
   const unread = useMemo(
-    () => entries.filter((e) => isUnread(e.at, seenAt)).length,
-    [entries, seenAt],
+    () => entries.filter((e) => isNewFor(seen, e.id, e.at)).length,
+    [entries, seen],
   );
 
   if (!session || !isCoach) return null;
 
   const toggle = () => {
     if (!open) {
-      setOpenSnapshot(seenAt);
+      setOpenSnapshot(seen);
       markAllSeen();
     }
     setOpen(!open);
@@ -124,7 +124,7 @@ export function CompletionBell() {
             <div className="px-2 pb-2 text-sm text-textDim">{t('No completed sessions yet.')}</div>
           ) : (
             entries.map((e) => {
-              const isNew = isUnread(e.at, openSnapshot);
+              const isNew = isNewFor(openSnapshot, e.id, e.at);
               return (
                 <button
                   key={e.id}

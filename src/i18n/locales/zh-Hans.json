@@ -534,5 +534,21 @@
   "Active plans": "进行中的计划",
   "Sessions due, last 4 weeks": "应完成训练，近 4 周",
   "Done, last 4 weeks": "完成率，近 4 周",
-  "Ending within 14 days": "14 天内结束"
+  "Ending within 14 days": "14 天内结束",
+  "New": "新",
+  "With remarks": "有备注",
+  "Effort 7+": "强度 7+",
+  "Nothing matches this filter.": "没有符合此筛选的内容。",
+  "Show all": "显示全部",
+  "PB": "PB",
+  "Mark seen": "标为已读",
+  "New PB": "新 PB",
+  "New PBs": "新 PB",
+  "Remark to read": "待读备注",
+  "Remarks to read": "待读备注",
+  "Hard session (effort 7+)": "高强度训练（强度 7+）",
+  "Hard sessions (effort 7+)": "高强度训练（强度 7+）",
+  "None": "无",
+  "Since you last looked": "自上次查看以来",
+  "Nothing new: the last 7 days": "没有新内容：最近 7 天"
 }

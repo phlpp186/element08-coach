@@ -10,6 +10,7 @@ import {
   getPlanDefinitions,
   listCoachAssignments,
   listCompletionEvents,
+  listAthleteProfiles,
   listCompletionSummaries,
   listMyStudents,
   subscribeToTables,
@@ -28,6 +29,7 @@ import {
 } from '../activity';
 import { sessionNoteLines } from '../sessionNotes';
 import { todayIso } from '../e08plan';
+import { parsePBs, type AthletePB } from './athleteProfileCloud';
 
 export const FEED_DAYS = 30;
 const FEED_LIMIT = 200;
@@ -38,9 +40,18 @@ interface Loaded {
   defs: Map<string, unknown>;
   events: CompletionRow[];
   history: CompletionLike[];
+  /** Each athlete's effective PBs, for the digest's "new PB". */
+  pbsByStudent: Map<string, AthletePB[]>;
 }
 
-const EMPTY: Loaded = { athletes: [], assignments: [], defs: new Map(), events: [], history: [] };
+const EMPTY: Loaded = {
+  athletes: [],
+  assignments: [],
+  defs: new Map(),
+  events: [],
+  history: [],
+  pbsByStudent: new Map(),
+};
 
 export function useActivity() {
   const { session, isCoach } = useAuth();
@@ -61,10 +72,12 @@ export function useActivity() {
       const [students, assignments] = await Promise.all([listMyStudents(), listCoachAssignments()]);
       const ids = assignments.map((a) => a.id);
       const since = new Date(Date.now() - FEED_DAYS * 86_400_000).toISOString();
-      const [defs, events, history] = await Promise.all([
+      const [defs, events, history, profiles] = await Promise.all([
         getPlanDefinitions(assignments.map((a) => a.planId)),
         listCompletionEvents(ids, { since, limit: FEED_LIMIT }),
         listCompletionSummaries(ids),
+        // PBs only decorate the digest: a failed read must not take the feed down.
+        listAthleteProfiles(students.map((s) => s.student.id)).catch(() => []),
       ]);
       setData({
         athletes: students.map((s) => ({
@@ -75,6 +88,7 @@ export function useActivity() {
         defs: defs as Map<string, unknown>,
         events,
         history,
+        pbsByStudent: new Map(profiles.map((p) => [p.student_id, parsePBs(p.pbs)])),
       });
       loadedOnce.current = true;
     } catch (e) {
@@ -116,7 +130,7 @@ export function useActivity() {
       feed.map((e) => ({ at: e.at, hasRemark: !!e.remarks || sessionNoteLines(e.session).length > 0 })),
       today,
     );
-    return { feed, flags, week, remarked, today };
+    return { feed, flags, week, remarked, today, pbsByStudent: data.pbsByStudent };
   }, [data]);
 
   return { ...derived, athleteCount: data.athletes.length, loading, error, refresh };

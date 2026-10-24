@@ -534,5 +534,21 @@
   "Active plans": "進行中のプラン",
   "Sessions due, last 4 weeks": "予定セッション（直近4週）",
   "Done, last 4 weeks": "完了率（直近4週）",
-  "Ending within 14 days": "14日以内に終了"
+  "Ending within 14 days": "14日以内に終了",
+  "New": "新着",
+  "With remarks": "メモあり",
+  "Effort 7+": "きつさ 7+",
+  "Nothing matches this filter.": "このフィルターに一致する項目はありません。",
+  "Show all": "すべて表示",
+  "PB": "PB",
+  "Mark seen": "既読にする",
+  "New PB": "新しいPB",
+  "New PBs": "新しいPB",
+  "Remark to read": "未読のメモ",
+  "Remarks to read": "未読のメモ",
+  "Hard session (effort 7+)": "きついセッション（きつさ7+）",
+  "Hard sessions (effort 7+)": "きついセッション（きつさ7+）",
+  "None": "なし",
+  "Since you last looked": "前回の確認以降",
+  "Nothing new: the last 7 days": "新着なし：直近7日間"
 }
