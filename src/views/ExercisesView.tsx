@@ -6,7 +6,7 @@
  * Blocks (a composer), Templates and the category editor are rail views of
  * their own. Exercises are dropped into plan sessions from the builder.
  */
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   addCategory,
   addCategoryToExercises,
@@ -271,17 +271,19 @@ export function ExercisesView() {
           {railRow(t("All"), active.length, view.kind === "all", () =>
             setView({ kind: "all" }),
           )}
-          {categories.map((c) =>
-            railRow(
-              <>
-                <CatDot name={c} size={8} />
-                <span className="truncate">{c}</span>
-              </>,
-              catCounts.get(c) ?? 0,
-              view.kind === "cat" && view.name === c,
-              () => setView({ kind: "cat", name: c }),
-            ),
-          )}
+          {categories.map((c) => (
+            <Fragment key={c}>
+              {railRow(
+                <>
+                  <CatDot name={c} size={8} />
+                  <span className="truncate">{c}</span>
+                </>,
+                catCounts.get(c) ?? 0,
+                view.kind === "cat" && view.name === c,
+                () => setView({ kind: "cat", name: c }),
+              )}
+            </Fragment>
+          ))}
           {railRow(
             t("Uncategorized"),
             uncatCount,
