@@ -5,12 +5,15 @@
  * and a coach ticks a month off when the money arrives. Nothing here requests or
  * processes a payment.
  *
- * Layout follows what the page is FOR: a coach opens it to find a problem, so
- * the overdue total leads and the roster is sorted worst-first (see buildLedger).
- * Everything else — history, editing the arrangement — is behind a row.
+ * Layout (Philipp's option A, 2026-10-24): the money that is late leads, then a
+ * month grid, athletes down the side and months across, the spreadsheet coaches
+ * already keep. A cell is paid, overdue (with its days), due soon, or not
+ * billed; clicking it ticks the month paid or undoes it. Late athletes get a
+ * "Copy reminder" with a friendly message to paste anywhere, and the whole
+ * ledger exports as CSV. Rows stay sorted worst-first (see buildLedger).
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useT } from '../i18n';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { fill, useT } from '../i18n';
 import { useRoster } from '../lib/supabase/useRoster';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import {
@@ -22,10 +25,16 @@ import {
   unmarkPaid,
 } from '../lib/supabase/coachBilling';
 import {
+  addMonths,
+  billingCsv,
   buildLedger,
+  cellFor,
   formatMoney,
   ledgerTotals,
   monthKey,
+  monthWindow,
+  overdueMonths,
+  periodTotals,
   todayISO,
   type AthleteBilling,
   type BillingTerms,
@@ -33,6 +42,18 @@ import {
 } from '../lib/billing';
 
 const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF', 'THB', 'AUD'];
+const WINDOW = 6;
+/** The name column stays put while the months scroll sideways on a phone. */
+const PIN = 'sticky left-0 z-10 -ml-3 bg-panel pl-3 pr-1 sm:-ml-4 sm:pl-4';
+
+type TFn = (s: string) => string;
+
+export interface BillingActions {
+  pay: (b: AthleteBilling, period: string) => Promise<void>;
+  unpay: (studentId: string, period: string) => Promise<void>;
+  saveTerms: (terms: BillingTerms) => Promise<void>;
+  removeTerms: (studentId: string) => Promise<void>;
+}
 
 export function BillingView() {
   const t = useT();
@@ -42,7 +63,6 @@ export function BillingView() {
   const [payments, setPayments] = useState<PaymentRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [openId, setOpenId] = useState<string | null>(null);
   const today = todayISO();
 
   const refresh = useCallback(async () => {
@@ -64,19 +84,33 @@ export function BillingView() {
     void refresh();
   }, [refresh]);
 
-  const nameOf = useCallback(
-    (id: string) => athletes.find((a) => a.studentId === id)?.name ?? t('Athlete'),
-    [athletes, t],
+  const actions = useMemo<BillingActions>(
+    () => ({
+      pay: async (b, period) => {
+        await markPaid({
+          studentId: b.studentId,
+          period,
+          amountCents: b.terms.amountCents,
+          currency: b.terms.currency,
+          paidOn: todayISO(),
+        });
+        await refresh();
+      },
+      unpay: async (studentId, period) => {
+        await unmarkPaid(studentId, period);
+        await refresh();
+      },
+      saveTerms: async (x) => {
+        await saveBillingTerms(x);
+        await refresh();
+      },
+      removeTerms: async (studentId) => {
+        await removeBillingTerms(studentId);
+        await refresh();
+      },
+    }),
+    [refresh],
   );
-
-  const ledger = useMemo(() => buildLedger(terms, payments, today), [terms, payments, today]);
-  const totals = useMemo(() => ledgerTotals(ledger), [ledger]);
-  // Currency is per-arrangement, but a mixed-currency total would be a lie, so
-  // the header only totals when the whole roster shares one.
-  const currencies = new Set(terms.map((x) => x.currency));
-  const oneCurrency = currencies.size === 1 ? [...currencies][0] : null;
-
-  const unbilled = athletes.filter((a) => !terms.some((x) => x.studentId === a.studentId));
 
   if (!session) {
     return (
@@ -87,69 +121,298 @@ export function BillingView() {
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-5 py-6 space-y-6">
-      <header className="space-y-1">
-        <h2 className="font-heading text-xl tracking-wide">{t('Billing')}</h2>
-        <p className="text-sm text-textDim">
-          {t('A private record of monthly fees. Nothing here charges anyone.')}
-        </p>
+    <BillingBody
+      terms={terms}
+      payments={payments}
+      athletes={athletes.map((a) => ({ studentId: a.studentId, name: a.name }))}
+      today={today}
+      loading={loading}
+      error={error}
+      actions={actions}
+    />
+  );
+}
+
+/** The page itself, from already-loaded data (also driven by a dev preview). */
+export function BillingBody({
+  terms,
+  payments,
+  athletes,
+  today,
+  loading,
+  error,
+  actions,
+}: {
+  terms: BillingTerms[];
+  payments: PaymentRow[];
+  athletes: { studentId: string; name: string }[];
+  today: string;
+  loading: boolean;
+  error: string | null;
+  actions: BillingActions;
+}) {
+  const t = useT();
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [end, setEnd] = useState(() => monthKey(today));
+  const [busy, setBusy] = useState<string | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+  const gridRef = useRef<HTMLElement>(null);
+  // On a narrow screen the grid scrolls sideways; start at the newest months.
+  const hasRows = terms.length > 0;
+  useEffect(() => {
+    const el = gridRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [hasRows, end]);
+
+  const nameOf = useCallback(
+    (id: string) => athletes.find((a) => a.studentId === id)?.name || t('Athlete'),
+    [athletes, t],
+  );
+
+  const ledger = useMemo(() => buildLedger(terms, payments, today), [terms, payments, today]);
+  const totals = useMemo(() => ledgerTotals(ledger), [ledger]);
+  // Currency is per-arrangement, but a mixed-currency total would be a lie, so
+  // totals only show when the whole roster shares one.
+  const currencies = new Set(terms.map((x) => x.currency));
+  const oneCurrency = currencies.size === 1 ? [...currencies][0] : null;
+  const money = (cents: number) => (oneCurrency ? formatMoney(cents, oneCurrency) : '·');
+
+  const thisMonth = monthKey(today);
+  const periods = monthWindow(end, WINDOW);
+  const sums = periodTotals(ledger, periods);
+  const [paidNow] = periodTotals(ledger, [thisMonth]);
+  const earliest = terms.reduce((min, x) => (monthKey(x.startedOn) < min ? monthKey(x.startedOn) : min), thisMonth);
+  const unbilled = athletes.filter((a) => !terms.some((x) => x.studentId === a.studentId));
+
+  const monthLabel = (p: string, withYear: boolean) =>
+    new Date(`${p}T12:00:00`).toLocaleDateString(undefined, withYear ? { month: 'short', year: '2-digit' } : { month: 'short' });
+
+  const run = async (key: string, fn: () => Promise<void>) => {
+    setBusy(key);
+    try {
+      await fn();
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const copyReminder = async (b: AthleteBilling) => {
+    const months = overdueMonths(b);
+    const text = fill(
+      t('Hi {name}, a friendly reminder: the coaching fee for {months} ({amount}) is still open. Thank you!'),
+      {
+        name: nameOf(b.studentId).split(' ')[0],
+        months: monthList(months.map((m) => m.period)),
+        amount: formatMoney(b.overdueCents, b.terms.currency),
+      },
+    );
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(b.studentId);
+      setTimeout(() => setCopied((c) => (c === b.studentId ? null : c)), 2500);
+    } catch {
+      // Clipboard blocked (permissions, insecure context): let the coach copy it.
+      window.prompt(t('Copy this reminder:'), text);
+    }
+  };
+
+  const exportCsv = () => {
+    // The BOM makes Excel read the names (umlauts, accents) as UTF-8.
+    const blob = new Blob(['﻿' + billingCsv(ledger, nameOf)], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `element08-billing-${today}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const tiles: { label: string; value: string; tone: string }[] = [
+    {
+      label: t('Overdue'),
+      value: money(totals.overdueCents),
+      tone: totals.overdueCents > 0 ? 'var(--c-red)' : 'var(--c-recover)',
+    },
+    {
+      label: t('Athletes late'),
+      value: String(totals.overdueAthletes),
+      tone: totals.overdueAthletes > 0 ? 'var(--c-amber)' : 'var(--c-recover)',
+    },
+    {
+      label: fill(t('Paid for {month}'), { month: monthLabel(thisMonth, false) }),
+      value: `${money(paidNow.paidCents)}`,
+      tone: 'var(--c-recover)',
+    },
+    { label: t('Per month'), value: money(totals.monthCents), tone: 'var(--c-highlight)' },
+  ];
+
+  const cols = { gridTemplateColumns: `9.5rem repeat(${WINDOW}, minmax(3.25rem, 1fr))` };
+
+  return (
+    <main className="mx-auto max-w-5xl px-5 py-6 space-y-6">
+      <header className="flex flex-wrap items-start gap-3">
+        <div className="min-w-0 flex-1 space-y-1">
+          <h2 className="text-lg">{t('Billing')}</h2>
+          <p className="text-sm text-textDim">{t('A private record of monthly fees. Nothing here charges anyone.')}</p>
+        </div>
+        {ledger.length > 0 && (
+          <button onClick={exportCsv} className="pill px-3 py-1.5 text-sm" title={t('Every billed month, for your accountant or tax return')}>
+            ⤓ {t('Export CSV')}
+          </button>
+        )}
       </header>
 
       {error && <p className="text-sm text-red">{error}</p>}
 
-      {/* The number a coach came for. */}
-      <div className="grid grid-cols-3 gap-3">
-        <Stat
-          label={t('Overdue')}
-          value={oneCurrency ? formatMoney(totals.overdueCents, oneCurrency) : String(totals.overdueCents / 100)}
-          tone={totals.overdueCents > 0 ? 'alert' : 'calm'}
-        />
-        <Stat
-          label={t('Athletes late')}
-          value={`${totals.overdueAthletes}`}
-          tone={totals.overdueAthletes > 0 ? 'alert' : 'calm'}
-        />
-        <Stat
-          label={t('Per month')}
-          value={oneCurrency ? formatMoney(totals.monthCents, oneCurrency) : String(totals.monthCents / 100)}
-          tone="calm"
-        />
-      </div>
-
-      {loading && <p className="text-sm text-textDim">{t('Loading…')}</p>}
-
-      <div className="space-y-2">
-        {ledger.map((a) => (
-          <AthleteRow
-            key={a.studentId}
-            billing={a}
-            name={nameOf(a.studentId)}
-            open={openId === a.studentId}
-            onToggle={() => setOpenId(openId === a.studentId ? null : a.studentId)}
-            onChanged={refresh}
-            today={today}
-            t={t}
-          />
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {tiles.map((x) => (
+          <div key={x.label} className="tile px-3 py-2.5" style={{ '--tone': `rgb(${x.tone})` } as CSSProperties}>
+            <div className="tile-value font-num text-xl font-bold leading-tight">{x.value}</div>
+            <div className="tile-label text-xs font-bold">{x.label}</div>
+          </div>
         ))}
-        {ledger.length === 0 && !loading && (
-          <p className="rounded-lg border border-dashed border-border bg-panel px-5 py-8 text-center text-sm text-textDim">
-            {t('No fees set up yet. Add one below to start tracking.')}
-          </p>
-        )}
       </div>
+
+      {loading && ledger.length === 0 && <p className="text-sm text-textDim">{t('Loading…')}</p>}
+
+      {ledger.length === 0 && !loading ? (
+        <p className="rounded-lg border border-dashed border-border bg-panel px-5 py-8 text-center text-sm text-textDim">
+          {t('No fees set up yet. Add one below to start tracking.')}
+        </p>
+      ) : (
+        ledger.length > 0 && (
+          <section ref={gridRef} className="board overflow-x-auto py-3 sm:py-4">
+            <div className="min-w-[34rem] space-y-1.5 px-3 sm:px-4">
+              {/* Month header with the window arrows. */}
+              <div className="grid items-center gap-1.5" style={cols}>
+                <div className={`${PIN} flex items-center gap-1 self-stretch`}>
+                  <button
+                    onClick={() => setEnd(addMonths(end, -WINDOW))}
+                    disabled={periods[0] <= earliest}
+                    className="pill h-7 w-7 justify-center text-sm disabled:opacity-40"
+                    title={t('Earlier months')}
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={() => setEnd(addMonths(end, WINDOW) > thisMonth ? thisMonth : addMonths(end, WINDOW))}
+                    disabled={end >= thisMonth}
+                    className="pill h-7 w-7 justify-center text-sm disabled:opacity-40"
+                    title={t('Later months')}
+                  >
+                    ›
+                  </button>
+                </div>
+                {periods.map((p, i) => (
+                  <div
+                    key={p}
+                    className={`text-center text-xs font-bold ${p === thisMonth ? 'text-highlight' : 'text-textDim'}`}
+                  >
+                    {monthLabel(p, i === 0 || p.endsWith('-01-01'))}
+                  </div>
+                ))}
+              </div>
+
+              {ledger.map((b) => {
+                const late = b.overdueCount > 0;
+                const open = openId === b.studentId;
+                return (
+                  <div key={b.studentId} className="space-y-1.5">
+                    <div className="grid items-center gap-1.5" style={cols}>
+                      <div className={`${PIN} min-w-0 self-stretch`}>
+                        <button
+                          onClick={() => setOpenId(open ? null : b.studentId)}
+                          aria-expanded={open}
+                          className="block max-w-full truncate text-left text-sm font-bold text-text hover:text-accent"
+                        >
+                          {nameOf(b.studentId)} <span className="text-textDim">{open ? '▴' : '▾'}</span>
+                        </button>
+                        <div className="truncate text-xs text-textDim">
+                          {formatMoney(b.terms.amountCents, b.terms.currency)} {t('/ month')}
+                          {b.terms.endedOn ? ` · ${t('Ended')}` : ''}
+                        </div>
+                        {late && (
+                          <button
+                            onClick={() => void copyReminder(b)}
+                            className={`text-xs font-bold hover:underline ${copied === b.studentId ? 'text-recover' : 'text-amber'}`}
+                          >
+                            {copied === b.studentId ? t('Copied ✓') : t('Copy reminder')}
+                          </button>
+                        )}
+                      </div>
+                      {periods.map((p) => (
+                        <MonthCell
+                          key={p}
+                          billing={b}
+                          period={p}
+                          busy={busy === `${b.studentId}|${p}`}
+                          onPay={() => void run(`${b.studentId}|${p}`, () => actions.pay(b, p))}
+                          onUnpay={() => {
+                            if (!confirm(fill(t('Undo the payment for {month}?'), { month: monthLabel(p, true) }))) return;
+                            void run(`${b.studentId}|${p}`, () => actions.unpay(b.studentId, p));
+                          }}
+                          t={t}
+                        />
+                      ))}
+                    </div>
+                    {open && (
+                      <TermsEditor
+                        name={nameOf(b.studentId)}
+                        studentId={b.studentId}
+                        existing={b.terms}
+                        onSave={actions.saveTerms}
+                        onRemove={() => actions.removeTerms(b.studentId)}
+                        t={t}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+
+              {oneCurrency && (
+                <div className="grid items-center gap-1.5 border-t border-border pt-2" style={cols}>
+                  <div className={`${PIN} self-stretch text-xs font-bold text-textDim`}>{t('Paid / owed')}</div>
+                  {sums.map((x, i) => (
+                    <div key={periods[i]} className="text-center font-num text-[11px] leading-tight text-textDim">
+                      {x.owedCents === 0 ? (
+                        '·'
+                      ) : (
+                        <>
+                          <span className={x.paidCents >= x.owedCents ? 'text-recover' : 'text-text'}>
+                            {formatMoney(x.paidCents, oneCurrency).replace(/[.,]00(?!\d)/, '')}
+                          </span>
+                          <br />
+                          {formatMoney(x.owedCents, oneCurrency).replace(/[.,]00(?!\d)/, '')}
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-2 text-[11px] text-textDim">
+                <Legend className="bg-recover text-ink">✓</Legend> {t('Paid')}
+                <Legend className="border border-red bg-red/15 text-red">d</Legend> {t('Overdue, days late')}
+                <Legend className="border-2 border-highlight text-highlight" /> {t('Owed, not yet due')}
+                <span>{t('Click a month to tick it paid (dated today) or to undo it.')}</span>
+              </p>
+            </div>
+          </section>
+        )
+      )}
 
       {unbilled.length > 0 && (
         <section className="space-y-2">
-          <h3 className="font-mono text-[10px] uppercase tracking-[0.3em] text-textDim">
-            {t('Not billed')}
-          </h3>
+          <h3 className="text-xs font-heading uppercase tracking-wide text-textDim">{t('Not billed')}</h3>
           {unbilled.map((a) => (
             <TermsEditor
               key={a.studentId}
               studentId={a.studentId}
               name={a.name}
               existing={null}
-              onSaved={refresh}
+              onSave={actions.saveTerms}
               t={t}
             />
           ))}
@@ -159,170 +422,100 @@ export function BillingView() {
   );
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone: 'alert' | 'calm' }) {
-  return (
-    <div className="board px-4 py-3">
-      <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-textDim">{label}</div>
-      <div className={`mt-1 text-xl font-semibold ${tone === 'alert' ? 'text-red' : 'text-text'}`}>
-        {value}
-      </div>
-    </div>
-  );
+/** "June, July, September 2026" (the year once per run of the same year). */
+function monthList(periods: string[]): string {
+  const byYear = new Map<string, string[]>();
+  for (const p of periods) {
+    const y = p.slice(0, 4);
+    const name = new Date(`${p}T12:00:00`).toLocaleDateString(undefined, { month: 'long' });
+    byYear.set(y, [...(byYear.get(y) ?? []), name]);
+  }
+  return [...byYear.entries()].map(([y, names]) => `${names.join(', ')} ${y}`).join(', ');
 }
 
-type TFn = (s: string) => string;
-
-function AthleteRow({
-  billing,
-  name,
-  open,
-  onToggle,
-  onChanged,
-  today,
-  t,
-}: {
-  billing: AthleteBilling;
-  name: string;
-  open: boolean;
-  onToggle: () => void;
-  onChanged: () => void;
-  today: string;
-  t: TFn;
-}) {
-  const [busy, setBusy] = useState(false);
-  const { terms } = billing;
-  const late = billing.overdueCount > 0;
-  // The oldest unpaid month is the one a coach settles first.
-  const nextUnpaid = billing.months.find((m) => !m.paid);
-
-  const pay = async (period: string) => {
-    setBusy(true);
-    try {
-      await markPaid({
-        studentId: billing.studentId,
-        period,
-        amountCents: terms.amountCents,
-        currency: terms.currency,
-        paidOn: today,
-      });
-      onChanged();
-    } finally {
-      setBusy(false);
-    }
-  };
-
+function Legend({ className, children }: { className: string; children?: ReactNode }) {
   return (
-    <div
-      className={`rounded-lg border bg-panel ${late ? 'border-red/50' : 'border-border'}`}
+    <span
+      className={`inline-flex h-4 w-6 items-center justify-center rounded text-[10px] font-bold ${className}`}
+      aria-hidden="true"
     >
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-        <button onClick={onToggle} className="min-w-0 flex-1 text-left">
-          <span className="font-semibold">{name}</span>
-          <span className="ml-2 text-sm text-textDim">
-            {formatMoney(terms.amountCents, terms.currency)} {t('/ month')}
-          </span>
-        </button>
-
-        {late ? (
-          <span className="rounded-full bg-red/15 px-2.5 py-1 font-mono text-[11px] text-red">
-            {billing.overdueCount === 1
-              ? `${t('Overdue')} · ${billing.maxDaysOverdue}${t('d')}`
-              : `${billing.overdueCount} × ${t('overdue')} · ${billing.maxDaysOverdue}${t('d')}`}
-          </span>
-        ) : (
-          <span className="font-mono text-[11px] text-textDim">
-            {billing.nextDueOn ? `${t('Next')} ${billing.nextDueOn}` : t('Ended')}
-          </span>
-        )}
-
-        {nextUnpaid && (
-          <button
-            disabled={busy}
-            onClick={() => void pay(nextUnpaid.period)}
-            className="pill pill-on btn-raised px-3 py-1.5 text-sm"
-          >
-            {t('Mark paid')} · {nextUnpaid.period.slice(0, 7)}
-          </button>
-        )}
-      </div>
-
-      {open && (
-        <div className="space-y-4 border-t border-border px-4 py-4">
-          <MonthHistory billing={billing} onChanged={onChanged} t={t} />
-          <TermsEditor
-            studentId={billing.studentId}
-            name={name}
-            existing={terms}
-            onSaved={onChanged}
-            t={t}
-          />
-        </div>
-      )}
-    </div>
+      {children}
+    </span>
   );
 }
 
-/** Every billable month, newest first — the ledger a coach scans back through. */
-function MonthHistory({
+function MonthCell({
   billing,
-  onChanged,
+  period,
+  busy,
+  onPay,
+  onUnpay,
   t,
 }: {
   billing: AthleteBilling;
-  onChanged: () => void;
+  period: string;
+  busy: boolean;
+  onPay: () => void;
+  onUnpay: () => void;
   t: TFn;
 }) {
-  const months = [...billing.months].reverse();
+  const { state, month } = cellFor(billing, period);
+  const base = 'flex h-9 w-full items-center justify-center rounded-md text-xs font-bold tabular-nums transition-colors';
+  if (state === 'none' || !month) {
+    return <span className={`${base} text-textDim/40`} aria-label={t('Not billed')}>·</span>;
+  }
+  const amount = formatMoney(month.amountCents, billing.terms.currency);
+  if (state === 'paid') {
+    return (
+      <button
+        onClick={onUnpay}
+        disabled={busy}
+        className={`${base} bg-recover text-ink hover:opacity-80`}
+        title={fill(t('Paid on {date}. Click to undo.'), { date: month.paid!.paidOn })}
+      >
+        {busy ? '…' : '✓'}
+      </button>
+    );
+  }
+  if (state === 'overdue') {
+    return (
+      <button
+        onClick={onPay}
+        disabled={busy}
+        className={`${base} border border-red bg-red/15 text-red hover:bg-red/25`}
+        title={fill(t('{amount} overdue by {n} days. Click to mark paid.'), { amount, n: month.daysOverdue })}
+      >
+        {busy ? '…' : `${month.daysOverdue} ${t('d')}`}
+      </button>
+    );
+  }
   return (
-    <div className="space-y-1">
-      {months.map((m) => (
-        <div key={m.period} className="flex items-center gap-3 text-sm">
-          <span className="w-20 font-mono text-textDim">{m.period.slice(0, 7)}</span>
-          {m.paid ? (
-            <>
-              <span className="text-green">{t('Paid')}</span>
-              <span className="text-textDim">{m.paid.paidOn}</span>
-              <button
-                onClick={async () => {
-                  await unmarkPaid(billing.studentId, m.period);
-                  onChanged();
-                }}
-                className="ml-auto text-xs text-textDim underline hover:text-text"
-              >
-                {t('Undo')}
-              </button>
-            </>
-          ) : (
-            <>
-              <span className={m.daysOverdue > 0 ? 'text-red' : 'text-textDim'}>
-                {m.daysOverdue > 0
-                  ? `${t('Overdue')} · ${m.daysOverdue}${t('d')}`
-                  : `${t('Due')} ${m.dueOn}`}
-              </span>
-              <span className="ml-auto font-mono text-textDim">
-                {formatMoney(m.amountCents, billing.terms.currency)}
-              </span>
-            </>
-          )}
-        </div>
-      ))}
-    </div>
+    <button
+      onClick={onPay}
+      disabled={busy}
+      className={`${base} border-2 border-highlight text-highlight hover:bg-highlight/10`}
+      title={fill(t('{amount} due {date}. Click to mark paid.'), { amount, date: month.dueOn })}
+    >
+      {busy ? '…' : fill(t('due {day}'), { day: Number(month.dueOn.slice(8)) })}
+    </button>
   );
 }
 
 /** Create or edit one athlete's arrangement. Amounts are typed in whole units
- *  and stored as cents — the input never sees a float. */
+ *  and stored as cents, so the input never sees a float. */
 function TermsEditor({
   studentId,
   name,
   existing,
-  onSaved,
+  onSave,
+  onRemove,
   t,
 }: {
   studentId: string;
   name: string;
   existing: BillingTerms | null;
-  onSaved: () => void;
+  onSave: (terms: BillingTerms) => Promise<void>;
+  onRemove?: () => Promise<void>;
   t: TFn;
 }) {
   const [amount, setAmount] = useState(existing ? String(existing.amountCents / 100) : '');
@@ -337,7 +530,7 @@ function TermsEditor({
     if (!Number.isFinite(value) || value < 0) return;
     setBusy(true);
     try {
-      await saveBillingTerms({
+      await onSave({
         studentId,
         amountCents: Math.round(value * 100),
         currency,
@@ -346,15 +539,14 @@ function TermsEditor({
         startedOn: monthKey(startedOn),
         endedOn: endedOn || null,
       });
-      onSaved();
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div className="rounded-lg border border-border bg-deep/40 px-4 py-3">
-      {!existing && <div className="mb-2 text-sm font-semibold">{name}</div>}
+    <div className="rounded-lg border border-border bg-abyss/60 px-4 py-3">
+      {!existing && <div className="mb-2 text-sm font-bold">{name}</div>}
       <div className="flex flex-wrap items-end gap-3">
         <Field label={t('Amount')}>
           <input
@@ -362,15 +554,11 @@ function TermsEditor({
             onChange={(e) => setAmount(e.target.value)}
             inputMode="decimal"
             placeholder="120"
-            className="w-24 rounded border border-border bg-panel px-2 py-1 text-sm"
+            className="field w-24"
           />
         </Field>
         <Field label={t('Currency')}>
-          <select
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            className="rounded border border-border bg-panel px-2 py-1 text-sm"
-          >
+          <select value={currency} onChange={(e) => setCurrency(e.target.value)} className="field w-auto">
             {CURRENCIES.map((c) => (
               <option key={c} value={c}>
                 {c}
@@ -379,42 +567,28 @@ function TermsEditor({
           </select>
         </Field>
         <Field label={t('Due day')}>
-          <input
-            value={dueDay}
-            onChange={(e) => setDueDay(e.target.value)}
-            inputMode="numeric"
-            className="w-14 rounded border border-border bg-panel px-2 py-1 text-sm"
-          />
+          <input value={dueDay} onChange={(e) => setDueDay(e.target.value)} inputMode="numeric" className="field w-16" />
         </Field>
         <Field label={t('From')}>
-          <input
-            type="date"
-            value={startedOn}
-            onChange={(e) => setStartedOn(e.target.value)}
-            className="rounded border border-border bg-panel px-2 py-1 text-sm"
-          />
+          <input type="date" value={startedOn} onChange={(e) => setStartedOn(e.target.value)} className="field w-auto" />
         </Field>
         <Field label={t('Until')}>
-          <input
-            type="date"
-            value={endedOn}
-            onChange={(e) => setEndedOn(e.target.value)}
-            className="rounded border border-border bg-panel px-2 py-1 text-sm"
-          />
+          <input type="date" value={endedOn} onChange={(e) => setEndedOn(e.target.value)} className="field w-auto" />
         </Field>
-        <button
-          disabled={busy}
-          onClick={() => void save()}
-          className="pill pill-on btn-raised px-3 py-1.5 text-sm"
-        >
+        <button disabled={busy} onClick={() => void save()} className="pill pill-on btn-raised px-3 py-1.5 text-sm">
           {existing ? t('Save') : t('Add fee')}
         </button>
-        {existing && (
+        {existing && onRemove && (
           <button
             disabled={busy}
             onClick={async () => {
-              await removeBillingTerms(studentId);
-              onSaved();
+              if (!confirm(fill(t('Remove the fee for {name}? Recorded payments are kept and show again if you add a fee later.'), { name }))) return;
+              setBusy(true);
+              try {
+                await onRemove();
+              } finally {
+                setBusy(false);
+              }
             }}
             className="text-xs text-textDim underline hover:text-red"
           >
@@ -429,10 +603,10 @@ function TermsEditor({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-textDim">{label}</span>
+      <span className="text-xs font-bold text-textDim">{label}</span>
       {children}
     </label>
   );

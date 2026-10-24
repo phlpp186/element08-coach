@@ -66,7 +66,7 @@ export function monthKey(d: string): string {
 }
 
 /** Add `n` months to a `YYYY-MM-01` key. */
-function addMonths(periodKey: string, n: number): string {
+export function addMonths(periodKey: string, n: number): string {
   const y = Number(periodKey.slice(0, 4));
   const m = Number(periodKey.slice(5, 7)) - 1 + n;
   const year = y + Math.floor(m / 12);
@@ -193,4 +193,69 @@ export function todayISO(now: Date = new Date()): string {
   const m = String(now.getMonth() + 1).padStart(2, '0');
   const d = String(now.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+// ─── Month grid, reminder, export ────────────────────────────────────────────
+
+/** `n` month keys ending at `endKey`, oldest first. */
+export function monthWindow(endKey: string, n: number): string[] {
+  return Array.from({ length: n }, (_, i) => addMonths(monthKey(endKey), i - n + 1));
+}
+
+export type CellState = 'paid' | 'overdue' | 'open' | 'none';
+
+/** One athlete × month cell of the grid: paid, overdue, owed but not yet due,
+ *  or not billed that month (before the start, after the end, or ahead). */
+export function cellFor(billing: AthleteBilling, period: string): { state: CellState; month: BillingMonth | null } {
+  const month = billing.months.find((m) => m.period === period) ?? null;
+  if (!month) return { state: 'none', month: null };
+  if (month.paid) return { state: 'paid', month };
+  return { state: month.daysOverdue > 0 ? 'overdue' : 'open', month };
+}
+
+/** Per month: what the roster owed and what of it is paid, in cents. Only
+ *  meaningful when every arrangement shares one currency (the caller checks). */
+export function periodTotals(ledger: AthleteBilling[], periods: string[]): { owedCents: number; paidCents: number }[] {
+  return periods.map((p) => {
+    let owedCents = 0;
+    let paidCents = 0;
+    for (const a of ledger) {
+      const m = a.months.find((x) => x.period === p);
+      if (!m) continue;
+      owedCents += m.amountCents;
+      if (m.paid) paidCents += m.paid.amountCents;
+    }
+    return { owedCents, paidCents };
+  });
+}
+
+/** The overdue months of one athlete, oldest first (what a reminder lists). */
+export function overdueMonths(billing: AthleteBilling): BillingMonth[] {
+  return billing.months.filter((m) => !m.paid && m.daysOverdue > 0);
+}
+
+const csvCell = (v: string | number) => {
+  const s = String(v);
+  return /[",\n;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
+/** Every billed month of every athlete as CSV, for an accountant or a tax
+ *  return: athlete, month, amount, currency, due date, status, paid on. */
+export function billingCsv(ledger: AthleteBilling[], nameOf: (studentId: string) => string): string {
+  const rows: (string | number)[][] = [['Athlete', 'Month', 'Amount', 'Currency', 'Due', 'Status', 'Paid on']];
+  const sorted = [...ledger].sort((a, b) => nameOf(a.studentId).localeCompare(nameOf(b.studentId)));
+  for (const a of sorted) {
+    for (const m of a.months) {
+      rows.push([
+        nameOf(a.studentId),
+        m.period.slice(0, 7),
+        ((m.paid?.amountCents ?? m.amountCents) / 100).toFixed(2),
+        m.paid?.currency ?? a.terms.currency,
+        m.dueOn,
+        m.paid ? 'paid' : m.daysOverdue > 0 ? 'overdue' : 'open',
+        m.paid?.paidOn ?? '',
+      ]);
+    }
+  }
+  return rows.map((r) => r.map(csvCell).join(',')).join('\n') + '\n';
 }
