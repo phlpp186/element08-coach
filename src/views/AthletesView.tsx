@@ -53,14 +53,14 @@ export function AthletesView() {
           <input ref={fileRef} type="file" accept=".e08coach,application/json" onChange={onImport} className="hidden" />
           <button
             onClick={() => fileRef.current?.click()}
-            className="text-sm text-textDim border border-border rounded-lg px-3 py-1.5 hover:border-accent"
+            className="pill text-sm px-3 py-1.5"
           >
             {t('Import')}
           </button>
           {athletes.length > 0 && (
             <button
               onClick={exportRoster}
-              className="text-sm text-textDim border border-border rounded-lg px-3 py-1.5 hover:border-accent"
+              className="pill text-sm px-3 py-1.5"
             >
               {t('Export')}
             </button>
@@ -68,7 +68,7 @@ export function AthletesView() {
           <InfoTip
             text={t('Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.')}
           />
-          <button onClick={addAthlete} className="glow-accent text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide">
+          <button onClick={addAthlete} className="pill pill-on btn-raised text-sm px-3 py-1.5">
             + {t('Add athlete')}
           </button>
         </div>

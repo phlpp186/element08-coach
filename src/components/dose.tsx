@@ -107,7 +107,7 @@ export function DoseEditor({
           <button
             key={u}
             onClick={() => add(u)}
-            className="rounded-full border border-border px-2 py-0.5 text-textDim hover:border-accent hover:text-accent"
+            className="pill px-2 py-0.5"
           >
             + {t(UNIT_LABEL[u])}
           </button>

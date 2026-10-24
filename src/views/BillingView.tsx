@@ -161,7 +161,7 @@ export function BillingView() {
 
 function Stat({ label, value, tone }: { label: string; value: string; tone: 'alert' | 'calm' }) {
   return (
-    <div className="rounded-lg border border-border bg-panel px-4 py-3">
+    <div className="board px-4 py-3">
       <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-textDim">{label}</div>
       <div className={`mt-1 text-xl font-semibold ${tone === 'alert' ? 'text-red' : 'text-text'}`}>
         {value}
@@ -239,7 +239,7 @@ function AthleteRow({
           <button
             disabled={busy}
             onClick={() => void pay(nextUnpaid.period)}
-            className="rounded-md bg-accent px-3 py-1.5 text-sm text-ink disabled:opacity-50"
+            className="pill pill-on btn-raised px-3 py-1.5 text-sm"
           >
             {t('Mark paid')} · {nextUnpaid.period.slice(0, 7)}
           </button>
@@ -405,7 +405,7 @@ function TermsEditor({
         <button
           disabled={busy}
           onClick={() => void save()}
-          className="rounded-md bg-accent px-3 py-1.5 text-sm text-ink disabled:opacity-50"
+          className="pill pill-on btn-raised px-3 py-1.5 text-sm"
         >
           {existing ? t('Save') : t('Add fee')}
         </button>

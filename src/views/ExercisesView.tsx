@@ -222,14 +222,14 @@ export function ExercisesView() {
           />
           <button
             onClick={() => fileRef.current?.click()}
-            className="text-sm text-textDim border border-border rounded-lg px-3 py-1.5 hover:border-accent"
+            className="pill text-sm px-3 py-1.5"
           >
             {t("Import Excel/CSV")}
           </button>
           {exercises.length > 0 && (
             <button
               onClick={() => exportLibraryCsv(exercises)}
-              className="text-sm text-textDim border border-border rounded-lg px-3 py-1.5 hover:border-accent"
+              className="pill text-sm px-3 py-1.5"
             >
               {t("Export")}
             </button>
@@ -473,7 +473,7 @@ function AddBar({
       />
       <button
         onClick={add}
-        className="glow-accent text-sm bg-accent text-ink rounded-lg px-4 font-heading tracking-wide"
+        className="pill pill-on btn-raised text-sm px-4"
       >
         {t("Add")}
       </button>
@@ -556,7 +556,7 @@ function BulkBar({
       </button>
 
       {menu && (
-        <div className="absolute left-2 top-full z-30 mt-1 max-h-64 min-w-44 overflow-auto rounded-lg border border-border bg-panel p-1 shadow-lg">
+        <div className="board absolute left-2 top-full z-30 mt-1 max-h-64 min-w-44 overflow-auto p-1">
           {(menu === "cat" ? categories : blocks.map((b) => b.name)).map(
             (name, i) => (
               <button
@@ -778,7 +778,7 @@ function LookAlikeModal({
         <div className="flex justify-end">
           <button
             onClick={onClose}
-            className="text-sm text-textDim border border-border rounded-lg px-3 py-1.5 hover:border-accent"
+            className="pill text-sm px-3 py-1.5"
           >
             {t("Close")}
           </button>
@@ -858,7 +858,7 @@ function BlocksPanel({
         />
         <button
           onClick={create}
-          className="text-sm text-accent border border-accent/60 rounded-lg px-4 hover:bg-accent/10"
+          className="pill text-sm text-accent px-4"
         >
           {t("Add block")}
         </button>
@@ -1018,7 +1018,7 @@ function AddToBlock({
         onBlur={() => setTimeout(() => setFocused(false), 120)}
       />
       {show && (
-        <ul className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-border bg-panel shadow-lg max-h-72 overflow-auto">
+        <ul className="board absolute z-20 left-0 right-0 mt-1 max-h-72 overflow-auto">
           {matches.slice(0, DROPDOWN_PAGE).map((e) => (
             <li key={e.id}>
               <button
@@ -1154,7 +1154,7 @@ function CategoriesPanel({
         />
         <button
           onClick={add}
-          className="text-sm text-accent border border-accent/60 rounded-lg px-4 hover:bg-accent/10"
+          className="pill text-sm text-accent px-4"
         >
           {t("Add")}
         </button>
@@ -1164,7 +1164,7 @@ function CategoriesPanel({
       </p>
       <div className="space-y-2">
         {categories.map((c) => (
-          <div key={c} className="rounded-lg border border-border bg-panel">
+          <div key={c} className="board">
             <div className="flex items-center gap-3 px-3 py-2">
               <button
                 onClick={() => setPicking(picking === c ? null : c)}

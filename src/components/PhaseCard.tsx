@@ -151,7 +151,7 @@ export function PhaseCard({
           })}
           <button
             onClick={addWeek}
-            className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent"
+            className="pill text-sm text-accent px-3 py-1.5"
           >
             + {t('Add week')}
           </button>

@@ -74,7 +74,7 @@ export function ExerciseInput({
         }}
       />
       {show && (
-        <ul className="absolute z-20 left-0 right-0 mt-1 rounded-lg border border-border bg-panel shadow-lg max-h-52 overflow-auto">
+        <ul className="board absolute z-20 left-0 right-0 mt-1 max-h-52 overflow-auto">
           {page.map((s, i) => (
             <li key={s}>
               <button

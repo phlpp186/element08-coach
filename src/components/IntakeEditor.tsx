@@ -76,7 +76,7 @@ export function IntakeEditor({
       <div className="flex items-center justify-end">
         <button
           onClick={copyForm}
-          className="rounded-lg border border-border px-3 py-1.5 text-sm text-textDim hover:border-accent hover:text-text"
+          className="pill px-3 py-1.5 text-sm"
         >
           {copied ? t('Copied ✓') : t('Copy blank form')}
         </button>

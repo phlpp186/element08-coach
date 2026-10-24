@@ -89,7 +89,7 @@ export function CoachNotesEditor({
           <h3 className="text-base">{t('Competitions')}</h3>
           <button
             onClick={addComp}
-            className="rounded-lg border border-border px-3 py-1.5 text-sm text-accent hover:border-accent"
+            className="pill px-3 py-1.5 text-sm text-accent"
           >
             + {t('Add competition')}
           </button>

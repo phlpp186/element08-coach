@@ -431,7 +431,7 @@ function SessionEditor({
         </button>
         <button
           onClick={onClose}
-          className="glow-accent text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide"
+          className="pill pill-on btn-raised text-sm px-3 py-1.5"
         >
           {t("Done")}
         </button>

@@ -101,7 +101,7 @@ export function TemplatePicker({
           <div
             role="dialog"
             aria-label={title}
-            className="flex max-h-[80vh] w-full max-w-4xl flex-col gap-3 rounded-xl border border-border bg-panel p-4 shadow-2xl"
+            className="board flex max-h-[80vh] w-full max-w-4xl flex-col gap-3 p-4"
           >
             <div className="flex items-center gap-3">
               <h3 className="font-heading text-sm uppercase tracking-[0.2em] text-text">

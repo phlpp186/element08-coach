@@ -30,7 +30,7 @@
  */
 import { useCallback, useMemo } from 'react';
 import * as echarts from 'echarts/core';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from './EChart';
 import type { PoolTraceData } from '../../lib/analytics/poolTrace';
 import { useChartTheme, type ChartTheme } from '../../lib/chartTheme';
 import { useT } from '../../i18n';

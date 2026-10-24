@@ -149,7 +149,7 @@ export function SeasonMap({
               : t('Set a competition date, or start from a suggested layout.')}
           </div>
         </div>
-        <button onClick={suggest} className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent">
+        <button onClick={suggest} className="pill text-sm text-accent px-3 py-1.5">
           {t('Suggest phases')}
         </button>
       </div>
@@ -192,7 +192,7 @@ export function SeasonMap({
         )}
         <button
           onClick={suggest}
-          className="text-xs text-textDim border border-border rounded-lg px-2.5 py-1 hover:border-accent hover:text-accent"
+          className="pill text-xs px-2.5 py-1"
         >
           {t('Suggest phases')}
         </button>
@@ -312,7 +312,7 @@ export function SeasonMap({
             <button
               key={p.id}
               onClick={() => setPhases(applyIntensityCurve(phases, intensityPreset(p.id, totalWeeks)))}
-              className="text-xs rounded-full border border-border bg-abyss px-3 py-1 hover:border-accent hover:text-accent"
+              className="pill text-xs px-3 py-1"
             >
               {t(p.label)}
             </button>

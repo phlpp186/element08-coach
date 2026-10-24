@@ -82,7 +82,7 @@ export function ActivityBody({
         <button
           onClick={() => markAllSeen()}
           disabled={unread === 0}
-          className="rounded-lg border border-border px-3 py-1.5 text-sm text-text hover:border-accent disabled:opacity-40 disabled:hover:border-border"
+          className="pill px-3 py-1.5 text-sm"
         >
           {t('Mark all as seen')}
         </button>

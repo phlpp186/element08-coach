@@ -217,7 +217,7 @@ export function ConnectedPlanView({
       </div>
 
       {!loading && recentNotes.length > 0 && (
-        <section className="rounded-lg border border-border bg-panel p-4 space-y-2.5">
+        <section className="board p-4 space-y-2.5">
           <h3 className="font-heading tracking-wide text-text text-sm">{t('Recent notes')}</h3>
           <ul className="space-y-3">
             {recentNotes.map((c) => (

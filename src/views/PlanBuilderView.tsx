@@ -289,7 +289,7 @@ export function PlanBuilderView({
               void doSave().then(() => navigate('/plan'));
             }}
             title={t('Save and return to Plans')}
-            className="rounded-lg border border-border px-3 py-1.5 text-sm text-text hover:border-accent"
+            className="pill px-3 py-1.5 text-sm"
           >
             {t('Done')}
           </button>
@@ -354,12 +354,12 @@ export function PlanBuilderView({
             </select>
           </Labeled>
           <Labeled label={t('Plan type')}>
-            <div className="flex rounded-lg border border-border overflow-hidden">
+            <div className="flex gap-1.5">
               {KINDS.map((k) => (
                 <button
                   key={k.id}
                   onClick={() => setMeta({ kind: k.id })}
-                  className={`flex-1 px-3 py-2 text-sm ${plan.kind === k.id ? 'bg-accent text-ink' : 'text-textDim'}`}
+                  className={`pill flex-1 justify-center px-3 py-2 text-sm ${plan.kind === k.id ? 'pill-on' : ''}`}
                 >
                   {t(k.label)}
                 </button>
@@ -443,7 +443,7 @@ export function PlanBuilderView({
           <button
             onClick={() => void doSave()}
             title={t('Save this plan to your library. It shows up in the app too.')}
-            className="rounded-lg px-4 py-2 font-heading tracking-wide border border-border text-text hover:border-accent"
+            className="pill px-4 py-2"
           >
             {t('Save')}
           </button>
@@ -452,7 +452,7 @@ export function PlanBuilderView({
             <button
               disabled={!ready}
               onClick={doDownload}
-              className="glow-accent rounded-lg px-4 py-2 font-heading tracking-wide disabled:opacity-40 bg-accent text-ink"
+              className="pill pill-on btn-raised px-4 py-2"
             >
               {t('Download')} .e08plan
             </button>
@@ -542,12 +542,12 @@ function TrainingSchedule(props: {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <h2 className="text-lg">{t('Schedule')}</h2>
-          <div className="flex rounded-lg border border-border overflow-hidden">
+          <div className="flex gap-1.5">
             {STRUCTURES.map((st) => (
               <button
                 key={st.id}
                 onClick={() => setMeta({ structure: st.id })}
-                className={`px-3 py-1.5 text-sm ${plan.structure === st.id ? 'bg-accent text-ink' : 'text-textDim'}`}
+                className={`pill px-3 py-1.5 text-sm ${plan.structure === st.id ? 'pill-on' : ''}`}
               >
                 {t(st.label)}
               </button>
@@ -654,12 +654,12 @@ function TrainingSchedule(props: {
       {plan.structure === 'weeks' ? (
         <button
           onClick={addWeekAndScroll}
-          className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent"
+          className="pill text-sm text-accent px-3 py-1.5"
         >
           + {t('Add week')}
         </button>
       ) : (
-        <button onClick={props.addDay} className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent">
+        <button onClick={props.addDay} className="pill text-sm text-accent px-3 py-1.5">
           + {t('Add day')}
         </button>
       )}
@@ -710,13 +710,13 @@ function WeekToolbar({
         <button
           onClick={onCopyLast}
           title={t('Append a copy of the last week, with all its sessions')}
-          className="rounded-lg border border-border px-3 py-1.5 text-sm text-text hover:border-accent"
+          className="pill px-3 py-1.5 text-sm"
         >
           {t('Copy last week')}
         </button>
         <button
           onClick={onAdd}
-          className="rounded-lg border border-border px-3 py-1.5 text-sm text-accent hover:border-accent"
+          className="pill px-3 py-1.5 text-sm text-accent"
         >
           + {t('Add week')}
         </button>
@@ -895,7 +895,7 @@ function SeasonSchedule(props: {
           />
         </div>
       ))}
-      <button onClick={props.addPhase} className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent">
+      <button onClick={props.addPhase} className="pill text-sm text-accent px-3 py-1.5">
         + {t('Add phase')}
       </button>
     </section>

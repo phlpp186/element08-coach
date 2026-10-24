@@ -81,14 +81,14 @@ export function CloudBackup() {
         <button
           onClick={restore}
           disabled={busy !== null || !updatedAt}
-          className="text-sm text-textDim border border-border rounded-lg px-3 py-1.5 hover:border-accent disabled:opacity-40"
+          className="pill text-sm px-3 py-1.5"
         >
           {busy === 'restore' ? '…' : t('Restore')}
         </button>
         <button
           onClick={backup}
           disabled={busy !== null}
-          className="glow-accent text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide disabled:opacity-50"
+          className="pill pill-on btn-raised text-sm px-3 py-1.5"
         >
           {busy === 'backup' ? '…' : t('Back up now')}
         </button>

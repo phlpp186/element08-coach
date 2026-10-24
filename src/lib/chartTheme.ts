@@ -28,19 +28,32 @@ export interface ChartTheme {
   recover: string;
   amber: string;
   red: string;
-  /** Chart typography — follows the UI (Nunito). */
+  /** Chart typography — the theme's number face (Fredoka in Block Arcade). */
   fontFamily: string;
+  /** Glow under lines and the strongest bars (dark themes only: on a pale
+   *  page a glow reads as a smudge). */
+  glow: boolean;
   /** A palette token at reduced opacity, e.g. `alpha('accent', 0.1)` for
    *  area fills and shaded bands. */
   alpha: (token: ChartToken, a: number) => string;
 }
 
-/** Read a `--c-*` token ("r g b") and return an `rgb()`/`rgba()` string. */
+/** Read a `--c-*` token ("r g b"): '#rrggbb' when solid (the chart finish in
+ *  lib/chartStyle lightens and fades hex colours), `rgba()` with an alpha. */
 function cssVar(name: string, alpha = 1): string {
   const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  if (!raw) return alpha < 1 ? 'rgba(0,0,0,0)' : '#000';
-  const parts = raw.split(/\s+/).join(', ');
-  return alpha < 1 ? `rgba(${parts}, ${alpha})` : `rgb(${parts})`;
+  if (!raw) return alpha < 1 ? 'rgba(0,0,0,0)' : '#000000';
+  const rgb = raw.split(/\s+/).map(Number);
+  if (alpha < 1) return `rgba(${rgb.join(', ')}, ${alpha})`;
+  return `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`;
+}
+
+/** A '#rrggbb' colour at an opacity. */
+export function withAlpha(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 // Re-render when the <html> class changes (theme toggle flips dark/light).
@@ -70,7 +83,10 @@ export function useChartTheme(): ChartTheme {
     recover: cssVar('--c-recover'),
     amber: cssVar('--c-amber'),
     red: cssVar('--c-red'),
-    fontFamily: 'Nunito, system-ui, sans-serif',
+    fontFamily:
+      getComputedStyle(document.documentElement).getPropertyValue('--font-num').trim() ||
+      'Nunito, system-ui, sans-serif',
+    glow: !/\b(light|mid)\b/.test(document.documentElement.className),
     alpha: (token, a) => cssVar(`--c-${token}`, a),
   };
 }

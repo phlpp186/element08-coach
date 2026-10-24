@@ -110,9 +110,7 @@ export function PlansView() {
   const tabBtn = (id: 'plans' | 'templates', label: string) => (
     <button
       onClick={() => setTab(id)}
-      className={`rounded-lg border border-border px-4 py-1.5 text-sm font-heading ${
-        tab === id ? 'bg-text text-deep' : 'text-text hover:bg-panel'
-      }`}
+      className={`pill px-4 py-1.5 text-sm ${tab === id ? 'pill-on' : ''}`}
     >
       {label}
     </button>
@@ -135,7 +133,7 @@ export function PlansView() {
         {tab === 'plans' && (
           <button
             onClick={() => navigate('/plan/new')}
-            className="glow-accent text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide"
+            className="pill pill-on btn-raised text-sm px-3 py-1.5"
           >
             + {t('New plan')}
           </button>
@@ -157,7 +155,7 @@ export function PlansView() {
           </button>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-panel">
+        <div className="board overflow-x-auto">
           <div className="min-w-[600px]">
             <div className="grid grid-cols-[minmax(0,2fr)_84px_minmax(0,1.1fr)_minmax(0,1.4fr)_112px] gap-3 border-b border-border px-4 py-2.5 text-xs font-heading tracking-wider text-textDim">
               <span>{t('NAME')}</span>
@@ -260,7 +258,7 @@ function TemplatesList() {
       <p className="text-sm text-textDim">
         {t('Templates are made and sent in the app. They are listed here so you can see them.')}
       </p>
-      <div className="rounded-xl border border-border bg-panel">
+      <div className="board">
         {templates.map((r) => {
           const tpl = (r.definition as { template?: Record<string, unknown> }).template ?? {};
           const blocks = Array.isArray(tpl.blocks) ? (tpl.blocks as { name?: string }[]) : [];

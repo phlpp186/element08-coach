@@ -90,7 +90,7 @@ export function AthleteDetailView({ athleteId }: { athleteId: string }) {
           <h3 className="text-base">{t('Plans')}</h3>
           <button
             onClick={() => navigate(`/plan/new?athlete=${athlete.id}`)}
-            className="glow-accent text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide"
+            className="pill pill-on btn-raised text-sm px-3 py-1.5"
           >
             + {t('Build a plan')}
           </button>
@@ -202,7 +202,7 @@ function PBSection({ athlete, patch }: { athlete: Athlete; patch: (p: Partial<At
           <span className="block mb-1 uppercase tracking-wide">{t('Date')}</span>
           <input type="date" className="field w-auto" value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
-        <button onClick={addPB} className="text-sm text-accent border border-border rounded-lg px-3 py-2 hover:border-accent">
+        <button onClick={addPB} className="pill text-sm text-accent px-3 py-2">
           {t('Log PB')}
         </button>
       </div>
@@ -244,7 +244,7 @@ function PBRow({
   const best = bestEntry(history)!;
   const values = history.map((e) => e.value);
   return (
-    <div className="rounded-lg border border-border bg-panel">
+    <div className="board">
       <button onClick={onToggle} className="flex w-full items-center gap-3 px-3 py-2 text-left">
         <span className="text-textDim text-xs">{open ? '▾' : '▸'}</span>
         <span className={`font-mono text-sm w-14 shrink-0 ${groupStyle(discipline.group).label}`}>{discipline.label}</span>
@@ -288,7 +288,7 @@ function GoalSection({ athlete, patch }: { athlete: Athlete; patch: (p: Partial<
     <section className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-base">{t('Goals')}</h3>
-        <button onClick={add} className="text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent">
+        <button onClick={add} className="pill text-sm text-accent px-3 py-1.5">
           + {t('Add goal')}
         </button>
       </div>
@@ -386,7 +386,7 @@ function ProgressSection({ athlete, patch }: { athlete: Athlete; patch: (p: Part
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
-        <button onClick={add} className="text-sm text-accent border border-border rounded-lg px-3 py-2 hover:border-accent">
+        <button onClick={add} className="pill text-sm text-accent px-3 py-2">
           {t('Add')}
         </button>
       </div>

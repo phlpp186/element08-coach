@@ -152,7 +152,7 @@ function HoldNotes({ blockTimeline, t }: { blockTimeline: unknown; t: (k: string
   const notes = holdNotes(blockTimeline);
   if (notes.length === 0) return null;
   return (
-    <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+    <ul className="board divide-y divide-border overflow-hidden">
       {notes.map((h) => (
         <li key={h.holdNumber} className="flex gap-4 bg-panel px-4 py-3">
           <div className="w-16 shrink-0">
@@ -172,7 +172,7 @@ function DepthDives({ dives, t }: { dives: AnyDive[]; t: (k: string) => string }
   if (dives.length === 0)
     return <p className="text-sm text-textDim">{t('No dives recorded.')}</p>;
   return (
-    <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+    <ul className="board divide-y divide-border overflow-hidden">
       {dives.map((d, idx) => (
         <DepthDiveRow key={idx} dive={d} idx={idx} t={t} />
       ))}
@@ -220,7 +220,7 @@ function DepthDiveRow({ dive, idx, t }: { dive: AnyDive; idx: number; t: (k: str
         {hasProfile && <span className="text-textDim">{open ? '▲' : '▾'}</span>}
       </button>
       {open && hasProfile && diveData && (
-        <div className="border-t border-border bg-deep p-3">
+        <div className="chart-well p-3">
           <Suspense fallback={chartFallback}>
             <DepthDiveTracks
               data={diveData}
@@ -242,7 +242,7 @@ function PoolDives({ dives, t }: { dives: AnyDive[]; t: (k: string) => string })
   if (dives.length === 0)
     return <p className="text-sm text-textDim">{t('No dives recorded.')}</p>;
   return (
-    <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+    <ul className="board divide-y divide-border overflow-hidden">
       {dives.map((d, idx) => (
         <PoolDiveRow key={idx} dive={d} idx={idx} t={t} />
       ))}
@@ -303,7 +303,7 @@ function PoolDiveRow({ dive, idx, t }: { dive: AnyDive; idx: number; t: (k: stri
         {hasProfile && <span className="text-textDim">{open ? '▲' : '▾'}</span>}
       </button>
       {open && hasProfile && (
-        <div className="space-y-5 border-t border-border bg-deep p-3">
+        <div className="chart-well space-y-5 p-3">
           {hasTracks && diveData && (
             <Suspense fallback={chartFallback}>
               <PoolDiveTracks data={diveData} groupId={`att-p${idx}`} />

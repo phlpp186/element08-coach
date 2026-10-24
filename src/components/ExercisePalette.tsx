@@ -95,7 +95,7 @@ export function ExercisePalette({
         <span className="text-textDim text-xs">{activeCount}</span>
         <button
           onClick={() => navigate('/exercises')}
-          className="ml-auto text-sm text-accent border border-border rounded-lg px-3 py-1.5 hover:border-accent"
+          className="pill ml-auto text-sm text-accent px-3 py-1.5"
         >
           {t('Manage exercises')}
         </button>
@@ -473,9 +473,7 @@ function FilterChip({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
-        active ? 'border-accent bg-accent/10 text-accent' : 'border-border text-textDim hover:border-accent hover:text-text'
-      }`}
+      className={`pill px-2.5 py-1 text-xs ${active ? 'pill-on' : ''}`}
     >
       {color && <span aria-hidden className="h-2 w-2 rounded-full" style={{ backgroundColor: color }} />}
       {children}
@@ -566,7 +564,7 @@ function AssignModal({
                     <button
                       key={d}
                       onClick={() => toggleMany(targets.filter((x) => x.dow === d).map((x) => x.id))}
-                      className="rounded-full border border-border px-2 py-0.5 text-textDim hover:border-accent hover:text-accent"
+                      className="pill px-2 py-0.5"
                       title={t('Toggle every session on this weekday')}
                     >
                       {t(DOW_SHORT[d])}
@@ -595,7 +593,7 @@ function AssignModal({
                     {g.items.map((tg) => (
                       <label
                         key={tg.id}
-                        className="flex items-center gap-2 rounded-lg border border-border bg-abyss px-3 py-1.5 text-sm cursor-pointer hover:border-accent"
+                        className="pill cursor-pointer px-3 py-1.5 text-sm"
                       >
                         <input
                           type="checkbox"
@@ -616,7 +614,7 @@ function AssignModal({
         <div className="flex items-center justify-end gap-2 pt-1">
           <button
             onClick={onClose}
-            className="text-sm text-textDim border border-border rounded-lg px-3 py-1.5 hover:border-accent"
+            className="pill text-sm px-3 py-1.5"
           >
             {t('Cancel')}
           </button>
@@ -626,7 +624,7 @@ function AssignModal({
               onAssign([...sel], descriptions);
               onClose();
             }}
-            className="glow-accent text-sm bg-accent text-ink rounded-lg px-4 py-1.5 font-heading tracking-wide disabled:opacity-50"
+            className="pill pill-on btn-raised text-sm px-4 py-1.5"
           >
             {t('Add to selected')} ({sel.size})
           </button>

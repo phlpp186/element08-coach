@@ -104,9 +104,7 @@ export function CompletionBell() {
         onClick={toggle}
         title={t('Completed sessions')}
         aria-label={t('Completed sessions')}
-        className={`relative rounded-lg border px-2.5 py-1.5 text-sm ${
-          open ? 'border-accent text-accent' : 'border-border text-textDim hover:text-text'
-        }`}
+        className={`pill relative px-2.5 py-1.5 text-sm ${open ? 'pill-on' : ''}`}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />

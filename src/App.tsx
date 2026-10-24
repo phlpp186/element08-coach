@@ -45,12 +45,13 @@ export function App() {
             </h1>
           </button>
           <div className="flex flex-wrap items-center justify-end gap-2">
-            <nav className="flex rounded-lg border border-border overflow-hidden">
+            <nav className="flex flex-wrap gap-1.5">
               {NAV.map((n) => (
                 <button
                   key={n.id}
                   onClick={() => navigate(n.to)}
-                  className={`px-3 py-1.5 text-sm sm:px-4 ${top === n.id ? 'glow-accent bg-accent text-ink' : 'text-textDim hover:text-text'}`}
+                  aria-current={top === n.id ? 'page' : undefined}
+                  className={`pill px-3 py-1.5 text-sm sm:px-4 ${top === n.id ? 'pill-on' : ''}`}
                 >
                   {t(n.label)}
                 </button>

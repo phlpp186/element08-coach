@@ -45,7 +45,7 @@ export function ConnectedAthletes() {
         <button
           onClick={invite}
           disabled={inviting}
-          className="glow-accent text-sm bg-accent text-ink rounded-lg px-3 py-1.5 font-heading tracking-wide disabled:opacity-50"
+          className="pill pill-on btn-raised text-sm px-3 py-1.5"
         >
           {inviting ? '…' : `+ ${t('Invite an athlete')}`}
         </button>

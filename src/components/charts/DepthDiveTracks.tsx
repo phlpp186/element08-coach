@@ -25,7 +25,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as echarts from 'echarts/core';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from './EChart';
 import type {
   ContractionOnset,
   DepthDiveData,

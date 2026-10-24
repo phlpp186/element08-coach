@@ -60,7 +60,7 @@ export function AssignToConnectedButton({
           setMsg(null);
           setOpen((v) => !v);
         }}
-        className="rounded-lg px-4 py-2 font-heading tracking-wide border border-accent text-accent disabled:opacity-40 hover:bg-accent/10"
+        className="pill text-accent px-4 py-2"
       >
         {t('Assign…')}
       </button>
@@ -74,7 +74,7 @@ export function AssignToConnectedButton({
       )}
 
       {open && (
-        <div className="absolute bottom-full right-0 mb-2 w-64 rounded-lg border border-border bg-panel p-2 shadow-xl">
+        <div className="board absolute bottom-full right-0 mb-2 w-64 p-2">
           <p className="px-2 py-1 text-xs text-textDim">{t('Assign to a connected athlete:')}</p>
           {loading ? (
             <p className="px-2 py-2 text-sm text-textDim">{t('Loading…')}</p>

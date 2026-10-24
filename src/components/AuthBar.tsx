@@ -53,7 +53,7 @@ export function AuthBar() {
         )}
         <button
           onClick={() => signOut()}
-          className="text-sm text-textDim hover:text-text border border-border rounded px-3 py-1"
+          className="pill text-sm px-3 py-1"
         >
           {t('Sign out')}
         </button>
@@ -65,12 +65,12 @@ export function AuthBar() {
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="text-sm border border-border rounded px-3 py-1 text-textDim hover:text-text"
+        className="pill text-sm px-3 py-1"
       >
         {t('Sign in')}
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-72 glass-card rounded-lg p-4 z-[60]">
+        <div className="board absolute right-0 z-[60] mt-2 w-72 p-4">
           <p className="mb-3 text-sm font-heading tracking-wide text-text">{t('Sign in')}</p>
           <input
             value={email}
@@ -78,7 +78,7 @@ export function AuthBar() {
             placeholder={t('Email')}
             autoComplete="email"
             inputMode="email"
-            className="w-full mb-2 rounded border border-border bg-transparent px-3 py-2 text-sm"
+            className="field mb-2"
           />
           <input
             value={password}
@@ -87,12 +87,12 @@ export function AuthBar() {
             type="password"
             autoComplete="current-password"
             onKeyDown={(e) => e.key === 'Enter' && submit()}
-            className="w-full mb-3 rounded border border-border bg-transparent px-3 py-2 text-sm"
+            className="field mb-3"
           />
           <button
             onClick={submit}
             disabled={busy || !email || !password}
-            className="glow-accent w-full rounded bg-accent text-ink py-2 text-sm disabled:opacity-50"
+            className="pill pill-on btn-raised w-full justify-center py-2 text-sm"
           >
             {busy ? '…' : t('Sign in')}
           </button>

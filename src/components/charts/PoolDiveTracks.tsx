@@ -14,7 +14,7 @@
  */
 import { useCallback, useMemo } from 'react';
 import * as echarts from 'echarts/core';
-import ReactECharts from 'echarts-for-react';
+import ReactECharts from './EChart';
 import type { PoolDiveData } from '../../lib/analytics/poolDiveProfile';
 import { useChartTheme, type ChartTheme } from '../../lib/chartTheme';
 import { useT } from '../../i18n';
