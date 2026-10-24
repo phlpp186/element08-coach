@@ -193,6 +193,16 @@ function planRunning(plan: unknown, todayIso: string): boolean {
   return !end || end >= todayIso;
 }
 
+/** The last three ratings (oldest first) when they climb strictly and end at
+ *  a hard session (>= EFFORT_FLOOR), else null: the "effort rising" signal
+ *  shared by Needs a look and the Overview lanes. */
+export function effortRising(ratings: readonly number[]): number[] | null {
+  const last3 = ratings.slice(-3);
+  return last3.length === 3 && last3[0] < last3[1] && last3[1] < last3[2] && last3[2] >= EFFORT_FLOOR
+    ? [...last3]
+    : null;
+}
+
 /**
  * Which athletes need the coach's attention, and why.
  *   missed       >= 2 planned sessions in ended weeks with no completion
@@ -254,10 +264,8 @@ export function needsALook(input: {
       if (days >= QUIET_DAYS) reasons.push({ kind: 'quiet', days });
     }
     rated.sort((x, y) => x.at - y.at);
-    const last3 = rated.slice(-3).map((r) => r.rating);
-    if (last3.length === 3 && last3[0] < last3[1] && last3[1] < last3[2] && last3[2] >= EFFORT_FLOOR) {
-      reasons.push({ kind: 'effortRising', ratings: last3 });
-    }
+    const rising = effortRising(rated.map((r) => r.rating));
+    if (rising) reasons.push({ kind: 'effortRising', ratings: rising });
     if (reasons.length) out.push({ studentId: ath.studentId, name: ath.name, reasons });
   }
   return out;

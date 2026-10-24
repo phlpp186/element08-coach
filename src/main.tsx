@@ -59,6 +59,14 @@ if (previewName === "billing") {
       </StrictMode>,
     );
   });
+} else if (previewName === "overview") {
+  void import("./dev/OverviewPreview").then(({ OverviewPreview }) => {
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <OverviewPreview />
+      </StrictMode>,
+    );
+  });
 } else if (previewName === "pooltrace") {
   void import("./dev/PoolTracePreview").then(({ PoolTracePreview }) => {
     createRoot(document.getElementById("root")!).render(

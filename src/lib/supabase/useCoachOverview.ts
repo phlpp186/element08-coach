@@ -1,7 +1,8 @@
 /**
  * useCoachOverview — one row per active cloud assignment (student ↔ plan) with
  * everything the multi-student timeline needs: the plan's date span, how far
- * through it we are today, and completion progress. Powers CoachOverview's
+ * through it we are today, completion progress, each week's adherence and the
+ * athlete's recent effort ratings. Powers CoachOverview's
  * Gantt-style swimlane so a coach can see, at a glance, where every athlete is
  * and when each plan finishes.
  *
@@ -14,11 +15,17 @@ import { useAuth } from './AuthProvider';
 import {
   getPlan,
   listCoachAssignments,
+  listCompletionSummaries,
   subscribeToTables,
   unsubscribeChannel,
 } from './coachData';
 import type { BuilderPlan } from '../e08plan';
 import { planSpan, planEndStatus, daysUntil, today } from '../athleteStats';
+import { effortRising } from '../activity';
+import { recentDone, weekBlocks, type WeekBlock } from '../overviewWeeks';
+
+/** Ratings kept per lane for the effort trend. */
+const TREND_LEN = 6;
 
 export interface OverviewRow {
   assignmentId: string;
@@ -33,6 +40,14 @@ export interface OverviewRow {
   status: 'ended' | 'endingSoon' | 'active' | null;
   /** Days until the plan ends (negative = past). null without an end date. */
   daysLeft: number | null;
+  /** One block per dated week, coloured by adherence. */
+  weeks: WeekBlock[];
+  /** Sessions planned / done in the last 28 days. */
+  recent: { planned: number; done: number };
+  /** The latest effort ratings (1-10), oldest first, at most TREND_LEN. */
+  ratings: number[];
+  /** The last three ratings when effort is rising (lib/activity effortRising). */
+  rising: number[] | null;
 }
 
 /** Count every planned session across a stored plan definition, defensively. */
@@ -72,9 +87,24 @@ export function useCoachOverview() {
         return plan;
       };
 
+      const completions = await listCompletionSummaries(assignments.map((a) => a.id));
+      const byAssignment = new Map<string, typeof completions>();
+      for (const c of completions) {
+        const list = byAssignment.get(c.assignment_id) ?? [];
+        list.push(c);
+        byAssignment.set(c.assignment_id, list);
+      }
+      const todayIso = today();
+
       const out: OverviewRow[] = [];
       for (const a of assignments) {
         const plan = await planFor(a.planId);
+        const rows = (byAssignment.get(a.id) ?? []).filter((c) => c.completed_at);
+        const done = new Set(rows.map((c) => c.exercise_id));
+        const rated = rows
+          .filter((c) => typeof c.rating === 'number')
+          .sort((x, y) => x.completed_at!.localeCompare(y.completed_at!))
+          .map((c) => c.rating as number);
         const { start, end } = plan ? planSpan(plan) : { start: null, end: null };
         out.push({
           assignmentId: a.id,
@@ -87,6 +117,10 @@ export function useCoachOverview() {
           totalSessions: plan ? countSessions(plan) : 0,
           status: planEndStatus(end),
           daysLeft: end ? daysUntil(end) : null,
+          weeks: weekBlocks(plan, done, todayIso),
+          recent: recentDone(plan, done, todayIso),
+          ratings: rated.slice(-TREND_LEN),
+          rising: effortRising(rated),
         });
       }
 
