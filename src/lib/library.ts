@@ -22,6 +22,7 @@ import {
 } from './e08plan';
 import { normIntensity, DEFAULT_INTENSITY } from './e08plan';
 import { dropCategoryColor, moveCategoryColor } from './categoryColor';
+import { moveItem } from './exerciseInsights';
 
 /** Max categories an exercise can carry. */
 export const MAX_CATEGORIES = 3;
@@ -607,6 +608,10 @@ export function addExerciseToBlock(blockId: string, exerciseId: string): void {
     ),
   );
 }
+/** Move one exercise inside a block (the composer's up/down). */
+export function moveExerciseInBlock(blockId: string, from: number, to: number): void {
+  commitBlocks(blocks.map((b) => (b.id === blockId ? { ...b, exerciseIds: moveItem(b.exerciseIds, from, to) } : b)));
+}
 export function removeExerciseFromBlock(blockId: string, exerciseId: string): void {
   commitBlocks(
     blocks.map((b) => (b.id === blockId ? { ...b, exerciseIds: b.exerciseIds.filter((x) => x !== exerciseId) } : b)),
@@ -642,6 +647,12 @@ export function saveSessionTemplate(name: string, from: BuilderSession): string 
   return id;
 }
 
+export function renameSessionTemplate(id: string, name: string): void {
+  const n = name.trim();
+  if (!n) return;
+  commitSessionTemplates(sessionTemplates.map((t) => (t.id === id ? { ...t, name: n } : t)));
+}
+
 export function removeSessionTemplate(id: string): void {
   commitSessionTemplates(sessionTemplates.filter((t) => t.id !== id));
 }
@@ -668,6 +679,12 @@ export function saveWeekTemplate(name: string, from: BuilderWeek): string {
     },
   ]);
   return id;
+}
+
+export function renameWeekTemplate(id: string, name: string): void {
+  const n = name.trim();
+  if (!n) return;
+  commitWeekTemplates(weekTemplates.map((t) => (t.id === id ? { ...t, name: n } : t)));
 }
 
 export function removeWeekTemplate(id: string): void {

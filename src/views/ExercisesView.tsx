@@ -1,34 +1,26 @@
 /**
  * ExercisesView — the coach's library workbench. A category rail (with counts)
- * structures the space; the main column is a sortable, incrementally-rendered
- * list with usage columns, bulk actions, an Archive, and look-alike merging.
- * Blocks and the category editor (incl. explicit colours) are rail views of
+ * structures the space; the main column opens with four health tiles (size,
+ * pinned, stale, look-alikes), then a sortable, incrementally-rendered list
+ * with usage bars and bulk actions; clicking a row opens its detail panel.
+ * Blocks (a composer), Templates and the category editor are rail views of
  * their own. Exercises are dropped into plan sessions from the builder.
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
-  addBlock,
   addCategory,
   addCategoryToExercises,
   addExercise,
   addExercisesToBlockBulk,
-  addExerciseToBlock,
   addManyExercises,
-  blockToSessionTemplate,
   exportLibraryCsv,
   mergeExercises,
   parseExerciseFile,
-  removeBlock,
   removeCategory,
-  removeExerciseFromBlock,
   removeExercises,
-  removeSessionTemplate,
-  removeWeekTemplate,
-  renameBlock,
   renameCategory,
   setArchived,
   togglePinned,
-  updateExercise,
   useBlocks,
   useCategories,
   useExercises,
@@ -37,8 +29,9 @@ import {
   type ExerciseBlock,
   type LibraryExercise,
 } from "../lib/library";
-import { findLookAlikes, rankExercises } from "../lib/librarySearch";
-import { useT } from "../i18n";
+import { findLookAlikes } from "../lib/librarySearch";
+import { isStale, STALE_DAYS } from "../lib/exerciseInsights";
+import { fill, useT } from "../i18n";
 import {
   CAT_PALETTE,
   categoryColor,
@@ -46,11 +39,14 @@ import {
   setCategoryColor,
   useCategoryColors,
 } from "../lib/categoryColor";
-import { CatDot, CatDots } from "../components/CatDot";
+import { CatDot } from "../components/CatDot";
 import { CategoryPicker } from "../components/CategoryPicker";
 import { InfoTip } from "../components/InfoTip";
 import { LoadMore } from "../components/LoadMore";
-import { DoseChips, DoseEditor } from "../components/dose";
+import { DoseChips } from "../components/dose";
+import { ExerciseDetail } from "../components/exercises/ExerciseDetail";
+import { BlockComposer } from "../components/exercises/BlockComposer";
+import { TemplatesPanel } from "../components/exercises/TemplatesPanel";
 
 const CREATE_BAR =
   "flex flex-wrap gap-2 rounded-xl border border-accent/25 bg-accent/5 p-3";
@@ -66,6 +62,8 @@ type RailView =
   | { kind: "categories" };
 
 type SortId = "recent" | "used" | "name" | "newest";
+/** A tile's narrowing of the list on top of the rail view. */
+type Quick = "pinned" | "stale" | null;
 
 const LAST_USED_FMT = new Intl.DateTimeFormat(undefined, {
   day: "numeric",
@@ -88,13 +86,21 @@ export function ExercisesView() {
   const [limit, setLimit] = useState(CHUNK);
   const [reviewing, setReviewing] = useState(false);
   const [hideLookAlikes, setHideLookAlikes] = useState(false);
+  const [quick, setQuick] = useState<Quick>(null);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [blockId, setBlockId] = useState<string | null>(null);
 
   // Selection and render window reset when the coach moves views/filters.
   const viewKey = view.kind + ("name" in view ? view.name : "");
   useEffect(() => {
     setSel(new Set());
     setLimit(CHUNK);
-  }, [viewKey, search, sort]);
+  }, [viewKey, search, sort, quick]);
+  useEffect(() => {
+    setQuick(null);
+    setDetailId(null);
+  }, [viewKey]);
 
   const active = useMemo(
     () => exercises.filter((e) => !e.archived),
@@ -113,6 +119,14 @@ export function ExercisesView() {
   );
 
   const lookAlikes = useMemo(() => findLookAlikes(exercises), [exercises]);
+  const nowMs = Date.now();
+  const pinnedCount = active.filter((e) => e.pinned).length;
+  const staleCount = active.filter((e) => isStale(e, nowMs)).length;
+  const maxUse = useMemo(
+    () => Math.max(1, ...active.map((e) => e.useCount ?? 0)),
+    [active],
+  );
+  const detail = detailId ? exercises.find((e) => e.id === detailId) ?? null : null;
 
   // The rows for the current exercises view (before the render window).
   const shown = useMemo(() => {
@@ -124,6 +138,12 @@ export function ExercisesView() {
     else if (view.kind === "uncat")
       base = active.filter((e) => !e.categories?.length);
     else base = active;
+
+    if (quick === "pinned") base = base.filter((e) => e.pinned);
+    else if (quick === "stale") {
+      const now = Date.now();
+      base = base.filter((e) => isStale(e, now));
+    }
 
     const q = search.trim().toLowerCase();
     if (q) base = base.filter((e) => e.description.toLowerCase().includes(q));
@@ -146,7 +166,7 @@ export function ExercisesView() {
       arr.sort((a, b) => a.description.localeCompare(b.description));
     else arr.reverse(); // newest = insertion order, latest first
     return arr;
-  }, [view, exercises, active, search, sort]);
+  }, [view, exercises, active, search, sort, quick]);
 
   const addDraftExercise = (description: string, cats: string[]) => {
     addExercise(description, cats);
@@ -202,7 +222,7 @@ export function ExercisesView() {
   );
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-6 space-y-6">
+    <main className="mx-auto max-w-6xl px-5 py-6 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h2 className="text-xl">{t("Exercises")}</h2>
@@ -306,15 +326,81 @@ export function ExercisesView() {
 
         {/* ── Main column ── */}
         {view.kind === "blocks" ? (
-          <BlocksPanel blocks={blocks} exercises={exercises} />
+          <BlockComposer
+            blocks={blocks}
+            exercises={exercises}
+            categories={categories}
+            activeId={blockId}
+            onActive={setBlockId}
+            onTemplates={() => setView({ kind: "templates" })}
+          />
         ) : view.kind === "templates" ? (
           <TemplatesPanel />
         ) : view.kind === "categories" ? (
           <CategoriesPanel categories={categories} counts={catCounts} />
         ) : (
+          <div
+            className={`min-w-0 gap-4 ${detail ? "lg:grid lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start" : ""}`}
+          >
           <div className="space-y-3 min-w-0">
-            {view.kind !== "archived" && (
-              <AddBar categories={categories} onAdd={addDraftExercise} />
+            {view.kind !== "archived" && exercises.length > 0 && (
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                {(
+                  [
+                    {
+                      key: "all",
+                      n: active.length,
+                      label: t("Exercises"),
+                      tone: "var(--c-accent)",
+                      on: quick == null,
+                      go: () => setQuick(null),
+                    },
+                    {
+                      key: "pinned",
+                      n: pinnedCount,
+                      label: t("Pinned"),
+                      tone: "var(--c-highlight)",
+                      on: quick === "pinned",
+                      go: () => setQuick(quick === "pinned" ? null : "pinned"),
+                    },
+                    {
+                      key: "stale",
+                      n: staleCount,
+                      label: fill(t("Unused {n}+ days"), { n: STALE_DAYS }),
+                      tone: "var(--c-amber)",
+                      on: quick === "stale",
+                      go: () => setQuick(quick === "stale" ? null : "stale"),
+                    },
+                    {
+                      key: "look",
+                      n: lookAlikes.length,
+                      label: t("Look-alikes to merge"),
+                      tone: "var(--c-modeDry)",
+                      on: false,
+                      go: () => lookAlikes.length > 0 && setReviewing(true),
+                    },
+                  ] as const
+                ).map((x) => (
+                  <button
+                    key={x.key}
+                    onClick={x.go}
+                    aria-pressed={x.on}
+                    className={`tile px-3 py-2 text-left ${x.on && x.key !== "all" ? "ring-2 ring-text/60" : ""}`}
+                    style={{ "--tone": `rgb(${x.tone})` } as CSSProperties}
+                  >
+                    <span className="tile-value block font-num text-xl font-bold leading-tight">{x.n}</span>
+                    <span className="tile-label block text-xs font-bold">{x.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {view.kind !== "archived" && (exercises.length === 0 || adding) && (
+              <AddBar
+                categories={categories}
+                onAdd={addDraftExercise}
+                onClose={exercises.length > 0 ? () => setAdding(false) : undefined}
+              />
             )}
 
             {exercises.length === 0 ? (
@@ -325,6 +411,14 @@ export function ExercisesView() {
               <>
                 {/* Toolbar */}
                 <div className="flex flex-wrap items-center gap-2">
+                  {view.kind !== "archived" && !adding && (
+                    <button
+                      onClick={() => setAdding(true)}
+                      className="pill pill-on btn-raised px-3 py-1.5 text-sm"
+                    >
+                      + {t("New exercise")}
+                    </button>
+                  )}
                   <label className="flex items-center px-1.5" title={t("Select all shown")}>
                     <input
                       type="checkbox"
@@ -396,6 +490,17 @@ export function ExercisesView() {
                     </div>
                   )}
 
+                {quick && (
+                  <p className="flex items-center gap-2 text-xs text-textDim">
+                    {quick === "pinned"
+                      ? t("Showing pinned exercises.")
+                      : fill(t("Showing exercises not used in a plan for {n}+ days. Archive the ones you no longer need."), { n: STALE_DAYS })}
+                    <button onClick={() => setQuick(null)} className="font-bold text-accent hover:underline">
+                      {t("Show all")}
+                    </button>
+                  </p>
+                )}
+
                 {/* Rows */}
                 {shown.length === 0 ? (
                   <p className="text-textDim text-sm">
@@ -409,7 +514,11 @@ export function ExercisesView() {
                       <ExerciseRow
                         key={ex.id}
                         ex={ex}
-                        categories={categories}
+                        stale={!ex.archived && isStale(ex, nowMs)}
+                        usage={(ex.useCount ?? 0) / maxUse}
+                        open={detailId === ex.id}
+                        narrow={!!detail}
+                        onOpen={() => setDetailId(detailId === ex.id ? null : ex.id)}
                         selected={sel.has(ex.id)}
                         onSelect={(on) =>
                           setSel((s) => {
@@ -434,6 +543,22 @@ export function ExercisesView() {
               </>
             )}
           </div>
+          {detail && (
+            <ExerciseDetail
+              key={detail.id}
+              ex={detail}
+              categories={categories}
+              blocks={blocks}
+              sessionTemplates={sessionTemplates}
+              weekTemplates={weekTemplates}
+              onClose={() => setDetailId(null)}
+              onOpenBlock={(id) => {
+                setBlockId(id);
+                setView({ kind: "blocks" });
+              }}
+            />
+          )}
+          </div>
         )}
       </div>
 
@@ -449,9 +574,12 @@ export function ExercisesView() {
 function AddBar({
   categories,
   onAdd,
+  onClose,
 }: {
   categories: string[];
   onAdd: (description: string, cats: string[]) => void;
+  /** Folds the bar back into the "+ New exercise" button. */
+  onClose?: () => void;
 }) {
   const t = useT();
   const [draft, setDraft] = useState("");
@@ -468,8 +596,12 @@ function AddBar({
         className="field flex-1 min-w-48"
         placeholder={t("Add an exercise, e.g. 4×50m bi-fins, 3 min rest")}
         value={draft}
+        autoFocus={!!onClose}
         onChange={(e) => setDraft(e.target.value)}
-        onKeyDown={(e) => e.key === "Enter" && add()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") add();
+          if (e.key === "Escape") onClose?.();
+        }}
       />
       <button
         onClick={add}
@@ -477,6 +609,11 @@ function AddBar({
       >
         {t("Add")}
       </button>
+      {onClose && (
+        <button onClick={onClose} className="px-1 text-textDim hover:text-text" title={t("Close")}>
+          ✕
+        </button>
+      )}
       {categories.length > 0 && (
         <div className="w-full space-y-1.5">
           <span className="text-xs text-textDim">
@@ -616,28 +753,33 @@ function usageLabel(ex: LibraryExercise, t: (s: string) => string): string {
 
 function ExerciseRow({
   ex,
-  categories,
+  stale,
+  usage,
+  open,
+  narrow,
+  onOpen,
   selected,
   onSelect,
 }: {
   ex: LibraryExercise;
-  categories: string[];
+  /** Not placed in a plan for STALE_DAYS (or never): drawn faded. */
+  stale: boolean;
+  /** useCount relative to the library's most used exercise, 0..1. */
+  usage: number;
+  /** Its detail panel is open. */
+  open: boolean;
+  /** The detail panel takes part of the width: drop the dose chips. */
+  narrow: boolean;
+  onOpen: () => void;
   selected: boolean;
   onSelect: (on: boolean) => void;
 }) {
   const t = useT();
-  const [open, setOpen] = useState(false);
-  const [desc, setDesc] = useState(ex.description);
-
-  const commit = () => {
-    const d = desc.trim();
-    if (d && d !== ex.description) updateExercise(ex.id, { description: d });
-    else if (!d) setDesc(ex.description);
-  };
-
   return (
     <div
-      className={`overflow-hidden rounded-lg border bg-panel ${selected ? "border-accent/60" : "border-border"}`}
+      className={`overflow-hidden rounded-lg border bg-panel ${
+        open ? "border-accent" : selected ? "border-accent/60" : "border-border"
+      }`}
       style={{ borderLeft: `3px solid ${categoryColor(ex.categories?.[0])}` }}
     >
       <div className="flex w-full items-center gap-2.5 px-3 py-2">
@@ -655,8 +797,9 @@ function ExerciseRow({
           {ex.pinned ? "★" : "☆"}
         </button>
         <button
-          onClick={() => setOpen((o) => !o)}
-          className="flex min-w-0 flex-1 items-center gap-3 text-left"
+          onClick={onOpen}
+          aria-expanded={open}
+          className={`flex min-w-0 flex-1 items-center gap-3 text-left ${stale ? "opacity-60" : ""}`}
         >
           <span
             className={`min-w-0 flex-1 truncate ${ex.archived ? "text-textDim line-through" : "text-text"}`}
@@ -672,71 +815,22 @@ function ExerciseRow({
               ))}
             </span>
           ) : null}
-          {ex.defaultDose?.length ? (
-            <span className="hidden shrink-0 md:block">
+          {ex.defaultDose?.length && !narrow ? (
+            <span className="hidden shrink-0 xl:block">
               <DoseChips dose={ex.defaultDose} />
             </span>
           ) : null}
-          <span className="shrink-0 text-xs text-textDim tabular-nums">
-            {usageLabel(ex, t)}
+          <span className="w-20 shrink-0 text-right">
+            <span className="block text-xs text-textDim tabular-nums">{usageLabel(ex, t)}</span>
+            <span className="mt-1 block h-1 overflow-hidden rounded-full bg-border/60" aria-hidden="true">
+              <span
+                className="block h-full rounded-full bg-recover"
+                style={{ width: `${Math.round(Math.min(1, usage) * 100)}%` }}
+              />
+            </span>
           </span>
-          <span className="shrink-0 text-textDim">{open ? "▴" : "▾"}</span>
         </button>
       </div>
-      {open && (
-        <div className="space-y-2.5 border-t border-border px-3 py-3">
-          <input
-            className="field"
-            value={desc}
-            onChange={(e) => setDesc(e.target.value)}
-            onBlur={commit}
-            onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
-          />
-          <div className="space-y-1.5">
-            <span className="text-xs text-textDim">
-              {t("Categories (up to 3, optional)")}
-            </span>
-            <CategoryPicker
-              selected={ex.categories ?? []}
-              categories={categories}
-              onChange={(next) => updateExercise(ex.id, { categories: next })}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <span className="text-xs text-textDim">
-              {t("Default dose (optional). Copied into a session when this exercise is added; tweak it there per week. Mix any parts: hold + distance + rest is fine.")}
-            </span>
-            <DoseEditor
-              dose={ex.defaultDose ?? []}
-              onChange={(d) => updateExercise(ex.id, { defaultDose: d })}
-            />
-          </div>
-          <div className="flex items-center gap-4">
-            {ex.archived ? (
-              <button
-                onClick={() => setArchived([ex.id], false)}
-                className="text-sm text-accent hover:underline"
-              >
-                {t("Restore")}
-              </button>
-            ) : (
-              <button
-                onClick={() => setArchived([ex.id], true)}
-                className="text-sm text-textDim hover:text-text"
-                title={t("Keeps its history; leaves every picker. Find it under Archived.")}
-              >
-                {t("Archive")}
-              </button>
-            )}
-            <button
-              onClick={() => removeExercises([ex.id])}
-              className="ml-auto px-2 text-sm text-red hover:underline"
-            >
-              {t("Remove")}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -825,284 +919,6 @@ function LookAlikeGroupRow({
           {t("Merge")} ({group.items.length})
         </button>
       </div>
-    </div>
-  );
-}
-
-// ── Blocks panel (rail view) ─────────────────────────────────────────────────
-
-function BlocksPanel({
-  blocks,
-  exercises,
-}: {
-  blocks: ExerciseBlock[];
-  exercises: LibraryExercise[];
-}) {
-  const t = useT();
-  const [draft, setDraft] = useState("");
-  const create = () => {
-    if (draft.trim()) {
-      addBlock(draft);
-      setDraft("");
-    }
-  };
-  return (
-    <div className="space-y-3 min-w-0">
-      <div className={CREATE_BAR}>
-        <input
-          className="field flex-1 min-w-48"
-          placeholder={t("New block name, e.g. CO₂ set")}
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && create()}
-        />
-        <button
-          onClick={create}
-          className="pill text-sm text-accent px-4"
-        >
-          {t("Add block")}
-        </button>
-      </div>
-      {blocks.length === 0 ? (
-        <p className="text-textDim text-sm">
-          {t(
-            "No blocks yet. Group exercises you use together (a warm-up, a CO₂ set), then add the whole block to a session at once from the builder.",
-          )}
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {blocks.map((b, i) => (
-            <BlockRow key={b.id} block={b} index={i} exercises={exercises} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** Collapsed by default (name + exercise-count + a category-dot preview).
- *  Click to expand the editor (rename, chips, add-to-block, delete). */
-function BlockRow({
-  block,
-  index,
-  exercises,
-}: {
-  block: ExerciseBlock;
-  index: number;
-  exercises: LibraryExercise[];
-}) {
-  const t = useT();
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState(block.name);
-  const items = block.exerciseIds
-    .map((id) => exercises.find((e) => e.id === id))
-    .filter((e): e is LibraryExercise => !!e);
-  const inBlock = new Set(block.exerciseIds);
-
-  return (
-    <div className="overflow-hidden rounded-lg border border-border bg-abyss">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-panel/40"
-      >
-        <span className="w-4 shrink-0 font-heading text-xs text-textDim">
-          {index + 1}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="truncate font-heading text-text">{block.name}</div>
-          <div className="mt-0.5 flex items-center gap-2 text-xs text-textDim">
-            <span>
-              {items.length} {items.length === 1 ? t("exercise") : t("exercises")}
-            </span>
-            {items.length > 0 && (
-              <span className="flex items-center gap-1">
-                {items.slice(0, 8).map((ex) => (
-                  <CatDot key={ex.id} name={ex.categories?.[0]} size={7} />
-                ))}
-              </span>
-            )}
-          </div>
-        </div>
-        <span className="shrink-0 text-textDim">{open ? "▴" : "▾"}</span>
-      </button>
-      {open && (
-        <div className="space-y-2.5 border-t border-border px-3 py-3">
-          <input
-            className="field font-heading"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onBlur={() => {
-              const n = name.trim();
-              if (n && n !== block.name) renameBlock(block.id, n);
-              else if (!n) setName(block.name);
-            }}
-            onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
-          />
-          {items.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {items.map((ex) => (
-                <span
-                  key={ex.id}
-                  className="group flex items-center gap-1.5 rounded-full border border-border bg-panel px-2.5 py-1 text-sm"
-                >
-                  <CatDots names={ex.categories} size={7} />
-                  {ex.description}
-                  <button
-                    onClick={() => removeExerciseFromBlock(block.id, ex.id)}
-                    className="text-textDim hover:text-red"
-                    title={t("Remove from block")}
-                  >
-                    ✕
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-          <AddToBlock blockId={block.id} exercises={exercises} inBlock={inBlock} />
-          <div className="flex items-center gap-4">
-            {items.length > 0 && (
-              <button
-                onClick={() => {
-                  blockToSessionTemplate(block);
-                  alert(`${t("Saved as a session template.")} (${block.name})`);
-                }}
-                className="text-xs text-accent hover:underline"
-                title={t("Templates carry a whole session (label, notes, doses) and are inserted via + from template in the builder.")}
-              >
-                {t("Convert to session template")}
-              </button>
-            )}
-            <button
-              onClick={() =>
-                confirm(`${t("Delete block")} "${block.name}"?`) && removeBlock(block.id)
-              }
-              className="ml-auto text-red text-xs hover:underline"
-            >
-              {t("Delete block")}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-const DROPDOWN_PAGE = 100;
-
-function AddToBlock({
-  blockId,
-  exercises,
-  inBlock,
-}: {
-  blockId: string;
-  exercises: LibraryExercise[];
-  inBlock: Set<string>;
-}) {
-  const t = useT();
-  const [q, setQ] = useState("");
-  const [focused, setFocused] = useState(false);
-  const matches = useMemo(
-    () => rankExercises(exercises, q).filter((e) => !inBlock.has(e.id)),
-    [q, exercises, inBlock],
-  );
-  const show = focused && matches.length > 0;
-
-  return (
-    <div className="relative">
-      <input
-        className="field w-full"
-        placeholder={t("Add an exercise to this block…")}
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setTimeout(() => setFocused(false), 120)}
-      />
-      {show && (
-        <ul className="board absolute z-20 left-0 right-0 mt-1 max-h-72 overflow-auto">
-          {matches.slice(0, DROPDOWN_PAGE).map((e) => (
-            <li key={e.id}>
-              <button
-                onMouseDown={(ev) => {
-                  ev.preventDefault();
-                  addExerciseToBlock(blockId, e.id);
-                  setQ("");
-                }}
-                className="flex w-full items-center gap-2 text-left px-3 py-1.5 text-sm text-textDim hover:bg-accent/10 hover:text-text"
-              >
-                <CatDots names={e.categories} size={7} />
-                {e.description}
-              </button>
-            </li>
-          ))}
-          {matches.length > DROPDOWN_PAGE && (
-            <li className="px-3 py-1.5 text-xs text-textDim">
-              {matches.length - DROPDOWN_PAGE} {t("more, keep typing to narrow down")}
-            </li>
-          )}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-// ── Templates panel (rail view) ──────────────────────────────────────────────
-
-function TemplatesPanel() {
-  const t = useT();
-  const sessionTemplates = useSessionTemplates();
-  const weekTemplates = useWeekTemplates();
-
-  if (sessionTemplates.length === 0 && weekTemplates.length === 0) {
-    return (
-      <p className="text-textDim text-sm">
-        {t(
-          'No templates yet. In the plan builder, open a session and hit "Save as template", or save a whole week from its card. Blocks can also be converted into session templates.',
-        )}
-      </p>
-    );
-  }
-
-  const row = (key: string, name: string, meta: string, onDelete: () => void) => (
-    <div key={key} className="flex items-center gap-3 rounded-lg border border-border bg-panel px-3 py-2">
-      <span className="min-w-0 flex-1 truncate text-text">{name}</span>
-      <span className="shrink-0 text-xs text-textDim tabular-nums">{meta}</span>
-      <button onClick={onDelete} className="shrink-0 text-textDim hover:text-red" title={t("Remove")}>
-        ✕
-      </button>
-    </div>
-  );
-
-  return (
-    <div className="space-y-4 min-w-0">
-      {sessionTemplates.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-wide text-textDim">{t("Session templates")}</p>
-          {sessionTemplates.map((x) =>
-            row(
-              x.id,
-              x.name,
-              `${x.exercises.length} ${x.exercises.length === 1 ? t("exercise") : t("exercises")}${x.useCount ? ` · ${x.useCount}×` : ""}`,
-              () => confirm(`${t("Delete")} "${x.name}"?`) && removeSessionTemplate(x.id),
-            ),
-          )}
-        </div>
-      )}
-      {weekTemplates.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-xs uppercase tracking-wide text-textDim">{t("Week templates")}</p>
-          {weekTemplates.map((x) =>
-            row(
-              x.id,
-              x.name,
-              `${x.sessions.length} ${x.sessions.length === 1 ? t("session") : t("sessions")}${x.useCount ? ` · ${x.useCount}×` : ""}`,
-              () => confirm(`${t("Delete")} "${x.name}"?`) && removeWeekTemplate(x.id),
-            ),
-          )}
-        </div>
-      )}
-      <p className="text-xs text-textDim">
-        {t("Insert session templates in the builder via + from template on any day; apply week templates from a week card.")}
-      </p>
     </div>
   );
 }
