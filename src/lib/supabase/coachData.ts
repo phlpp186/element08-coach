@@ -45,6 +45,10 @@ export interface CompletionRow {
   exercise_id: string;
   completed_at: string | null;
   rating: number | null;
+  /** Mental difficulty 1-10. Absent before migration 0018 and on older reports. */
+  mental?: number | null;
+  /** Worst hypoxia sign 1-4 (lib/hypoxia). */
+  hypoxia?: number | null;
   remarks: string | null;
   session: Json | null;
   updated_at: string;
@@ -284,12 +288,12 @@ export async function listCompletionSummaries(
   assignmentIds: string[],
 ): Promise<Omit<CompletionRow, 'session' | 'remarks'>[]> {
   if (!assignmentIds.length) return [];
-  return unwrap(
-    await supabase
-      .from('completions')
-      .select('id, assignment_id, exercise_id, completed_at, rating, updated_at')
-      .in('assignment_id', assignmentIds),
-  );
+  const cols = 'id, assignment_id, exercise_id, completed_at, rating, updated_at';
+  const q = (select: string) => supabase.from('completions').select(select).in('assignment_id', assignmentIds);
+  const res = await q(`${cols}, mental, hypoxia`);
+  // Until migration 0018 adds the two columns, naming them fails the query.
+  if (res.error && /mental|hypoxia/i.test(res.error.message)) return unwrap(await q(cols)) as never;
+  return unwrap(res) as never;
 }
 
 /** Several athletes' profiles in one query (the Activity page's PB check). */

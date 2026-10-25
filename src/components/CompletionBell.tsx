@@ -20,6 +20,7 @@ import {
   unsubscribeChannel,
 } from '../lib/supabase/coachData';
 import { relTime, toFeedEntries, type FeedEntry } from '../lib/activity';
+import { HYPOXIA_FLAG_MIN, HYPOXIA_LABEL } from '../lib/hypoxia';
 import { isNewFor, markAllSeen, useSeenState, type SeenState } from '../lib/completionsSeen';
 import { navigate } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
@@ -141,6 +142,9 @@ export function CompletionBell() {
                       {e.kind === 'updated' && <span className="text-highlight">{t('updated')} · </span>}
                       {e.sessionLabel ?? t('Session')}
                     </span>
+                    {e.hypoxia != null && e.hypoxia >= HYPOXIA_FLAG_MIN && (
+                      <span className="text-red text-xs font-bold shrink-0">{t(HYPOXIA_LABEL[e.hypoxia])}</span>
+                    )}
                     {e.rating != null && <span className="text-amber text-xs shrink-0">★ {e.rating}</span>}
                   </div>
                   <div className="text-xs text-textDim mt-0.5 truncate">

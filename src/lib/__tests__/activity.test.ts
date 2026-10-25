@@ -182,6 +182,34 @@ describe('needsALook', () => {
     expect(run([5, 6, 6])).toEqual([]);
     expect(run([3, 4, 6])).toEqual([]);
   });
+
+  it('flags the worst recent hypoxia report with its effort', () => {
+    const undated = { phases: [{ weeks: [{ plannedSessions: [] }] }] };
+    const run = (completions: CompletionLike[]) =>
+      needsALook({
+        ...base,
+        athletes: [base.athletes[0]],
+        assignments: [{ id: 'a1', studentId: 's1', assignedAt: null, plan: undated }],
+        completions,
+      })[0]?.reasons ?? [];
+    const at = (d: string) => ({ completed_at: `${d}T08:00:00Z`, updated_at: `${d}T08:00:00Z` });
+    // LMC rated 7 beats a later session with symptoms.
+    expect(
+      run([
+        comp({ exercise_id: 'e1', rating: 7, hypoxia: 3, ...at('2026-10-08') }),
+        comp({ exercise_id: 'e2', rating: 5, hypoxia: 2, ...at('2026-10-12') }),
+        comp({ exercise_id: 'e3', rating: 6, hypoxia: 1, ...at('2026-10-13') }),
+      ]),
+    ).toEqual([{ kind: 'hypoxia', level: 3, rating: 7 }]);
+    // Clean, unreported or older than two weeks: nothing.
+    expect(
+      run([
+        comp({ exercise_id: 'e1', rating: 6, hypoxia: 1, ...at('2026-10-12') }),
+        comp({ exercise_id: 'e2', rating: 6, ...at('2026-10-12') }),
+        comp({ exercise_id: 'e3', rating: 6, hypoxia: 4, ...at('2026-09-20') }),
+      ]),
+    ).toEqual([]);
+  });
 });
 
 describe('thisWeekSummary', () => {

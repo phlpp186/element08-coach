@@ -31,14 +31,15 @@ const assignments = [
 ];
 const rows: FeedRow[] = [
   {
-    id: 'c1', assignment_id: 'a1', exercise_id: 'd3', completed_at: ago(2), updated_at: ago(2), rating: 7,
+    id: 'c1', assignment_id: 'a1', exercise_id: 'd3', completed_at: ago(2), updated_at: ago(2), rating: 7, mental: 3, hypoxia: 1,
     remarks: 'Felt strong, the second dive was easy.',
     session: { mode: 'depth', maxDepth: 42, dives: [{ depth: 30, discipline: 'FIM' }, { depth: 38, discipline: 'FIM', remarks: 'Squeeze feeling at 35 m' }, { depth: 42, discipline: 'FIM', remarks: 'Clean' }, { depth: 20, discipline: 'CWT', remarks: 'Fun dive' }, { depth: 10, discipline: 'CWT', remarks: 'Hang' }] },
   },
   { id: 'c2', assignment_id: 'a2', exercise_id: 'p3', completed_at: ago(26), updated_at: ago(26), rating: 8, remarks: null,
     session: { mode: 'pool', dives: [{ discipline: 'DYN', distance: 50 }, { discipline: 'DYN', distance: 50 }, { discipline: 'DYN', distance: 75 }, { discipline: 'DYN', distance: 50 }] } },
   {
-    id: 'c3', assignment_id: 'a1', exercise_id: 's2', completed_at: ago(24 * 5), updated_at: ago(5), rating: 6, remarks: null,
+    id: 'c3', assignment_id: 'a1', exercise_id: 's2', completed_at: ago(24 * 5), updated_at: ago(5), rating: 7, mental: 4, hypoxia: 3,
+    remarks: 'Breathed up hard before the last hold, felt easy. Buddy said I shook at the surface.',
     session: { mode: 'dry', blockTimeline: [{ type: 'Rest', seconds: 120 }, { type: 'Hold', seconds: 150, note: 'Contractions from 1:40' }, { type: 'Hold', seconds: 212 }] },
   },
   {

@@ -651,5 +651,11 @@
   "d": "วัน",
   "due {day}": "ครบกำหนดวันที่ {day}",
   "{amount} due {date}. Click to mark paid.": "{amount} ครบกำหนด {date} คลิกเพื่อทำเครื่องหมายว่าชำระแล้ว",
-  "{amount} overdue by {n} days. Click to mark paid.": "{amount} เกินกำหนด {n} วัน คลิกเพื่อทำเครื่องหมายว่าชำระแล้ว"
+  "{amount} overdue by {n} days. Click to mark paid.": "{amount} เกินกำหนด {n} วัน คลิกเพื่อทำเครื่องหมายว่าชำระแล้ว",
+  "Mental": "จิตใจ",
+  "Hypoxia": "ภาวะขาดออกซิเจน",
+  "Clean": "ปกติ",
+  "Symptoms": "มีอาการ",
+  "LMC / Samba": "LMC / Samba",
+  "Blackout": "หมดสติ"
 }

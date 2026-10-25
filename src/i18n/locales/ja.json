@@ -651,5 +651,11 @@
   "d": "日",
   "due {day}": "{day}日期限",
   "{amount} due {date}. Click to mark paid.": "{amount}、{date}期限。クリックで支払い済みにします。",
-  "{amount} overdue by {n} days. Click to mark paid.": "{amount}、{n}日超過。クリックで支払い済みにします。"
+  "{amount} overdue by {n} days. Click to mark paid.": "{amount}、{n}日超過。クリックで支払い済みにします。",
+  "Mental": "メンタル",
+  "Hypoxia": "低酸素",
+  "Clean": "クリーン",
+  "Symptoms": "症状あり",
+  "LMC / Samba": "LMC / Samba",
+  "Blackout": "ブラックアウト"
 }

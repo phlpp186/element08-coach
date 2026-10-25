@@ -651,5 +651,11 @@
   "d": "天",
   "due {day}": "{day} 日到期",
   "{amount} due {date}. Click to mark paid.": "{amount}，{date} 到期。点击标记为已付。",
-  "{amount} overdue by {n} days. Click to mark paid.": "{amount} 已逾期 {n} 天。点击标记为已付。"
+  "{amount} overdue by {n} days. Click to mark paid.": "{amount} 已逾期 {n} 天。点击标记为已付。",
+  "Mental": "心理",
+  "Hypoxia": "缺氧",
+  "Clean": "正常",
+  "Symptoms": "症状",
+  "LMC / Samba": "LMC / Samba",
+  "Blackout": "黑视"
 }

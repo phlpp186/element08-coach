@@ -651,5 +651,11 @@
   "d": "T",
   "due {day}": "bis {day}.",
   "{amount} due {date}. Click to mark paid.": "{amount} fällig am {date}. Klicken, um als bezahlt zu markieren.",
-  "{amount} overdue by {n} days. Click to mark paid.": "{amount} seit {n} Tagen überfällig. Klicken, um als bezahlt zu markieren."
+  "{amount} overdue by {n} days. Click to mark paid.": "{amount} seit {n} Tagen überfällig. Klicken, um als bezahlt zu markieren.",
+  "Mental": "Mental",
+  "Hypoxia": "Hypoxie",
+  "Clean": "Sauber",
+  "Symptoms": "Symptome",
+  "LMC / Samba": "LMC / Samba",
+  "Blackout": "Blackout"
 }

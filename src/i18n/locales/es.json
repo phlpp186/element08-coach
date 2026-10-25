@@ -651,5 +651,11 @@
   "d": "d",
   "due {day}": "vence el {day}",
   "{amount} due {date}. Click to mark paid.": "{amount} vence el {date}. Haz clic para marcarlo pagado.",
-  "{amount} overdue by {n} days. Click to mark paid.": "{amount} vencido hace {n} días. Haz clic para marcarlo pagado."
+  "{amount} overdue by {n} days. Click to mark paid.": "{amount} vencido hace {n} días. Haz clic para marcarlo pagado.",
+  "Mental": "Mental",
+  "Hypoxia": "Hipoxia",
+  "Clean": "Limpio",
+  "Symptoms": "Síntomas",
+  "LMC / Samba": "LMC / Samba",
+  "Blackout": "Síncope"
 }

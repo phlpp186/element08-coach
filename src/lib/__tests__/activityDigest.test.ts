@@ -76,6 +76,8 @@ const entry = (id: string, at: string, more: Partial<FeedEntry> = {}): FeedEntry
   at,
   kind: 'completed',
   rating: null,
+  mental: null,
+  hypoxia: null,
   remarks: null,
   session: null,
   ...more,

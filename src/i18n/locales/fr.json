@@ -651,5 +651,11 @@
   "d": "j",
   "due {day}": "échéance le {day}",
   "{amount} due {date}. Click to mark paid.": "{amount} dû le {date}. Clique pour marquer payé.",
-  "{amount} overdue by {n} days. Click to mark paid.": "{amount} en retard de {n} jours. Clique pour marquer payé."
+  "{amount} overdue by {n} days. Click to mark paid.": "{amount} en retard de {n} jours. Clique pour marquer payé.",
+  "Mental": "Mental",
+  "Hypoxia": "Hypoxie",
+  "Clean": "Propre",
+  "Symptoms": "Symptômes",
+  "LMC / Samba": "LMC / Samba",
+  "Blackout": "Syncope"
 }

@@ -26,6 +26,7 @@ import {
 } from '../lib/activityDigest';
 import { formatPB, type AthletePB } from '../lib/supabase/athleteProfileCloud';
 import { sessionChips, sessionNoteLines } from '../lib/sessionNotes';
+import { HYPOXIA_FLAG_MIN, HYPOXIA_LABEL, hypoxiaTone } from '../lib/hypoxia';
 
 const NOTE_LINES = 3;
 
@@ -299,7 +300,8 @@ function FeedItem({
   const notes = sessionNoteLines(e.session);
   const chips = e.session ? sessionChips(e.session) : null;
   const bars = e.session ? sessionBars(e.session) : null;
-  const compact = e.rating == null && !e.remarks && !e.session;
+  const flagged = e.hypoxia != null && e.hypoxia >= HYPOXIA_FLAG_MIN;
+  const compact = e.rating == null && e.mental == null && !flagged && !e.remarks && !e.session;
   const frame = unread ? 'border-accent/60 bg-accent/5' : 'border-border bg-panel';
   const stripe = bars ? { background: `rgb(${MODE_TONE[bars.mode]})` } : undefined;
   const dot = unread && <span className="h-1.5 w-1.5 shrink-0 self-center rounded-full bg-accent" />;
@@ -344,7 +346,7 @@ function FeedItem({
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-sm">{headline}</div>
 
-          {(chipList.length > 0 || e.rating != null || pbs.length > 0) && (
+          {(chipList.length > 0 || e.rating != null || e.mental != null || flagged || pbs.length > 0) && (
             <div className="flex flex-wrap gap-1.5">
               {pbs.map((b) => (
                 <span key={b.discipline} className="rounded-full bg-recover/20 px-2 py-0.5 text-xs font-bold text-recover">
@@ -361,6 +363,16 @@ function FeedItem({
                   className={`rounded-full px-2 py-0.5 text-xs ${isHard(e) ? 'bg-red/15 text-red' : 'bg-amber/15 text-amber'}`}
                 >
                   {t('Effort')} {Math.max(0, Math.min(10, e.rating))}/10
+                </span>
+              )}
+              {e.mental != null && (
+                <span className="rounded-full bg-abyss px-2 py-0.5 text-xs text-text">
+                  {t('Mental')} {Math.max(0, Math.min(10, e.mental))}/10
+                </span>
+              )}
+              {flagged && (
+                <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${hypoxiaTone(e.hypoxia!)}`}>
+                  {t('Hypoxia')}: {t(HYPOXIA_LABEL[e.hypoxia!])}
                 </span>
               )}
             </div>
@@ -492,7 +504,9 @@ function NeedsALook({ flags, t }: { flags: AthleteFlags[]; t: (s: string) => str
               <div className="flex flex-wrap gap-1">
                 {f.reasons.map((r) => {
                   const tone =
-                    r.kind === 'effortRising'
+                    r.kind === 'hypoxia'
+                      ? hypoxiaTone(r.level)
+                      : r.kind === 'effortRising'
                       ? 'bg-amber/15 text-amber'
                       : r.kind === 'noPlan'
                         ? 'bg-abyss text-textDim'
@@ -504,7 +518,9 @@ function NeedsALook({ flags, t }: { flags: AthleteFlags[]; t: (s: string) => str
                         ? fill(t('{n} days quiet'), { n: r.days })
                         : r.kind === 'effortRising'
                           ? `${t('Effort rising')} ${r.ratings.join(' → ')}`
-                          : t('No active plan');
+                          : r.kind === 'hypoxia'
+                            ? `${t(HYPOXIA_LABEL[r.level])}${r.rating != null ? `, ${t('Effort')} ${r.rating}/10` : ''}`
+                            : t('No active plan');
                   return (
                     <span key={r.kind} className={`rounded-full px-2 py-0.5 text-xs ${tone}`}>
                       {text}

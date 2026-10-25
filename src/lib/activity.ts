@@ -10,6 +10,7 @@
  * updated_at is clearly after completed_at is an edit ("updated"), and its
  * event time is the later of the two.
  */
+import { HYPOXIA_DAYS, HYPOXIA_FLAG_MIN, hypoxiaLevel, type HypoxiaLevel } from './hypoxia';
 import { addDays, mondayOf } from './e08plan';
 import { daysBetween } from './planHelpers';
 
@@ -22,6 +23,8 @@ export interface CompletionLike {
   completed_at: string | null;
   updated_at: string | null;
   rating: number | null;
+  mental?: number | null;
+  hypoxia?: number | null;
 }
 
 export type EventKind = 'completed' | 'updated';
@@ -160,6 +163,9 @@ export type FlagReason =
   | { kind: 'missed'; count: number }
   | { kind: 'quiet'; days: number }
   | { kind: 'effortRising'; ratings: number[] }
+  /** The worst hypoxia sign reported in the last HYPOXIA_DAYS, with the
+   *  effort the athlete gave that session (a low one = it felt easy). */
+  | { kind: 'hypoxia'; level: HypoxiaLevel; rating: number | null }
   | { kind: 'noPlan' };
 
 export interface AthleteFlags {
@@ -209,6 +215,8 @@ export function effortRising(ratings: readonly number[]): number[] | null {
  *   quiet        no completion or edit for >= 7 days on a running plan,
  *                counted from the latest of: last event, assignment, plan start
  *   effortRising last 3 ratings strictly increasing and the latest >= 7
+ *   hypoxia      a report with symptoms or worse (>= HYPOXIA_FLAG_MIN) in the
+ *                last HYPOXIA_DAYS; the worst one, the latest on a tie
  *   noPlan       a connected athlete with no active assignment
  */
 export function needsALook(input: {
@@ -239,6 +247,8 @@ export function needsALook(input: {
     let lastActive = -Infinity;
     let anyRunning = false;
     const rated: { at: number; rating: number }[] = [];
+    let hyp: { level: HypoxiaLevel; rating: number | null; at: number } | null = null;
+    const hypSince = nowMs - HYPOXIA_DAYS * 86_400_000;
     for (const a of mine) {
       const rows = byAssignment.get(a.id) ?? [];
       const done = new Set(rows.filter((c) => c.completed_at).map((c) => c.exercise_id));
@@ -248,6 +258,13 @@ export function needsALook(input: {
         if (!ev) continue;
         lastActive = Math.max(lastActive, Date.parse(ev.at));
         if (typeof c.rating === 'number') rated.push({ at: Date.parse(c.completed_at!), rating: c.rating });
+        const level = hypoxiaLevel(c.hypoxia);
+        const at = Date.parse(c.completed_at!);
+        if (level != null && level >= HYPOXIA_FLAG_MIN && at >= hypSince) {
+          if (!hyp || level > hyp.level || (level === hyp.level && at > hyp.at)) {
+            hyp = { level, rating: typeof c.rating === 'number' ? c.rating : null, at };
+          }
+        }
       }
       if (planRunning(a.plan, todayIso)) {
         anyRunning = true;
@@ -266,6 +283,7 @@ export function needsALook(input: {
     rated.sort((x, y) => x.at - y.at);
     const rising = effortRising(rated.map((r) => r.rating));
     if (rising) reasons.push({ kind: 'effortRising', ratings: rising });
+    if (hyp) reasons.push({ kind: 'hypoxia', level: hyp.level, rating: hyp.rating });
     if (reasons.length) out.push({ studentId: ath.studentId, name: ath.name, reasons });
   }
   return out;
@@ -351,6 +369,8 @@ export interface FeedEntry {
   at: string;
   kind: EventKind;
   rating: number | null;
+  mental: number | null;
+  hypoxia: HypoxiaLevel | null;
   remarks: string | null;
   /** The attached logbook session, when there is one. */
   session: unknown | null;
@@ -392,6 +412,8 @@ export function toFeedEntries(
       at: ev.at,
       kind: ev.kind,
       rating: typeof r.rating === 'number' ? r.rating : null,
+      mental: typeof r.mental === 'number' ? r.mental : null,
+      hypoxia: hypoxiaLevel(r.hypoxia),
       remarks: r.remarks?.trim() || null,
       session: r.session ?? null,
     });

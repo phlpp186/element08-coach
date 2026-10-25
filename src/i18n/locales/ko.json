@@ -651,5 +651,11 @@
   "d": "일",
   "due {day}": "{day}일 납부",
   "{amount} due {date}. Click to mark paid.": "{amount}, {date} 납부. 클릭하면 결제 완료로 표시돼요.",
-  "{amount} overdue by {n} days. Click to mark paid.": "{amount}, {n}일 연체. 클릭하면 결제 완료로 표시돼요."
+  "{amount} overdue by {n} days. Click to mark paid.": "{amount}, {n}일 연체. 클릭하면 결제 완료로 표시돼요.",
+  "Mental": "멘탈",
+  "Hypoxia": "저산소",
+  "Clean": "정상",
+  "Symptoms": "증상",
+  "LMC / Samba": "LMC / Samba",
+  "Blackout": "블랙아웃"
 }

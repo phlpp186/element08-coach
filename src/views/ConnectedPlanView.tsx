@@ -13,6 +13,7 @@ import { normIntensity, todayIso } from '../lib/e08plan';
 import { splitAtCurrentWeek } from '../lib/planWeekOrder';
 import { AttachedSessionDetail } from '../components/AttachedSessionDetail';
 import { useT, tr } from '../i18n';
+import { HYPOXIA_FLAG_MIN, HYPOXIA_LABEL, hypoxiaLevel, hypoxiaTone } from '../lib/hypoxia';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import {
   getPlan,
@@ -240,6 +241,10 @@ export function ConnectedPlanView({
                     {typeof c.rating === 'number'
                       ? ` · ★ ${Math.max(0, Math.min(10, c.rating))}/10`
                       : ''}
+                    {typeof c.mental === 'number' ? ` · ${t('Mental')} ${c.mental}/10` : ''}
+                    {(hypoxiaLevel(c.hypoxia) ?? 0) >= HYPOXIA_FLAG_MIN
+                      ? ` · ${t(HYPOXIA_LABEL[hypoxiaLevel(c.hypoxia)!])}`
+                      : ''}
                   </p>
                 </button>
               </li>
@@ -372,6 +377,7 @@ function SessionRow({
     if (focused) setOpen(true);
   }, [focused]);
   const done = !!completion?.completed_at;
+  const hyp = hypoxiaLevel(completion?.hypoxia);
   const day = typeof session.dayOfWeek === 'number' ? DAY_LABELS[session.dayOfWeek] : null;
   const title = session.label?.trim() || session.sessionType || t('Session');
   const attached = completion?.session ?? null;
@@ -429,6 +435,19 @@ function SessionRow({
                 {typeof completion?.rating === 'number' && (
                   <span className="text-amber" title={t('Rating')}>
                     ★ {Math.max(0, Math.min(10, completion.rating))}/10
+                  </span>
+                )}
+                {typeof completion?.mental === 'number' && (
+                  <span className="text-textDim">
+                    {t('Mental')} {Math.max(0, Math.min(10, completion.mental))}/10
+                  </span>
+                )}
+                {hyp != null && (
+                  <span
+                    className={`rounded-full px-2 py-0.5 ${hyp >= HYPOXIA_FLAG_MIN ? `font-bold ${hypoxiaTone(hyp)}` : 'text-textDim'}`}
+                    title={t('Hypoxia')}
+                  >
+                    {t('Hypoxia')}: {t(HYPOXIA_LABEL[hyp])}
                   </span>
                 )}
               </div>
