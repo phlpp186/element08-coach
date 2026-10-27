@@ -7,6 +7,7 @@
  */
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './client';
+import { syncCoacheePro } from './coacheePro';
 
 export type Json = string | number | boolean | null | { [k: string]: Json } | Json[];
 
@@ -113,6 +114,8 @@ export async function createInvite(): Promise<string> {
 export async function disconnect(linkId: string): Promise<void> {
   const { error } = await supabase.rpc('disconnect_link', { link_id: linkId });
   if (error) throw new Error(error.message);
+  // Ends the athlete's included Pro now rather than at the daily run.
+  syncCoacheePro();
 }
 
 // ─── Plans (coach owns) ─────────────────────────────────────────────────────

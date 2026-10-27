@@ -10,6 +10,7 @@
  * pure functions. This file only reads and writes rows.
  */
 import { supabase } from './client';
+import { syncCoacheePro } from './coacheePro';
 import type { BillingTerms, PaymentRow } from '../billing';
 
 interface TermsRow {
@@ -92,6 +93,8 @@ export async function saveBillingTerms(t: BillingTerms & { note?: string | null 
     { onConflict: 'coach_id,student_id' },
   );
   if (error) throw new Error(error.message);
+  // The "until" date sets how long the athlete's included Pro runs.
+  syncCoacheePro();
 }
 
 export async function removeBillingTerms(studentId: string): Promise<void> {
@@ -102,6 +105,7 @@ export async function removeBillingTerms(studentId: string): Promise<void> {
     .eq('coach_id', uid)
     .eq('student_id', studentId);
   if (error) throw new Error(error.message);
+  syncCoacheePro();
 }
 
 /**
