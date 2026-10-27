@@ -657,5 +657,13 @@
   "Clean": "Propre",
   "Symptoms": "Symptômes",
   "LMC / Samba": "LMC / Samba",
-  "Blackout": "Syncope"
+  "Blackout": "Syncope",
+  "Coaching fees due": "Frais de coaching dus",
+  "Copied": "Copié",
+  "Due today for {months}": "Dû aujourd'hui pour {months}",
+  "Later": "Plus tard",
+  "Mark paid": "Marquer payé",
+  "Mark {month} paid": "Marquer {month} payé",
+  "Open Billing": "Ouvrir la facturation",
+  "Open: {months}": "En attente : {months}"
 }

@@ -657,5 +657,13 @@
   "Clean": "Sauber",
   "Symptoms": "Symptome",
   "LMC / Samba": "LMC / Samba",
-  "Blackout": "Blackout"
+  "Blackout": "Blackout",
+  "Coaching fees due": "Fällige Coaching-Gebühren",
+  "Copied": "Kopiert",
+  "Due today for {months}": "Heute fällig für {months}",
+  "Later": "Später",
+  "Mark paid": "Als bezahlt markieren",
+  "Mark {month} paid": "{month} als bezahlt markieren",
+  "Open Billing": "Abrechnung öffnen",
+  "Open: {months}": "Offen: {months}"
 }

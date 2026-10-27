@@ -657,5 +657,13 @@
   "Clean": "정상",
   "Symptoms": "증상",
   "LMC / Samba": "LMC / Samba",
-  "Blackout": "블랙아웃"
+  "Blackout": "블랙아웃",
+  "Coaching fees due": "납부일이 된 코칭 비용",
+  "Copied": "복사됨",
+  "Due today for {months}": "오늘 마감: {months}",
+  "Later": "나중에",
+  "Mark paid": "결제 완료로 표시",
+  "Mark {month} paid": "{month} 결제 완료로 표시",
+  "Open Billing": "결제 관리 열기",
+  "Open: {months}": "미납: {months}"
 }

@@ -3,6 +3,7 @@ import {
   buildAthleteBilling,
   buildLedger,
   daysBetween,
+  dueReminders,
   formatMoney,
   ledgerTotals,
   monthKey,
@@ -131,8 +132,40 @@ describe('buildLedger', () => {
       [],
       '2026-08-09',
     );
-    expect(ledgerTotals(ledger).monthCents).toBe(12000);
-    expect(ledgerTotals(ledger).overdueAthletes).toBe(2);
+    expect(ledgerTotals(ledger, '2026-08-09').monthCents).toBe(12000);
+    expect(ledgerTotals(ledger, '2026-08-09').overdueAthletes).toBe(2);
+  });
+
+  it('counts an arrangement with an end date still ahead as live', () => {
+    const ledger = buildLedger(
+      [terms({ studentId: 'a', endedOn: '2026-12-31' }), terms({ studentId: 'b', endedOn: '2026-06-30' })],
+      [],
+      '2026-08-09',
+    );
+    expect(ledgerTotals(ledger, '2026-08-09').monthCents).toBe(12000);
+  });
+});
+
+describe('dueReminders', () => {
+  const athlete = (studentId: string, startedOn: string) =>
+    terms({ studentId, startedOn, dueDay: 1, amountCents: 10000 });
+
+  it('lists who is due today and who is overdue, nobody who paid', () => {
+    const ledger = buildLedger(
+      [athlete('today', '2026-11-01'), athlete('late', '2026-10-01'), athlete('paid', '2026-11-01')],
+      [paid('2026-11-01', '2026-10-30', 'paid')],
+      '2026-11-01',
+    );
+    const r = dueReminders(ledger, '2026-11-01');
+    expect(r.map((x) => [x.studentId, x.dueToday, x.months.length, x.amountCents])).toEqual([
+      ['late', true, 2, 20000],
+      ['today', true, 1, 10000],
+    ]);
+  });
+
+  it('nothing before the due day', () => {
+    const ledger = buildLedger([athlete('a', '2026-11-01')], [], '2026-10-31');
+    expect(dueReminders(ledger, '2026-10-31')).toEqual([]);
   });
 });
 

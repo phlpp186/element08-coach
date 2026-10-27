@@ -162,7 +162,10 @@ export function buildLedger(
 }
 
 /** Totals for the header strip. */
-export function ledgerTotals(ledger: AthleteBilling[]): {
+export function ledgerTotals(
+  ledger: AthleteBilling[],
+  today: string,
+): {
   overdueCents: number;
   overdueAthletes: number;
   monthCents: number;
@@ -170,8 +173,12 @@ export function ledgerTotals(ledger: AthleteBilling[]): {
   return {
     overdueCents: ledger.reduce((s, a) => s + a.overdueCents, 0),
     overdueAthletes: ledger.filter((a) => a.overdueCount > 0).length,
-    // What the roster is worth per month, counting only live arrangements.
-    monthCents: ledger.reduce((s, a) => s + (a.terms.endedOn ? 0 : a.terms.amountCents), 0),
+    // What the roster is worth per month, counting only live arrangements: no
+    // end date yet, or one still ahead (most athletes are coached until a date).
+    monthCents: ledger.reduce(
+      (s, a) => s + (a.terms.endedOn && a.terms.endedOn < today ? 0 : a.terms.amountCents),
+      0,
+    ),
   };
 }
 
@@ -258,4 +265,43 @@ export function billingCsv(ledger: AthleteBilling[], nameOf: (studentId: string)
     }
   }
   return rows.map((r) => r.map(csvCell).join(',')).join('\n') + '\n';
+}
+
+/** One athlete to remind about: every unpaid month whose due date has come. */
+export interface DueReminder {
+  studentId: string;
+  /** Oldest first. */
+  months: BillingMonth[];
+  /** One of them falls due today (the rest, if any, are overdue). */
+  dueToday: boolean;
+  amountCents: number;
+  currency: string;
+}
+
+/** Who is due today or overdue, most overdue first (the coach's pop-up). */
+export function dueReminders(ledger: AthleteBilling[], today: string): DueReminder[] {
+  const out: DueReminder[] = [];
+  for (const a of ledger) {
+    const months = a.months.filter((m) => !m.paid && m.dueOn <= today);
+    if (months.length === 0) continue;
+    out.push({
+      studentId: a.studentId,
+      months,
+      dueToday: months.some((m) => m.dueOn === today),
+      amountCents: months.reduce((s, m) => s + m.amountCents, 0),
+      currency: a.terms.currency,
+    });
+  }
+  return out;
+}
+
+/** "June, July, September 2026" (the year once per run of the same year). */
+export function monthList(periods: string[]): string {
+  const byYear = new Map<string, string[]>();
+  for (const p of periods) {
+    const y = p.slice(0, 4);
+    const name = new Date(`${p}T12:00:00`).toLocaleDateString(undefined, { month: 'long' });
+    byYear.set(y, [...(byYear.get(y) ?? []), name]);
+  }
+  return [...byYear.entries()].map(([y, names]) => `${names.join(', ')} ${y}`).join(', ');
 }

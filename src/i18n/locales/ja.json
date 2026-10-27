@@ -657,5 +657,13 @@
   "Clean": "クリーン",
   "Symptoms": "症状あり",
   "LMC / Samba": "LMC / Samba",
-  "Blackout": "ブラックアウト"
+  "Blackout": "ブラックアウト",
+  "Coaching fees due": "支払期日のコーチング料金",
+  "Copied": "コピーしました",
+  "Due today for {months}": "本日期日: {months}",
+  "Later": "あとで",
+  "Mark paid": "支払い済みにする",
+  "Mark {month} paid": "{month} を支払い済みにする",
+  "Open Billing": "請求を開く",
+  "Open: {months}": "未払い: {months}"
 }

@@ -657,5 +657,13 @@
   "Clean": "正常",
   "Symptoms": "出現症狀",
   "LMC / Samba": "LMC / Samba",
-  "Blackout": "昏厥"
+  "Blackout": "昏厥",
+  "Coaching fees due": "到期的教練費",
+  "Copied": "已複製",
+  "Due today for {months}": "今天到期：{months}",
+  "Later": "稍後",
+  "Mark paid": "標記為已付",
+  "Mark {month} paid": "將 {month} 標記為已付",
+  "Open Billing": "開啟帳單",
+  "Open: {months}": "未付：{months}"
 }

@@ -657,5 +657,13 @@
   "Clean": "正常",
   "Symptoms": "症状",
   "LMC / Samba": "LMC / Samba",
-  "Blackout": "黑视"
+  "Blackout": "黑视",
+  "Coaching fees due": "到期的教练费",
+  "Copied": "已复制",
+  "Due today for {months}": "今天到期：{months}",
+  "Later": "稍后",
+  "Mark paid": "标记为已付",
+  "Mark {month} paid": "将 {month} 标记为已付",
+  "Open Billing": "打开账单",
+  "Open: {months}": "未付：{months}"
 }

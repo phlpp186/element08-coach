@@ -4,7 +4,16 @@
  *  routed in a build. */
 import { useMemo, useState } from 'react';
 import { BillingBody, type BillingActions } from '../views/BillingView';
-import { addMonths, monthKey, todayISO, type BillingTerms, type PaymentRow } from '../lib/billing';
+import {
+  addMonths,
+  buildLedger,
+  dueReminders,
+  monthKey,
+  todayISO,
+  type BillingTerms,
+  type PaymentRow,
+} from '../lib/billing';
+import { DueReminderDialog } from '../components/BillingDueReminder';
 
 const TODAY = todayISO();
 const m = (n: number) => addMonths(monthKey(TODAY), n);
@@ -20,6 +29,8 @@ const startTerms: BillingTerms[] = [
   { studentId: 'a2', amountCents: 9000, currency: 'EUR', dueDay: 15, startedOn: m(-4), endedOn: null },
   { studentId: 'a3', amountCents: 15000, currency: 'EUR', dueDay: 1, startedOn: m(-3), endedOn: null },
   { studentId: 'a4', amountCents: 8000, currency: 'EUR', dueDay: 1, startedOn: m(-9), endedOn: m(-5) },
+  // Due today, so the pop-up has a "due today" row.
+  { studentId: 'a5', amountCents: 10000, currency: 'EUR', dueDay: Math.min(28, Number(TODAY.slice(8, 10))), startedOn: m(0), endedOn: m(5) },
 ];
 const paid = (studentId: string, n: number, amountCents: number): PaymentRow => ({
   studentId,
@@ -52,8 +63,30 @@ export function BillingPreview() {
     }),
     [],
   );
+  const [popup, setPopup] = useState(true);
+  const due = dueReminders(buildLedger(terms, payments, TODAY), TODAY);
+  const nameOf = (id: string) => athletes.find((a) => a.studentId === id)?.name ?? 'Athlete';
   return (
-    <BillingBody
+    <>
+      {popup && due.length > 0 && (
+        <DueReminderDialog
+          due={due}
+          nameOf={nameOf}
+          busy={null}
+          copied={null}
+          onPay={(r) => {
+            const mm = r.months[0];
+            setPayments((ps) => [
+              ...ps,
+              { studentId: r.studentId, period: mm.period, amountCents: mm.amountCents, currency: r.currency, paidOn: TODAY },
+            ]);
+          }}
+          onCopy={() => {}}
+          onClose={() => setPopup(false)}
+          onOpenBilling={() => setPopup(false)}
+        />
+      )}
+      <BillingBody
       terms={terms}
       payments={payments}
       athletes={athletes}
@@ -61,6 +94,7 @@ export function BillingPreview() {
       loading={false}
       error={null}
       actions={actions}
-    />
+      />
+    </>
   );
 }

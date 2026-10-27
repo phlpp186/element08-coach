@@ -32,6 +32,7 @@ import {
   formatMoney,
   ledgerTotals,
   monthKey,
+  monthList,
   monthWindow,
   overdueMonths,
   periodTotals,
@@ -170,7 +171,7 @@ export function BillingBody({
   );
 
   const ledger = useMemo(() => buildLedger(terms, payments, today), [terms, payments, today]);
-  const totals = useMemo(() => ledgerTotals(ledger), [ledger]);
+  const totals = useMemo(() => ledgerTotals(ledger, today), [ledger, today]);
   // Currency is per-arrangement, but a mixed-currency total would be a lie, so
   // totals only show when the whole roster shares one.
   const currencies = new Set(terms.map((x) => x.currency));
@@ -420,17 +421,6 @@ export function BillingBody({
       )}
     </main>
   );
-}
-
-/** "June, July, September 2026" (the year once per run of the same year). */
-function monthList(periods: string[]): string {
-  const byYear = new Map<string, string[]>();
-  for (const p of periods) {
-    const y = p.slice(0, 4);
-    const name = new Date(`${p}T12:00:00`).toLocaleDateString(undefined, { month: 'long' });
-    byYear.set(y, [...(byYear.get(y) ?? []), name]);
-  }
-  return [...byYear.entries()].map(([y, names]) => `${names.join(', ')} ${y}`).join(', ');
 }
 
 function Legend({ className, children }: { className: string; children?: ReactNode }) {

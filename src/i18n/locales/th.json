@@ -657,5 +657,13 @@
   "Clean": "ปกติ",
   "Symptoms": "มีอาการ",
   "LMC / Samba": "LMC / Samba",
-  "Blackout": "หมดสติ"
+  "Blackout": "หมดสติ",
+  "Coaching fees due": "ค่าโค้ชที่ถึงกำหนด",
+  "Copied": "คัดลอกแล้ว",
+  "Due today for {months}": "ครบกำหนดวันนี้: {months}",
+  "Later": "ภายหลัง",
+  "Mark paid": "ทำเครื่องหมายว่าชำระแล้ว",
+  "Mark {month} paid": "ทำเครื่องหมาย {month} ว่าชำระแล้ว",
+  "Open Billing": "เปิดการเรียกเก็บเงิน",
+  "Open: {months}": "ค้างชำระ: {months}"
 }

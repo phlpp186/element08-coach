@@ -11,6 +11,7 @@ import { ExercisesView } from './views/ExercisesView';
 import { BillingView } from './views/BillingView';
 import { AuthBar } from './components/AuthBar';
 import { CompletionBell } from './components/CompletionBell';
+import { BillingDueReminder } from './components/BillingDueReminder';
 import { ThemeToggle } from './components/ThemeToggle';
 import { AppFooter } from './components/AppFooter';
 import { useT } from './i18n';
@@ -67,6 +68,7 @@ export function App() {
 
       <Outlet />
       <AppFooter />
+      <BillingDueReminder />
     </div>
   );
 }
