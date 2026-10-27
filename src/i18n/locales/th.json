@@ -665,5 +665,8 @@
   "Mark paid": "ทำเครื่องหมายว่าชำระแล้ว",
   "Mark {month} paid": "ทำเครื่องหมาย {month} ว่าชำระแล้ว",
   "Open Billing": "เปิดการเรียกเก็บเงิน",
-  "Open: {months}": "ค้างชำระ: {months}"
+  "Open: {months}": "ค้างชำระ: {months}",
+  "Disconnect {name}? They stop seeing your plans, you stop seeing their sessions, and the Pro included with your coaching ends. Their own logbook stays as it is.": "ยกเลิกการเชื่อมต่อกับ {name} ไหม? เขาจะไม่เห็นแผนของคุณ คุณจะไม่เห็นเซสชันของเขา และ Pro ที่รวมในการโค้ชจะสิ้นสุด สมุดบันทึกของเขายังอยู่เหมือนเดิม",
+  "Disconnect athlete": "ยกเลิกการเชื่อมต่อนักกีฬา",
+  "For an athlete you no longer coach. You can invite them again later.": "สำหรับนักกีฬาที่คุณไม่ได้โค้ชแล้ว คุณเชิญเขาอีกครั้งได้ภายหลัง"
 }

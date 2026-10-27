@@ -665,5 +665,8 @@
   "Mark paid": "标记为已付",
   "Mark {month} paid": "将 {month} 标记为已付",
   "Open Billing": "打开账单",
-  "Open: {months}": "未付：{months}"
+  "Open: {months}": "未付：{months}",
+  "Disconnect {name}? They stop seeing your plans, you stop seeing their sessions, and the Pro included with your coaching ends. Their own logbook stays as it is.": "要断开与 {name} 的连接吗？对方将看不到你的计划，你也看不到对方的训练，教练服务包含的 Pro 也会结束。对方自己的日志保持不变。",
+  "Disconnect athlete": "断开运动员",
+  "For an athlete you no longer coach. You can invite them again later.": "用于你不再指导的运动员。之后可以再次邀请。"
 }

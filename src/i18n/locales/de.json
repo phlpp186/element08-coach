@@ -665,5 +665,8 @@
   "Mark paid": "Als bezahlt markieren",
   "Mark {month} paid": "{month} als bezahlt markieren",
   "Open Billing": "Abrechnung öffnen",
-  "Open: {months}": "Offen: {months}"
+  "Open: {months}": "Offen: {months}",
+  "Disconnect {name}? They stop seeing your plans, you stop seeing their sessions, and the Pro included with your coaching ends. Their own logbook stays as it is.": "{name} trennen? Deine Pläne sind für sie nicht mehr sichtbar, du siehst ihre Einheiten nicht mehr, und das im Coaching enthaltene Pro endet. Ihr eigenes Logbuch bleibt unverändert.",
+  "Disconnect athlete": "Athlet:in trennen",
+  "For an athlete you no longer coach. You can invite them again later.": "Für Athlet:innen, die du nicht mehr coachst. Du kannst sie später wieder einladen."
 }

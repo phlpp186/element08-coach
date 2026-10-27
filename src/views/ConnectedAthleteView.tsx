@@ -6,10 +6,11 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { navigate } from '../hooks/useHashRoute';
-import { useT, tr } from '../i18n';
+import { fill, useT, tr } from '../i18n';
 import { groupStyleById } from '../lib/disciplines';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import {
+  disconnect,
   getAthleteProfile,
   listMyStudents,
   listCoachAssignments,
@@ -38,6 +39,8 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
   const [assignments, setAssignments] = useState<CoachAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [linkId, setLinkId] = useState<string | null>(null);
+  const [disconnecting, setDisconnecting] = useState(false);
 
   // Depend only on STABLE primitives (studentId + the signed-in user's id), never
   // the whole `session` object — Supabase's onAuthStateChange hands a fresh
@@ -56,6 +59,7 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
       ]);
       const me = students.find((s) => s.student.id === studentId);
       setName(me?.student.display_name?.trim() || tr('Athlete'));
+      setLinkId(me?.id ?? null);
       setPbs(parsePBs(profile?.pbs));
       setGoals(parseGoals(profile?.goals));
       setAssignments(allAssignments.filter((a) => a.studentId === studentId));
@@ -77,6 +81,29 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
     const ch = subscribeToTables(['completions', 'athlete_profiles'], () => load());
     return () => unsubscribeChannel(ch);
   }, [userId, load]);
+
+  // Ends coaching: the link, the plans assigned to them and the Pro included
+  // with coaching (disconnect re-syncs it). Their own logbook is untouched.
+  async function endCoaching() {
+    if (!linkId) return;
+    if (
+      !confirm(
+        fill(
+          t('Disconnect {name}? They stop seeing your plans, you stop seeing their sessions, and the Pro included with your coaching ends. Their own logbook stays as it is.'),
+          { name },
+        ),
+      )
+    )
+      return;
+    setDisconnecting(true);
+    try {
+      await disconnect(linkId);
+      navigate('/athletes');
+    } catch (e) {
+      setError((e as Error).message);
+      setDisconnecting(false);
+    }
+  }
 
   if (!session) {
     return (
@@ -182,6 +209,21 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
               onChange={(p) => updateCoachNote(studentId, { intake: { ...note.intake, ...p } })}
             />
           </section>
+
+          {linkId && (
+            <section className="border-t border-border pt-4">
+              <button
+                onClick={() => void endCoaching()}
+                disabled={disconnecting}
+                className="text-sm text-textDim underline hover:text-red"
+              >
+                {disconnecting ? '…' : t('Disconnect athlete')}
+              </button>
+              <p className="mt-1 text-xs text-textDim">
+                {t('For an athlete you no longer coach. You can invite them again later.')}
+              </p>
+            </section>
+          )}
         </>
       )}
     </main>

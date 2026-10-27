@@ -665,5 +665,8 @@
   "Mark paid": "결제 완료로 표시",
   "Mark {month} paid": "{month} 결제 완료로 표시",
   "Open Billing": "결제 관리 열기",
-  "Open: {months}": "미납: {months}"
+  "Open: {months}": "미납: {months}",
+  "Disconnect {name}? They stop seeing your plans, you stop seeing their sessions, and the Pro included with your coaching ends. Their own logbook stays as it is.": "{name} 님과 연결을 해제할까요? 상대는 내 플랜을 더 이상 볼 수 없고, 나도 상대의 세션을 볼 수 없으며, 코칭에 포함된 Pro도 끝나요. 상대의 로그북은 그대로 남아요.",
+  "Disconnect athlete": "선수 연결 해제",
+  "For an athlete you no longer coach. You can invite them again later.": "더 이상 코칭하지 않는 선수용이에요. 나중에 다시 초대할 수 있어요."
 }

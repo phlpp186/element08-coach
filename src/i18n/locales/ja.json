@@ -665,5 +665,8 @@
   "Mark paid": "支払い済みにする",
   "Mark {month} paid": "{month} を支払い済みにする",
   "Open Billing": "請求を開く",
-  "Open: {months}": "未払い: {months}"
+  "Open: {months}": "未払い: {months}",
+  "Disconnect {name}? They stop seeing your plans, you stop seeing their sessions, and the Pro included with your coaching ends. Their own logbook stays as it is.": "{name} との接続を解除しますか？ あなたのプランは表示されなくなり、あなたも相手のセッションを見られなくなり、コーチングに含まれるProも終了します。相手のログブックはそのまま残ります。",
+  "Disconnect athlete": "アスリートとの接続を解除",
+  "For an athlete you no longer coach. You can invite them again later.": "もう指導していないアスリート向けです。後で再び招待できます。"
 }
