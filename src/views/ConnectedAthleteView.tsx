@@ -127,6 +127,16 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
           <h2 className="text-xl text-text">{name}</h2>
           <p className="text-xs text-accent">✓ {t('connected · synced with the app')}</p>
         </div>
+        {linkId && (
+          <button
+            onClick={() => void endCoaching()}
+            disabled={disconnecting}
+            title={t('For an athlete you no longer coach. You can invite them again later.')}
+            className="ml-auto pill text-sm px-3 py-1.5 hover:text-red"
+          >
+            {disconnecting ? '…' : t('Disconnect athlete')}
+          </button>
+        )}
       </div>
 
       {loading && <p className="text-textDim text-sm">{t('Loading…')}</p>}
@@ -210,20 +220,6 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
             />
           </section>
 
-          {linkId && (
-            <section className="border-t border-border pt-4">
-              <button
-                onClick={() => void endCoaching()}
-                disabled={disconnecting}
-                className="text-sm text-textDim underline hover:text-red"
-              >
-                {disconnecting ? '…' : t('Disconnect athlete')}
-              </button>
-              <p className="mt-1 text-xs text-textDim">
-                {t('For an athlete you no longer coach. You can invite them again later.')}
-              </p>
-            </section>
-          )}
         </>
       )}
     </main>
