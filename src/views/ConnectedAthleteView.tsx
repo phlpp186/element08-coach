@@ -14,6 +14,7 @@ import {
   getAthleteProfile,
   listMyStudents,
   listCoachAssignments,
+  removeAssignment,
   subscribeToTables,
   unsubscribeChannel,
   type CoachAssignment,
@@ -41,6 +42,7 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
   const [error, setError] = useState<string | null>(null);
   const [linkId, setLinkId] = useState<string | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [removing, setRemoving] = useState<string | null>(null);
 
   // Depend only on STABLE primitives (studentId + the signed-in user's id), never
   // the whole `session` object — Supabase's onAuthStateChange hands a fresh
@@ -81,6 +83,28 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
     const ch = subscribeToTables(['completions', 'athlete_profiles'], () => load());
     return () => unsubscribeChannel(ch);
   }, [userId, load]);
+
+  // Takes one plan off the athlete; it leaves their app at the next sync.
+  async function removePlan(a: CoachAssignment) {
+    if (
+      !confirm(
+        fill(
+          t('Remove {plan} from {name}? It disappears from their app. What they logged on it stays, and assigning the plan again brings it back.'),
+          { plan: a.planTitle, name },
+        ),
+      )
+    )
+      return;
+    setRemoving(a.id);
+    try {
+      await removeAssignment(a.id);
+      setAssignments((prev) => prev.filter((x) => x.id !== a.id));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setRemoving(null);
+    }
+  }
 
   // Ends coaching: the link, the plans assigned to them and the Pro included
   // with coaching (disconnect re-syncs it). Their own logbook is untouched.
@@ -184,19 +208,28 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
             ) : (
               <div className="space-y-2">
                 {assignments.map((a) => (
-                  <button
-                    key={a.id}
-                    onClick={() => navigate(`/connected/${studentId}/plan/${a.id}`)}
-                    className="w-full text-left rounded-lg border border-border bg-panel p-3 flex items-center justify-between gap-3 hover:border-accent transition-colors"
-                  >
-                    <span className="text-text">{a.planTitle}</span>
-                    <span className="flex items-center gap-2 shrink-0">
-                      <span className="text-xs text-textDim">
-                        {a.doneCount} {a.doneCount === 1 ? t('session') : t('sessions')} {t('done')}
+                  <div key={a.id} className="flex items-stretch gap-2">
+                    <button
+                      onClick={() => navigate(`/connected/${studentId}/plan/${a.id}`)}
+                      className="flex-1 min-w-0 text-left rounded-lg border border-border bg-panel p-3 flex items-center justify-between gap-3 hover:border-accent transition-colors"
+                    >
+                      <span className="text-text truncate">{a.planTitle}</span>
+                      <span className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs text-textDim">
+                          {a.doneCount} {a.doneCount === 1 ? t('session') : t('sessions')} {t('done')}
+                        </span>
+                        <span className="text-textDim">›</span>
                       </span>
-                      <span className="text-textDim">›</span>
-                    </span>
-                  </button>
+                    </button>
+                    <button
+                      onClick={() => removePlan(a)}
+                      disabled={removing === a.id}
+                      className="pill px-3 text-xs text-textDim hover:text-red shrink-0 disabled:opacity-50"
+                      aria-label={fill(t('Remove {plan} from {name}'), { plan: a.planTitle, name })}
+                    >
+                      {t('Remove')}
+                    </button>
+                  </div>
                 ))}
               </div>
             )}

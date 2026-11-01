@@ -36,6 +36,15 @@ export interface LibraryStamp {
   editedAt: string;
   deletedAt?: string;
   portal?: BuilderPlan;
+  /** On a frozen "(previous version)" copy: the library plan it was copied
+   *  from, so assigning that plan again replaces the copy (coachData.assignPlan). */
+  copyOf?: string;
+}
+
+/** The plan a frozen "(previous version)" copy was taken from, if any. */
+export function copyOfPlan(definition: unknown): string | null {
+  const s = stampOf(definition);
+  return s && typeof s.copyOf === 'string' ? s.copyOf : null;
 }
 
 type Obj = Record<string, unknown>;

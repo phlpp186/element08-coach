@@ -668,5 +668,7 @@
   "Open: {months}": "未付：{months}",
   "Disconnect {name}? They stop seeing your plans, you stop seeing their sessions, and the Pro included with your coaching ends. Their own logbook stays as it is.": "要断开与 {name} 的连接吗？对方将看不到你的计划，你也看不到对方的训练，教练服务包含的 Pro 也会结束。对方自己的日志保持不变。",
   "Disconnect athlete": "断开运动员",
-  "For an athlete you no longer coach. You can invite them again later.": "用于你不再指导的运动员。之后可以再次邀请。"
+  "For an athlete you no longer coach. You can invite them again later.": "用于你不再指导的运动员。之后可以再次邀请。",
+  "Remove {plan} from {name}": "从{name}移除{plan}",
+  "Remove {plan} from {name}? It disappears from their app. What they logged on it stays, and assigning the plan again brings it back.": "要从{name}移除{plan}吗？它会从对方的应用中消失。已记录的内容会保留，再次分配该计划即可恢复。"
 }

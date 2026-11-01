@@ -316,6 +316,7 @@ export async function keepPreviousFor(
           editedOn: 'web',
           editedAt: at,
           ...(stamp?.portal ? { portal: { ...stamp.portal, name: copyTitle } } : {}),
+          copyOf: cloudId,
         },
       } as unknown as Json,
     })

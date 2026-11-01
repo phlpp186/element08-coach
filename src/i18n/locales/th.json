@@ -668,5 +668,7 @@
   "Open: {months}": "ค้างชำระ: {months}",
   "Disconnect {name}? They stop seeing your plans, you stop seeing their sessions, and the Pro included with your coaching ends. Their own logbook stays as it is.": "ยกเลิกการเชื่อมต่อกับ {name} ไหม? เขาจะไม่เห็นแผนของคุณ คุณจะไม่เห็นเซสชันของเขา และ Pro ที่รวมในการโค้ชจะสิ้นสุด สมุดบันทึกของเขายังอยู่เหมือนเดิม",
   "Disconnect athlete": "ยกเลิกการเชื่อมต่อนักกีฬา",
-  "For an athlete you no longer coach. You can invite them again later.": "สำหรับนักกีฬาที่คุณไม่ได้โค้ชแล้ว คุณเชิญเขาอีกครั้งได้ภายหลัง"
+  "For an athlete you no longer coach. You can invite them again later.": "สำหรับนักกีฬาที่คุณไม่ได้โค้ชแล้ว คุณเชิญเขาอีกครั้งได้ภายหลัง",
+  "Remove {plan} from {name}": "นำ {plan} ออกจาก {name}",
+  "Remove {plan} from {name}? It disappears from their app. What they logged on it stays, and assigning the plan again brings it back.": "นำ {plan} ออกจาก {name} หรือไม่? แผนจะหายไปจากแอป สิ่งที่บันทึกไว้แล้วยังอยู่ และเมื่อมอบหมายแผนอีกครั้งก็จะกลับมา"
 }

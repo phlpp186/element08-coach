@@ -8,6 +8,7 @@
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './client';
 import { syncCoacheePro } from './coacheePro';
+import { copyOfPlan, tombstone } from '../planLibrary';
 
 export type Json = string | number | boolean | null | { [k: string]: Json } | Json[];
 
@@ -182,8 +183,37 @@ export async function deletePlan(id: string): Promise<void> {
 
 // ─── Assignments (coach pushes a plan to a student) ─────────────────────────
 
+/** Assign a plan. An athlete still on a frozen "(previous version)" copy of
+ *  it (a "Library only" save, planLibrary.keepPreviousFor) is moved back onto
+ *  the plan instead: one plan in their app, not the copy and the plan side by
+ *  side, and the move keeps their logged sessions and their Today choice,
+ *  which belong to the assignment. The copy is then deleted from the library
+ *  when nobody else is on it. */
 export async function assignPlan(planId: string, studentId: string): Promise<AssignmentRow> {
-  return unwrap(
+  const mine = unwrap(
+    await supabase
+      .from('assignments')
+      .select('id, plan_id, active, plan:plans(definition)')
+      .eq('student_id', studentId),
+  ) as unknown as { id: string; plan_id: string; active: boolean; plan: { definition: Json } | null }[];
+  const onPlan = mine.some((r) => r.plan_id === planId);
+  const copy = mine.find((r) => r.active && r.plan_id !== planId && copyOfPlan(r.plan?.definition) === planId);
+
+  if (copy && !onPlan) {
+    const at = new Date().toISOString();
+    const moved = unwrap(
+      await supabase
+        .from('assignments')
+        .update({ plan_id: planId, active: true, updated_at: at })
+        .eq('id', copy.id)
+        .select()
+        .single(),
+    ) as AssignmentRow;
+    await retireCopy(copy.plan_id, copy.plan?.definition, at);
+    return moved;
+  }
+
+  const row = unwrap(
     await supabase
       .from('assignments')
       .upsert(
@@ -192,7 +222,36 @@ export async function assignPlan(planId: string, studentId: string): Promise<Ass
       )
       .select()
       .single(),
-  );
+  ) as AssignmentRow;
+  // They already had a row for the plan (removed earlier): that one is back,
+  // so the copy goes rather than sitting beside it.
+  if (copy) await removeAssignment(copy.id);
+  return row;
+}
+
+/** Delete a frozen copy from the library (a tombstone, as a library delete)
+ *  once no athlete is on it any more. */
+async function retireCopy(copyPlanId: string, definition: Json | undefined, at: string) {
+  const { count } = await supabase
+    .from('assignments')
+    .select('id', { count: 'exact', head: true })
+    .eq('plan_id', copyPlanId);
+  if (count) return;
+  await supabase
+    .from('plans')
+    .update({ definition: tombstone(definition, at) as Json, updated_at: at })
+    .eq('id', copyPlanId);
+}
+
+/** Take a plan off an athlete: it leaves their app at the next sync. The row
+ *  stays inactive, so what they logged on it is kept and assigning the plan
+ *  again brings it back with that history. */
+export async function removeAssignment(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('assignments')
+    .update({ active: false, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw new Error(error.message);
 }
 
 export async function deleteAssignment(id: string): Promise<void> {

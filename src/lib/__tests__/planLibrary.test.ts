@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   builderToDefinition,
+  copyOfPlan,
   definitionToBuilder,
   isLibraryDefinition,
   stampOf,
@@ -150,5 +151,18 @@ describe('library rows', () => {
     const d = tombstone(appPlan(), 'x');
     expect(stampOf(d)?.deletedAt).toBe('x');
     expect(d.phases).toBeDefined();
+  });
+});
+
+describe('copyOfPlan', () => {
+  it('names the plan a frozen copy came from', () => {
+    const def = { library: { v: 1, editedOn: 'web', editedAt: '2026-11-01T10:00:00Z', copyOf: 'plan-a' } };
+    expect(copyOfPlan(def)).toBe('plan-a');
+  });
+
+  it('is null for an ordinary plan and for a copy made before copies were stamped', () => {
+    expect(copyOfPlan({ library: { v: 1, editedOn: 'web', editedAt: '2026-11-01T10:00:00Z' } })).toBeNull();
+    expect(copyOfPlan({})).toBeNull();
+    expect(copyOfPlan(null)).toBeNull();
   });
 });
