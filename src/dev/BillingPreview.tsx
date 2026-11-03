@@ -17,7 +17,12 @@ import { DueReminderDialog } from '../components/BillingDueReminder';
 
 const TODAY = todayISO();
 const m = (n: number) => addMonths(monthKey(TODAY), n);
+// ?preview=billing&many: a dozen more athletes with open months, the roster
+// that pushed the due pop-up off the screen.
+const MANY = new URLSearchParams(location.search).has('many');
+const extra = MANY ? Array.from({ length: 12 }, (_, i) => ({ studentId: `x${i}`, name: `Athlete ${i + 6}` })) : [];
 const athletes = [
+  ...extra,
   { studentId: 'a1', name: 'Lena Fischer' },
   { studentId: 'a2', name: 'Marco' },
   { studentId: 'a3', name: 'Sofia' },
@@ -25,6 +30,7 @@ const athletes = [
   { studentId: 'a5', name: 'Ana' },
 ];
 const startTerms: BillingTerms[] = [
+  ...extra.map((x) => ({ studentId: x.studentId, amountCents: 10000, currency: 'EUR', dueDay: 1, startedOn: m(-2), endedOn: null })),
   { studentId: 'a1', amountCents: 12000, currency: 'EUR', dueDay: 1, startedOn: m(-6), endedOn: null },
   { studentId: 'a2', amountCents: 9000, currency: 'EUR', dueDay: 15, startedOn: m(-4), endedOn: null },
   { studentId: 'a3', amountCents: 15000, currency: 'EUR', dueDay: 1, startedOn: m(-3), endedOn: null },

@@ -157,10 +157,12 @@ export function DueReminderDialog({
         aria-modal="true"
         aria-label={t('Coaching fees due')}
         onClick={(e) => e.stopPropagation()}
-        className="board w-full max-w-md space-y-3 p-5"
+        // Capped at the screen with only the list scrolling: one card per
+        // athlete ran off a laptop screen with no way to reach Later.
+        className="board flex max-h-[calc(100dvh-2rem)] w-full max-w-md flex-col gap-3 p-5"
       >
         <h2 className="font-heading text-lg text-text">{t('Coaching fees due')}</h2>
-        <ul className="space-y-2">
+        <ul className="-mr-2 min-h-0 flex-1 space-y-2 overflow-y-auto overscroll-contain pr-2">
           {due.map((r) => {
             const late = r.months.length > 1 || !r.dueToday;
             return (
