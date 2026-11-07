@@ -47,7 +47,7 @@ export function PlanDetail({
   conflict: boolean;
   /** Its cloud id when it is an app plan: Edit opens the block editor, and
    *  a copy or a .e08plan file (both builder-made) would lose its workouts,
-   *  loads and tests, so neither is offered. */
+   *  loads and tests, so neither is offered, nor Assign. */
   blockId?: string | null;
   online: boolean;
   onClose: () => void;
@@ -168,7 +168,10 @@ export function PlanDetail({
           >
             {conflict && !blockId ? t('Choose version') : t('Edit')}
           </button>
-          {online && !conflict && (
+          {/* An app plan reaches an athlete through "+ App block" (her own
+              copy); assigning it here would hand one athlete's block to
+              another, and the builder's publish refuses app plans anyway. */}
+          {online && !conflict && !blockId && (
             <AssignToConnectedButton ready={stats.sessions > 0} ensurePublished={ensurePublished} menuBelow />
           )}
           {!blockId && (
