@@ -670,5 +670,9 @@
   "Disconnect athlete": "Athlet:in trennen",
   "For an athlete you no longer coach. You can invite them again later.": "Für Athlet:innen, die du nicht mehr coachst. Du kannst sie später wieder einladen.",
   "Remove {plan} from {name}": "{plan} von {name} entfernen",
-  "Remove {plan} from {name}? It disappears from their app. What they logged on it stays, and assigning the plan again brings it back.": "{plan} von {name} entfernen? Der Plan verschwindet aus der App. Was dort schon eingetragen ist, bleibt erhalten, und wenn du den Plan erneut zuweist, ist er wieder da."
+  "Remove {plan} from {name}? It disappears from their app. What they logged on it stays, and assigning the plan again brings it back.": "{plan} von {name} entfernen? Der Plan verschwindet aus der App. Was dort schon eingetragen ist, bleibt erhalten, und wenn du den Plan erneut zuweist, ist er wieder da.",
+  "Billing works with your connected athletes.": "Die Abrechnung arbeitet mit deinen verbundenen Athleten.",
+  "Connecting athletes needs the coach role, which comes with ELEMENT | 08 Pro. In the app, open Settings › Account and tap Become a coach. Your athletes do not need Pro.": "Um Athleten zu verbinden, brauchst du die Coach-Rolle, die mit ELEMENT | 08 Pro kommt. Öffne in der App Einstellungen › Konto und tippe auf Coach werden. Deine Athleten brauchen kein Pro.",
+  "Without it you can still build plans here and send them as .e08plan files.": "Auch ohne sie kannst du hier Pläne erstellen und als .e08plan-Dateien verschicken.",
+  "No connected athletes yet. Invite one under Athletes, then set up their fee here.": "Noch keine verbundenen Athleten. Lade unter Athleten einen ein und lege dann hier die Gebühr fest."
 }

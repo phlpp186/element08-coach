@@ -670,5 +670,9 @@
   "Disconnect athlete": "ยกเลิกการเชื่อมต่อนักกีฬา",
   "For an athlete you no longer coach. You can invite them again later.": "สำหรับนักกีฬาที่คุณไม่ได้โค้ชแล้ว คุณเชิญเขาอีกครั้งได้ภายหลัง",
   "Remove {plan} from {name}": "นำ {plan} ออกจาก {name}",
-  "Remove {plan} from {name}? It disappears from their app. What they logged on it stays, and assigning the plan again brings it back.": "นำ {plan} ออกจาก {name} หรือไม่? แผนจะหายไปจากแอป สิ่งที่บันทึกไว้แล้วยังอยู่ และเมื่อมอบหมายแผนอีกครั้งก็จะกลับมา"
+  "Remove {plan} from {name}? It disappears from their app. What they logged on it stays, and assigning the plan again brings it back.": "นำ {plan} ออกจาก {name} หรือไม่? แผนจะหายไปจากแอป สิ่งที่บันทึกไว้แล้วยังอยู่ และเมื่อมอบหมายแผนอีกครั้งก็จะกลับมา",
+  "Billing works with your connected athletes.": "การเรียกเก็บเงินใช้กับนักกีฬาที่เชื่อมต่อแล้วของคุณ",
+  "Connecting athletes needs the coach role, which comes with ELEMENT | 08 Pro. In the app, open Settings › Account and tap Become a coach. Your athletes do not need Pro.": "การเชื่อมต่อนักกีฬาต้องใช้บทบาทโค้ช ซึ่งมาพร้อมกับ ELEMENT | 08 Pro ในแอป ให้เปิด ตั้งค่า › บัญชี แล้วแตะ เป็นโค้ช นักกีฬาของคุณไม่ต้องใช้ Pro",
+  "Without it you can still build plans here and send them as .e08plan files.": "แม้ไม่มีบทบาทนี้ คุณยังสร้างแผนที่นี่และส่งเป็นไฟล์ .e08plan ได้",
+  "No connected athletes yet. Invite one under Athletes, then set up their fee here.": "ยังไม่มีนักกีฬาที่เชื่อมต่อ เชิญนักกีฬาได้ที่ นักกีฬา แล้วตั้งค่าค่าธรรมเนียมที่นี่"
 }

@@ -670,5 +670,9 @@
   "Disconnect athlete": "선수 연결 해제",
   "For an athlete you no longer coach. You can invite them again later.": "더 이상 코칭하지 않는 선수용이에요. 나중에 다시 초대할 수 있어요.",
   "Remove {plan} from {name}": "{name}에게서 {plan} 제거",
-  "Remove {plan} from {name}? It disappears from their app. What they logged on it stays, and assigning the plan again brings it back.": "{name}에게서 {plan}을(를) 제거할까요? 앱에서 사라집니다. 기록한 내용은 남고, 플랜을 다시 배정하면 돌아옵니다."
+  "Remove {plan} from {name}? It disappears from their app. What they logged on it stays, and assigning the plan again brings it back.": "{name}에게서 {plan}을(를) 제거할까요? 앱에서 사라집니다. 기록한 내용은 남고, 플랜을 다시 배정하면 돌아옵니다.",
+  "Billing works with your connected athletes.": "결제는 연결된 선수와 함께 작동합니다.",
+  "Connecting athletes needs the coach role, which comes with ELEMENT | 08 Pro. In the app, open Settings › Account and tap Become a coach. Your athletes do not need Pro.": "선수를 연결하려면 ELEMENT | 08 Pro에 포함된 코치 역할이 필요합니다. 앱에서 설정 › 계정을 열고 코치 되기를 탭하세요. 선수는 Pro가 필요하지 않습니다.",
+  "Without it you can still build plans here and send them as .e08plan files.": "코치 역할이 없어도 여기에서 플랜을 만들고 .e08plan 파일로 보낼 수 있습니다.",
+  "No connected athletes yet. Invite one under Athletes, then set up their fee here.": "아직 연결된 선수가 없습니다. 선수 탭에서 초대한 다음 여기에서 비용을 설정하세요."
 }

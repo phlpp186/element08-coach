@@ -670,5 +670,9 @@
   "Disconnect athlete": "断开运动员",
   "For an athlete you no longer coach. You can invite them again later.": "用于你不再指导的运动员。之后可以再次邀请。",
   "Remove {plan} from {name}": "从{name}移除{plan}",
-  "Remove {plan} from {name}? It disappears from their app. What they logged on it stays, and assigning the plan again brings it back.": "要从{name}移除{plan}吗？它会从对方的应用中消失。已记录的内容会保留，再次分配该计划即可恢复。"
+  "Remove {plan} from {name}? It disappears from their app. What they logged on it stays, and assigning the plan again brings it back.": "要从{name}移除{plan}吗？它会从对方的应用中消失。已记录的内容会保留，再次分配该计划即可恢复。",
+  "Billing works with your connected athletes.": "账单功能用于你已连接的运动员。",
+  "Connecting athletes needs the coach role, which comes with ELEMENT | 08 Pro. In the app, open Settings › Account and tap Become a coach. Your athletes do not need Pro.": "连接运动员需要教练角色，该角色包含在 ELEMENT | 08 Pro 中。在应用中打开 设置 › 账户，点击“成为教练”。你的运动员不需要 Pro。",
+  "Without it you can still build plans here and send them as .e08plan files.": "没有教练角色，你仍可以在这里创建计划，并以 .e08plan 文件发送。",
+  "No connected athletes yet. Invite one under Athletes, then set up their fee here.": "还没有已连接的运动员。请在“运动员”中邀请一位，然后在这里设置费用。"
 }

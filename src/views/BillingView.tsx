@@ -58,7 +58,7 @@ export interface BillingActions {
 
 export function BillingView() {
   const t = useT();
-  const { session } = useAuth();
+  const { session, profile, isCoach } = useAuth();
   const { athletes } = useRoster();
   const [terms, setTerms] = useState<BillingTerms[]>([]);
   const [payments, setPayments] = useState<PaymentRow[]>([]);
@@ -120,6 +120,11 @@ export function BillingView() {
       </main>
     );
   }
+  // Signed in but the role is still loading: wait, or a real coach sees the hint flash.
+  if (!profile) return null;
+  // A ledger row belongs to a connected athlete, and only a coach can connect
+  // athletes, so without the role this page could only ever be empty.
+  if (!isCoach) return <BillingNeedsCoach />;
 
   return (
     <BillingBody
@@ -131,6 +136,28 @@ export function BillingView() {
       error={error}
       actions={actions}
     />
+  );
+}
+
+/** Signed in without the coach role: say what unlocks Billing instead of an empty ledger. */
+export function BillingNeedsCoach() {
+  const t = useT();
+  return (
+    <main className="mx-auto max-w-4xl px-5 py-6 space-y-4">
+      <div className="space-y-1">
+        <h2 className="text-lg">{t('Billing')}</h2>
+        <p className="text-sm text-textDim">{t('A private record of monthly fees. Nothing here charges anyone.')}</p>
+      </div>
+      <div className="rounded-xl border border-dashed border-border bg-panel p-5 space-y-2 text-sm">
+        <p className="font-bold text-text">{t('Billing works with your connected athletes.')}</p>
+        <p className="text-textDim">
+          {t('Connecting athletes needs the coach role, which comes with ELEMENT | 08 Pro. In the app, open Settings › Account and tap Become a coach. Your athletes do not need Pro.')}
+        </p>
+        <p className="text-textDim">
+          {t('Without it you can still build plans here and send them as .e08plan files.')}
+        </p>
+      </div>
+    </main>
   );
 }
 
@@ -280,7 +307,9 @@ export function BillingBody({
 
       {ledger.length === 0 && !loading ? (
         <p className="rounded-lg border border-dashed border-border bg-panel px-5 py-8 text-center text-sm text-textDim">
-          {t('No fees set up yet. Add one below to start tracking.')}
+          {athletes.length === 0
+            ? t('No connected athletes yet. Invite one under Athletes, then set up their fee here.')
+            : t('No fees set up yet. Add one below to start tracking.')}
         </p>
       ) : (
         ledger.length > 0 && (

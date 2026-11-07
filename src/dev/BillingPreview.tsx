@@ -3,7 +3,7 @@
  *  month, undoing it and editing a fee all work against that local state. Not
  *  routed in a build. */
 import { useMemo, useState } from 'react';
-import { BillingBody, type BillingActions } from '../views/BillingView';
+import { BillingBody, BillingNeedsCoach, type BillingActions } from '../views/BillingView';
 import {
   addMonths,
   buildLedger,
@@ -19,7 +19,12 @@ const TODAY = todayISO();
 const m = (n: number) => addMonths(monthKey(TODAY), n);
 // ?preview=billing&many: a dozen more athletes with open months, the roster
 // that pushed the due pop-up off the screen.
-const MANY = new URLSearchParams(location.search).has('many');
+const Q = new URLSearchParams(location.search);
+const MANY = Q.has('many');
+// ?preview=billing&notcoach: signed in without the coach role.
+// ?preview=billing&empty: a coach with no connected athletes yet.
+const NOT_COACH = Q.has('notcoach');
+const EMPTY = Q.has('empty');
 const extra = MANY ? Array.from({ length: 12 }, (_, i) => ({ studentId: `x${i}`, name: `Athlete ${i + 6}` })) : [];
 const athletes = [
   ...extra,
@@ -53,8 +58,12 @@ const startPayments: PaymentRow[] = [
 ];
 
 export function BillingPreview() {
-  const [terms, setTerms] = useState(startTerms);
-  const [payments, setPayments] = useState(startPayments);
+  return NOT_COACH ? <BillingNeedsCoach /> : <LedgerPreview />;
+}
+
+function LedgerPreview() {
+  const [terms, setTerms] = useState(EMPTY ? [] : startTerms);
+  const [payments, setPayments] = useState(EMPTY ? [] : startPayments);
   const actions = useMemo<BillingActions>(
     () => ({
       pay: async (b, period) =>
@@ -95,7 +104,7 @@ export function BillingPreview() {
       <BillingBody
       terms={terms}
       payments={payments}
-      athletes={athletes}
+      athletes={EMPTY ? [] : athletes}
       today={TODAY}
       loading={false}
       error={null}

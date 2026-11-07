@@ -670,5 +670,9 @@
   "Disconnect athlete": "アスリートとの接続を解除",
   "For an athlete you no longer coach. You can invite them again later.": "もう指導していないアスリート向けです。後で再び招待できます。",
   "Remove {plan} from {name}": "{name}から{plan}を外す",
-  "Remove {plan} from {name}? It disappears from their app. What they logged on it stays, and assigning the plan again brings it back.": "{name}から{plan}を外しますか？アプリから消えます。記録済みの内容は残り、もう一度割り当てると元に戻ります。"
+  "Remove {plan} from {name}? It disappears from their app. What they logged on it stays, and assigning the plan again brings it back.": "{name}から{plan}を外しますか？アプリから消えます。記録済みの内容は残り、もう一度割り当てると元に戻ります。",
+  "Billing works with your connected athletes.": "請求は接続済みのアスリートに対して使えます。",
+  "Connecting athletes needs the coach role, which comes with ELEMENT | 08 Pro. In the app, open Settings › Account and tap Become a coach. Your athletes do not need Pro.": "アスリートと接続するにはコーチ役割が必要です。コーチ役割は ELEMENT | 08 Pro に含まれます。アプリで 設定 › アカウント を開き、「コーチになる」をタップしてください。アスリートは Pro 不要です。",
+  "Without it you can still build plans here and send them as .e08plan files.": "コーチ役割がなくても、ここでプランを作成し .e08plan ファイルとして送れます。",
+  "No connected athletes yet. Invite one under Athletes, then set up their fee here.": "接続済みのアスリートはまだいません。「アスリート」から招待して、ここで料金を設定してください。"
 }
