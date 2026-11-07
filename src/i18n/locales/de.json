@@ -821,5 +821,10 @@
   "Send to {name}": "An {name} senden",
   "Could not send: {error}": "Senden fehlgeschlagen: {error}",
   "Send it now and she gets it right away, or create it first and send it from the editor when it is ready. It shows in your app either way.": "Sende ihn jetzt und sie bekommt ihn sofort, oder erstelle ihn erst und sende ihn aus dem Editor, wenn er fertig ist. In deiner App erscheint er so oder so.",
-  "Create, send later": "Erstellen, später senden"
+  "Create, send later": "Erstellen, später senden",
+  "Cues, breathe-up, how it should feel.": "Hinweise, Vorbereitungsatmung, wie es sich anfühlen soll.",
+  "She sees the notes above the lines and rates against the target.": "Sie sieht die Notizen über den Zeilen und bewertet gegen das Ziel.",
+  "Notes and effort · {label}, week {n}": "Notizen und Anstrengung · {label}, Woche {n}",
+  "Target {n}": "Ziel {n}",
+  "Notes and effort": "Notizen und Anstrengung"
 }

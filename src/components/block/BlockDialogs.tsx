@@ -1,8 +1,9 @@
 /**
- * The block editor's two dialogs: add an exercise to a session (into its
- * list and the workout the player runs, for this session or every session of
- * its slot from this week), and add a session to a week (a copy of one of
- * the plan's sessions, or a blank one).
+ * The block editor's dialogs: add an exercise to a session (into its list and
+ * the workout the player runs, for this session or every session of its slot
+ * from this week), add a session to a week (a copy of one of the plan's
+ * sessions, or a blank one), and the notes and target effort of a session the
+ * coach added.
  */
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
@@ -12,13 +13,17 @@ import {
   insertSession,
   itemLine,
   newSessionId,
+  NO_INFO,
   parseClock,
+  sessionInfoOf,
   sessionSources,
   slugId,
+  withInfo,
   type BlockInfo,
   type BlockPlan,
   type BlockSession,
   type DayChoice,
+  type SessionInfo,
   type SessionMode,
   type FlatWeek,
   type SetsItem,
@@ -300,6 +305,77 @@ export function AddExerciseDialog({
   );
 }
 
+/** The plan builder's "Notes / full text" and "Target effort", so a session
+ *  added here reads on her phone like one from the builder. */
+function SessionInfoFields({ info, onChange }: { info: SessionInfo; onChange: (info: SessionInfo) => void }) {
+  const t = useT();
+  return (
+    <>
+      <label className="block">
+        <span className={lbl}>{t('Notes / full text')}</span>
+        <textarea
+          className="field min-h-20"
+          value={info.notes}
+          placeholder={t('Cues, breathe-up, how it should feel.')}
+          onChange={(e) => onChange({ ...info, notes: e.target.value })}
+        />
+      </label>
+      <div>
+        <span className={lbl}>{t('Target effort (optional)')}</span>
+        <div className="flex flex-wrap gap-1">
+          {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => {
+            const on = info.target === n;
+            return (
+              <button
+                key={n}
+                type="button"
+                aria-pressed={on}
+                onClick={() => onChange({ ...info, target: on ? null : n })}
+                className={`h-8 w-8 rounded-md border text-sm ${
+                  on ? 'border-accent bg-accent/15 text-text' : 'border-border text-textDim hover:border-accent'
+                }`}
+              >
+                {n}
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-1 text-xs text-textDim">{t('She sees the notes above the lines and rates against the target.')}</p>
+      </div>
+    </>
+  );
+}
+
+/** Notes and target effort of a session the coach added. */
+export function SessionInfoDialog({
+  session,
+  week,
+  onClose,
+  onSave,
+}: {
+  session: BlockSession;
+  week: FlatWeek;
+  onClose: () => void;
+  onSave: (info: SessionInfo) => void;
+}) {
+  const t = useT();
+  const [info, setInfo] = useState<SessionInfo>(() => sessionInfoOf(session));
+  const label = session.label?.trim() || t('Session');
+  return (
+    <Modal title={fill(t('Notes and effort · {label}, week {n}'), { label, n: week.number })} onClose={onClose}>
+      <SessionInfoFields info={info} onChange={setInfo} />
+      <div className="flex justify-end gap-2">
+        <button onClick={onClose} className="pill px-3 py-1.5 text-sm">
+          {t('Cancel')}
+        </button>
+        <button onClick={() => onSave(info)} className="pill pill-on btn-raised px-4 py-1.5 text-sm">
+          {t('Done')}
+        </button>
+      </div>
+    </Modal>
+  );
+}
+
 const KINDS: { id: SessionMode; label: string }[] = [
   { id: 'general', label: 'General' },
   { id: 'pool', label: 'Pool' },
@@ -329,12 +405,21 @@ export function AddSessionDialog({
   const [mode, setMode] = useState<SessionMode>('general');
   const [day, setDay] = useState<DayChoice>(presetDay);
   const [every, setEvery] = useState(false);
-  const src = groups.flatMap((g) => g.sessions).find((s) => s.id === from) ?? null;
-  const ok = src ? true : !!(label.trim() || lines.trim());
+  const [info, setInfo] = useState<SessionInfo>(NO_INFO);
+  const all = groups.flatMap((g) => g.sessions);
+  const src = all.find((s) => s.id === from) ?? null;
+  const ok = src ? true : !!(label.trim() || lines.trim() || info.notes.trim());
+
+  // A copy starts with the notes and target of the session it copies.
+  const pick = (id: string) => {
+    setFrom(id);
+    const next = all.find((s) => s.id === id);
+    setInfo(next ? sessionInfoOf(next) : NO_INFO);
+  };
 
   const add = () => {
     const make = (id: string) =>
-      src ? copySession(src, id, day) : blankSession(id, label, lines.split('\n'), day, mode);
+      src ? withInfo(copySession(src, id, day), info) : blankSession(id, label, lines.split('\n'), day, mode, info);
     onAdd((p) => (every ? insertEveryWeek(p, week.index, make) : insertSession(p, week.index, make(newSessionId()))));
   };
 
@@ -342,7 +427,7 @@ export function AddSessionDialog({
     <Modal title={fill(t('Add session to week {n}'), { n: week.number })} onClose={onClose}>
       <label className="block">
         <span className={lbl}>{t('Start from')}</span>
-        <select className="field" value={from} onChange={(e) => setFrom(e.target.value)}>
+        <select className="field" value={from} onChange={(e) => pick(e.target.value)}>
           <option value="">{t('A blank session')}</option>
           {groups.map((g) => (
             <optgroup key={g.mode} label={t(KINDS.find((k) => k.id === g.mode)!.label)}>
@@ -389,6 +474,7 @@ export function AddSessionDialog({
           </label>
         </>
       )}
+      <SessionInfoFields info={info} onChange={setInfo} />
       <div>
         <span className={lbl}>{t('Day')}</span>
         <div className="flex flex-wrap gap-1.5">

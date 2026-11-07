@@ -821,5 +821,10 @@
   "Send to {name}": "Envoyer à {name}",
   "Could not send: {error}": "Impossible d’envoyer : {error}",
   "Send it now and she gets it right away, or create it first and send it from the editor when it is ready. It shows in your app either way.": "Envoie-le maintenant et elle le reçoit tout de suite, ou crée-le d’abord et envoie-le depuis l’éditeur quand il est prêt. Il apparaît dans ton app dans les deux cas.",
-  "Create, send later": "Créer, envoyer plus tard"
+  "Create, send later": "Créer, envoyer plus tard",
+  "Cues, breathe-up, how it should feel.": "Consignes, ventilation, ressenti attendu.",
+  "She sees the notes above the lines and rates against the target.": "Elle voit les notes au-dessus des lignes et note son effort face à la cible.",
+  "Notes and effort · {label}, week {n}": "Notes et effort · {label}, semaine {n}",
+  "Target {n}": "Cible {n}",
+  "Notes and effort": "Notes et effort"
 }

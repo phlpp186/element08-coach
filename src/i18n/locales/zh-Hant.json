@@ -821,5 +821,10 @@
   "Send to {name}": "傳送給 {name}",
   "Could not send: {error}": "無法傳送：{error}",
   "Send it now and she gets it right away, or create it first and send it from the editor when it is ready. It shows in your app either way.": "現在傳送，她會立即收到；也可以先建立，準備好後再從編輯器傳送。兩種方式都會顯示在你的 App 中。",
-  "Create, send later": "建立，稍後傳送"
+  "Create, send later": "建立，稍後傳送",
+  "Cues, breathe-up, how it should feel.": "要點、閉氣前呼吸、應有的感受。",
+  "She sees the notes above the lines and rates against the target.": "她會在項目上方看到備註，並對照目標評分。",
+  "Notes and effort · {label}, week {n}": "備註與強度 · {label}，第 {n} 週",
+  "Target {n}": "目標 {n}",
+  "Notes and effort": "備註與強度"
 }

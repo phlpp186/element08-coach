@@ -49,6 +49,12 @@ export interface BlockSession {
   placed?: boolean;
   optional?: boolean;
   completedAt?: string | null;
+  /** The coach's notes, shown above the lines (the plan builder's "Notes /
+   *  full text"). */
+  sessionNotes?: string;
+  /** The coach's target effort, 1-10. Not `effort`: on her linked plan that is
+   *  HER rating from the report. */
+  coachTarget?: number | null;
   [k: string]: unknown;
 }
 
@@ -557,20 +563,59 @@ export function blankSession(
   lines: string[],
   day: DayChoice,
   mode: SessionMode = 'general',
+  info: SessionInfo = NO_INFO,
 ): BlockSession {
   return placeOn(
-    {
-      id,
-      dayOfWeek: day === 'any' ? 0 : day,
-      label: label.trim(),
-      mode,
-      completedAt: null,
-      exercises: lines
-        .map((l) => l.trim())
-        .filter(Boolean)
-        .map((description, i) => ({ id: `${id}-${i + 1}`, description, completedAt: null })),
-    },
+    withInfo(
+      {
+        id,
+        dayOfWeek: day === 'any' ? 0 : day,
+        label: label.trim(),
+        mode,
+        completedAt: null,
+        exercises: lines
+          .map((l) => l.trim())
+          .filter(Boolean)
+          .map((description, i) => ({ id: `${id}-${i + 1}`, description, completedAt: null })),
+      },
+      info,
+    ),
     day,
+  );
+}
+
+/** What the coach tells her about a session besides its lines. */
+export interface SessionInfo {
+  notes: string;
+  /** 1-10, or none. */
+  target: number | null;
+}
+
+export const NO_INFO: SessionInfo = { notes: '', target: null };
+
+const validTarget = (n: unknown): number | null =>
+  typeof n === 'number' && Number.isFinite(n) && n >= 1 && n <= 10 ? Math.round(n) : null;
+
+export function sessionInfoOf(s: BlockSession): SessionInfo {
+  return { notes: typeof s.sessionNotes === 'string' ? s.sessionNotes : '', target: validTarget(s.coachTarget) };
+}
+
+/** The session with these notes and target; an empty one leaves the field out. */
+export function withInfo(s: BlockSession, info: SessionInfo): BlockSession {
+  const rest = without(s, 'sessionNotes', 'coachTarget');
+  const notes = info.notes.trim();
+  const target = validTarget(info.target);
+  return {
+    ...rest,
+    ...(notes ? { sessionNotes: notes } : {}),
+    ...(target != null ? { coachTarget: target } : {}),
+  };
+}
+
+/** Notes and target of one session the coach added. */
+export function setSessionInfo(plan: BlockPlan, sessionId: string, info: SessionInfo): BlockPlan {
+  return mapSessions(plan, (ss) =>
+    ss.some((s) => s.id === sessionId) ? ss.map((s) => (s.id === sessionId ? withInfo(s, info) : s)) : ss,
   );
 }
 

@@ -821,5 +821,10 @@
   "Send to {name}": "ส่งให้ {name}",
   "Could not send: {error}": "ส่งไม่ได้: {error}",
   "Send it now and she gets it right away, or create it first and send it from the editor when it is ready. It shows in your app either way.": "ส่งตอนนี้แล้วเธอจะได้รับทันที หรือสร้างก่อนแล้วส่งจากตัวแก้ไขเมื่อพร้อม ไม่ว่าแบบไหนจะแสดงในแอปของคุณ",
-  "Create, send later": "สร้างไว้ ส่งทีหลัง"
+  "Create, send later": "สร้างไว้ ส่งทีหลัง",
+  "Cues, breathe-up, how it should feel.": "คำแนะนำ, การหายใจเตรียม, ควรรู้สึกอย่างไร",
+  "She sees the notes above the lines and rates against the target.": "นักกีฬาจะเห็นบันทึกเหนือรายการ และให้คะแนนเทียบกับเป้าหมาย",
+  "Notes and effort · {label}, week {n}": "บันทึกและระดับความหนัก · {label}, สัปดาห์ที่ {n}",
+  "Target {n}": "เป้าหมาย {n}",
+  "Notes and effort": "บันทึกและระดับความหนัก"
 }

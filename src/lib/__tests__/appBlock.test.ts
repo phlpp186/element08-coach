@@ -26,16 +26,20 @@ import {
   removedSessionsInWeek,
   removeLine,
   removeLocalLine,
+  NO_INFO,
   phaseOfWeek,
   reportsBySession,
+  sessionInfoOf,
   sessionMetas,
   sessionSlot,
   sessionSources,
   sessionsByDay,
+  setSessionInfo,
   slugId,
   testValue,
   toggleRemoved,
   undoDrop,
+  withInfo,
   withSwap,
   type BlockPlan,
   type BlockSession,
@@ -500,5 +504,44 @@ describe('sessions to copy from', () => {
       ['dry', ['sc-w02-d4-t']],
       ['general', ['sc-w02-d0-a', 'sc-w02-d2-b', 'sc-w01-fl-swim']],
     ]);
+  });
+});
+
+describe('notes and target effort', () => {
+  it('writes the plan builder fields, and leaves out empty ones', () => {
+    const s = blankSession('c-1', 'Pool', ['8 x 50 m'], 2, 'pool', { notes: ' Easy, effort 5-6. \n', target: 5 });
+    expect(s).toMatchObject({ sessionNotes: 'Easy, effort 5-6.', coachTarget: 5 });
+    expect(s.effort).toBeUndefined();
+    const plain = blankSession('c-2', 'Pool', ['8 x 50 m'], 2, 'pool');
+    expect('sessionNotes' in plain || 'coachTarget' in plain).toBe(false);
+    const cleared = withInfo(s, NO_INFO);
+    expect('sessionNotes' in cleared || 'coachTarget' in cleared).toBe(false);
+  });
+
+  it('keeps a target to 1-10 whole numbers', () => {
+    const s = blankSession('c-1', 'X', [], 0);
+    expect(withInfo(s, { notes: '', target: 6.6 }).coachTarget).toBe(7);
+    expect(withInfo(s, { notes: '', target: 11 }).coachTarget).toBeUndefined();
+    expect(withInfo(s, { notes: '', target: 0 }).coachTarget).toBeUndefined();
+    expect(sessionInfoOf({ ...s, coachTarget: 12, sessionNotes: 3 as unknown as string })).toEqual(NO_INFO);
+  });
+
+  it('a copy carries the original notes and target, which the coach can change', () => {
+    const src = { ...blankSession('sc-w01-d4-t', 'CO2 table', ['Hold table'], 4, 'dry'), sessionNotes: 'Tidal breathing.', coachTarget: 6, effort: 8 };
+    const c = copySession(src, 'c-x', 1);
+    expect(sessionInfoOf(c)).toEqual({ notes: 'Tidal breathing.', target: 6 });
+    expect(c.effort).toBeUndefined();
+    expect(sessionInfoOf(withInfo(c, { notes: 'Comfortable.', target: null }))).toEqual({ notes: 'Comfortable.', target: null });
+  });
+
+  it('edits only the one session', () => {
+    const now = Date.UTC(2026, 10, 7);
+    let p = insertEveryWeek(planOf(), 1, (id) => blankSession(id, 'Swim', ['Easy'], 3, 'pool'), now);
+    const ids = flatWeeks(p).flatMap((w) => w.week.plannedSessions.map((s) => s.id)).filter((id) => id.startsWith('c-'));
+    expect(ids).toHaveLength(2);
+    p = setSessionInfo(p, ids[0], { notes: 'Only this week.', target: 4 });
+    const all = flatWeeks(p).flatMap((w) => w.week.plannedSessions);
+    expect(sessionInfoOf(all.find((s) => s.id === ids[0])!)).toEqual({ notes: 'Only this week.', target: 4 });
+    expect(sessionInfoOf(all.find((s) => s.id === ids[1])!)).toEqual(NO_INFO);
   });
 });

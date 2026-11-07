@@ -27,7 +27,9 @@ import {
   removedSessionsInWeek,
   removeLine,
   removeLocalLine,
+  sessionInfoOf,
   sessionSlot,
+  setSessionInfo,
   toggleRemoved,
   undoDrop,
   type BlockExercise,
@@ -46,7 +48,7 @@ import {
 import { addDays, calendarFormat, DAY_LABELS, formatIso, MESO_LABEL, todayIso, type MesoType } from '../../lib/e08plan';
 import { fill, useT } from '../../i18n';
 import type { BlockDraft, DraftStatus } from './useBlockDraft';
-import { AddExerciseDialog, AddSessionDialog } from './BlockDialogs';
+import { AddExerciseDialog, AddSessionDialog, SessionInfoDialog } from './BlockDialogs';
 import { HerNumbers, HowItWorks } from './BlockPanels';
 
 export interface SaveState {
@@ -98,6 +100,7 @@ interface Handlers {
   onRemove: (s: BlockSession, line: BlockExercise, everyFrom: number | null) => void;
   onUndoLine: (r: RemovedLine) => void;
   onAddExercise: (s: BlockSession, w: FlatWeek) => void;
+  onEditInfo: (s: BlockSession, w: FlatWeek) => void;
   onDelete: (s: BlockSession) => void;
   onUndoDelete: (id: string) => void;
   onAddSession: (w: FlatWeek, day: DayChoice) => void;
@@ -137,6 +140,7 @@ export function BlockEditor({
   const [open, setOpen] = useState<Set<number>>(() => new Set([phaseOfWeek(phases, current)]));
   const [adding, setAdding] = useState<{ session: BlockSession; week: FlatWeek } | null>(null);
   const [addingSession, setAddingSession] = useState<{ week: FlatWeek; day: DayChoice } | null>(null);
+  const [editingInfo, setEditingInfo] = useState<{ session: BlockSession; week: FlatWeek } | null>(null);
   const [showHow, setShowHow] = useState(() => typeof window === 'undefined' || window.matchMedia('(min-width: 1024px)').matches);
   const info = draft.info;
   const canServer = draft.status === 'ready' && !draft.busy;
@@ -162,6 +166,7 @@ export function BlockEditor({
     },
     onUndoLine: (r) => void draft.change({ edits: undoDrop(src?.edits, r.drop) }),
     onAddExercise: (session, week) => setAdding({ session, week }),
+    onEditInfo: (session, week) => setEditingInfo({ session, week }),
     onDelete: (s) => {
       if (isBlockSession(s.id)) void draft.change({ removed: toggleRemoved(src?.removed, s.id, true) });
       else if (confirm(t('Delete this session you added? It cannot be brought back.')))
@@ -246,6 +251,17 @@ export function BlockEditor({
           }}
           busy={draft.busy}
           blockSession={isBlockSession(adding.session.id) && !!sessionSlot(adding.session.id)}
+        />
+      )}
+      {editingInfo && (
+        <SessionInfoDialog
+          session={editingInfo.session}
+          week={editingInfo.week}
+          onClose={() => setEditingInfo(null)}
+          onSave={(next) => {
+            draft.local((p) => setSessionInfo(p, editingInfo.session.id, next));
+            setEditingInfo(null);
+          }}
         />
       )}
       {addingSession && (
@@ -506,6 +522,7 @@ function SessionCard({
   const label = s.label?.trim() || t('Session');
   const kind = MODE_TAG[modeOf(s)];
   const weekday = report ? new Date(report.at).toLocaleDateString([], { weekday: 'short' }) : '';
+  const info = sessionInfoOf(s);
 
   return (
     <div className={`rounded-lg border bg-panel px-2.5 py-2 ${report ? 'border-recover/50' : 'border-border'}`}>
@@ -513,8 +530,12 @@ function SessionCard({
         <span className="min-w-0 flex-1 text-sm font-bold text-text">{label}</span>
         {kind && <span className={`${tagClass} ${kind.cls}`}>{t(kind.label)}</span>}
         {s.optional && <span className={`${tagClass} bg-surface text-textDim`}>{t('Optional')}</span>}
+        {info.target != null && (
+          <span className={`${tagClass} bg-surface text-textDim`}>{fill(t('Target {n}'), { n: info.target })}</span>
+        )}
         {!fromBlock && <span className={`${tagClass} bg-accent/15 text-accent`}>{t('Added')}</span>}
       </div>
+      {info.notes && <p className="mt-1 whitespace-pre-line text-xs leading-snug text-textDim">{info.notes}</p>}
       {report && (
         <div className="mt-1 flex flex-wrap items-center gap-1.5">
           <span className={`${tagClass} bg-recover/15 text-recover`}>
@@ -599,6 +620,11 @@ function SessionCard({
         <button onClick={() => h.onAddExercise(s, week)} disabled={!can} className="text-xs text-textDim hover:text-accent disabled:opacity-40">
           {t('+ exercise')}
         </button>
+        {!fromBlock && (
+          <button onClick={() => h.onEditInfo(s, week)} disabled={!can} className="text-xs text-textDim hover:text-accent disabled:opacity-40">
+            {t('Notes and effort')}
+          </button>
+        )}
         <button onClick={() => h.onDelete(s)} disabled={!can} className="text-xs text-textDim hover:text-red disabled:opacity-40">
           {t('Delete session')}
         </button>

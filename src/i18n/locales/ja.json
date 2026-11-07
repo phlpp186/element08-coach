@@ -821,5 +821,10 @@
   "Send to {name}": "{name}に送信",
   "Could not send: {error}": "送信できませんでした：{error}",
   "Send it now and she gets it right away, or create it first and send it from the editor when it is ready. It shows in your app either way.": "今すぐ送ると彼女にすぐ届きます。先に作成して、準備ができたらエディターから送ることもできます。どちらでもあなたのアプリに表示されます。",
-  "Create, send later": "作成して後で送信"
+  "Create, send later": "作成して後で送信",
+  "Cues, breathe-up, how it should feel.": "ポイント、ブリーズアップ、どう感じるべきか。",
+  "She sees the notes above the lines and rates against the target.": "選手は項目の上にメモを見て、目標と比べて評価します。",
+  "Notes and effort · {label}, week {n}": "メモときつさ · {label}、第{n}週",
+  "Target {n}": "目標 {n}",
+  "Notes and effort": "メモときつさ"
 }

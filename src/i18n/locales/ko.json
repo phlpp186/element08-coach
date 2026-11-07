@@ -821,5 +821,10 @@
   "Send to {name}": "{name}에게 보내기",
   "Could not send: {error}": "보내지 못했습니다: {error}",
   "Send it now and she gets it right away, or create it first and send it from the editor when it is ready. It shows in your app either way.": "지금 보내면 그녀가 바로 받습니다. 먼저 만들고 준비되면 편집기에서 보낼 수도 있습니다. 어느 쪽이든 내 앱에 표시됩니다.",
-  "Create, send later": "만들고 나중에 보내기"
+  "Create, send later": "만들고 나중에 보내기",
+  "Cues, breathe-up, how it should feel.": "포인트, 브리드업, 어떤 느낌이어야 하는지.",
+  "She sees the notes above the lines and rates against the target.": "선수는 항목 위에서 메모를 보고 목표와 비교해 평가합니다.",
+  "Notes and effort · {label}, week {n}": "메모와 강도 · {label}, {n}주차",
+  "Target {n}": "목표 {n}",
+  "Notes and effort": "메모와 강도"
 }

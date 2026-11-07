@@ -821,5 +821,10 @@
   "Send to {name}": "发送给 {name}",
   "Could not send: {error}": "无法发送：{error}",
   "Send it now and she gets it right away, or create it first and send it from the editor when it is ready. It shows in your app either way.": "现在发送，她会立即收到；也可以先创建，准备好后再从编辑器发送。两种方式都会显示在你的 App 中。",
-  "Create, send later": "创建，稍后发送"
+  "Create, send later": "创建，稍后发送",
+  "Cues, breathe-up, how it should feel.": "要点、屏气前呼吸、应有的感受。",
+  "She sees the notes above the lines and rates against the target.": "她会在条目上方看到备注，并对照目标打分。",
+  "Notes and effort · {label}, week {n}": "备注与强度 · {label}，第 {n} 周",
+  "Target {n}": "目标 {n}",
+  "Notes and effort": "备注与强度"
 }
