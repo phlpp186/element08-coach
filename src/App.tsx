@@ -10,6 +10,8 @@ import { PlansView } from './views/PlansView';
 import { ExercisesView } from './views/ExercisesView';
 import { BillingView } from './views/BillingView';
 import { SessionFileView } from './views/SessionFileView';
+import { BlockCreateView } from './views/BlockCreateView';
+import { BlockEditorView } from './views/BlockEditorView';
 import { AuthBar } from './components/AuthBar';
 import { CompletionBell } from './components/CompletionBell';
 import { BillingDueReminder } from './components/BillingDueReminder';
@@ -35,7 +37,8 @@ export function App() {
   const { session, isCoach } = useAuth();
   useLibrarySync(!!session && isCoach);
   useInviteLinking(!!session && isCoach);
-  const top = route.segments[0] ?? 'athletes';
+  // The block editor belongs to the Library.
+  const top = route.segments[0] === 'block' ? 'plan' : (route.segments[0] ?? 'athletes');
   const t = useT();
 
   return (
@@ -98,6 +101,14 @@ function Outlet() {
 
   if (top === 'session-file') {
     return <SessionFileView />;
+  }
+
+  if (top === 'block') {
+    // /block/new?athlete=ID → pick an app block for a paired athlete
+    // /block/:cloudPlanId   → coach an app block from the library
+    if (second === 'new' || !second)
+      return <BlockCreateView presetStudentId={route.query.get('athlete')} />;
+    return <BlockEditorView key={second} cloudPlanId={second} />;
   }
 
   if (top === 'plan') {

@@ -75,6 +75,14 @@ if (previewName === "connection") {
       </StrictMode>,
     );
   });
+} else if (previewName === "block") {
+  void import("./dev/BlockEditorPreview").then(({ BlockEditorPreview }) => {
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <BlockEditorPreview />
+      </StrictMode>,
+    );
+  });
 } else if (previewName === "pooltrace") {
   void import("./dev/PoolTracePreview").then(({ PoolTracePreview }) => {
     createRoot(document.getElementById("root")!).render(

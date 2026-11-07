@@ -192,6 +192,25 @@ export async function updatePlan(
   );
 }
 
+/** Save over a plan only while it is still the version read at `base`
+ *  (its updated_at). Null when it changed since (or is gone): nothing was
+ *  written, so an edit made elsewhere is never overwritten unseen. */
+export async function updatePlanIf(
+  id: string,
+  base: string,
+  patch: { title: string; definition: Json },
+): Promise<PlanRow | null> {
+  return unwrap(
+    await supabase
+      .from('plans')
+      .update({ ...patch, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .eq('updated_at', base)
+      .select()
+      .maybeSingle(),
+  );
+}
+
 export async function deletePlan(id: string): Promise<void> {
   const { error } = await supabase.from('plans').delete().eq('id', id);
   if (error) throw new Error(error.message);

@@ -274,27 +274,26 @@ export function PlanBuilderView({
 
   const attachedAthlete = athletes.find((a) => a.id === athleteId);
 
-  // A plan built in the app (the S&C block, a coach's copy for one athlete):
-  // the builder cannot keep its workouts, loads and tests, so it is not
-  // opened for editing here (saveToLibrary refuses it too).
+  // A plan built in the app (an app block, a coach's copy for one athlete):
+  // the builder cannot keep its workouts, loads and tests, so it opens in the
+  // block editor instead (saveToLibrary refuses it too).
   const libraryRows = useLibrary().rows;
   const cloudId = recordId ? getCloudPlanLink(recordId)?.cloudPlanId : undefined;
-  if (cloudId && isAppPlan(libraryRows[cloudId]?.definition)) {
+  const appPlan = !!cloudId && isAppPlan(libraryRows[cloudId]?.definition);
+  useEffect(() => {
+    if (appPlan && cloudId) navigate(`/block/${cloudId}`, { replace: true });
+  }, [appPlan, cloudId]);
+  if (appPlan && cloudId) {
     return (
       <main className="mx-auto max-w-4xl px-5 py-6 space-y-6">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-lg">{plan.name || t('Plan')}</h2>
-          <button onClick={() => navigate('/plan')} className="pill px-3 py-1.5 text-sm">
-            {t('Done')}
-          </button>
-        </div>
-        <section className="board space-y-2 p-5">
+        <section className="board space-y-3 p-5">
           <p className="font-bold text-amber">{t('Built in the app')}</p>
-          <p className="text-sm text-textDim">
-            {t(
-              'This plan has workouts, loads or tests that the web builder cannot keep. Edit it in the ELEMENT | 08 app: your changes there reach your athletes.',
-            )}
-          </p>
+          <button
+            onClick={() => navigate(`/block/${cloudId}`, { replace: true })}
+            className="pill pill-on btn-raised px-4 py-1.5 text-sm"
+          >
+            {t('Open in the block editor')}
+          </button>
         </section>
       </main>
     );

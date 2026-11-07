@@ -18,6 +18,23 @@ function parse(): Route {
   return { segments, query: new URLSearchParams(qs ?? '') };
 }
 
+/** Asked before the hash moves on; false keeps the page (unsaved changes). */
+let leaveGuard: (() => boolean) | null = null;
+
+/** Set while a page has unsaved changes; null when it has none. */
+export function setLeaveGuard(guard: (() => boolean) | null): void {
+  leaveGuard = guard;
+}
+
+// Registered before any view subscribes, so a refused move is put back
+// before a view can render the next page.
+window.addEventListener('hashchange', (e) => {
+  if (!leaveGuard || window.location.hash === cachedHash) return;
+  if (leaveGuard()) return;
+  e.stopImmediatePropagation();
+  history.replaceState(null, '', cachedHash || '#/');
+});
+
 function subscribe(cb: () => void): () => void {
   window.addEventListener('hashchange', cb);
   return () => window.removeEventListener('hashchange', cb);
@@ -38,7 +55,10 @@ export function useRoute(): Route {
   return useSyncExternalStore(subscribe, getSnapshot);
 }
 
-/** Navigate by setting the hash (adds a history entry). */
-export function navigate(to: string): void {
-  window.location.hash = to.startsWith('#') ? to : `#${to}`;
+/** Navigate by setting the hash (adds a history entry). `replace` swaps
+ *  the current entry instead, for a redirect Back should skip. */
+export function navigate(to: string, opts: { replace?: boolean } = {}): void {
+  const hash = to.startsWith('#') ? to : `#${to}`;
+  if (opts.replace) window.location.replace(hash);
+  else window.location.hash = hash;
 }

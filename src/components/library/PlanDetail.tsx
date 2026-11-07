@@ -27,6 +27,7 @@ export function PlanDetail({
   edited,
   pending,
   conflict,
+  blockId,
   online,
   onClose,
   onDuplicate,
@@ -44,6 +45,10 @@ export function PlanDetail({
   edited: ReactNode;
   pending: boolean;
   conflict: boolean;
+  /** Its cloud id when it is an app plan: Edit opens the block editor, and
+   *  a copy or a .e08plan file (both builder-made) would lose its workouts,
+   *  loads and tests, so neither is offered. */
+  blockId?: string | null;
   online: boolean;
   onClose: () => void;
   onDuplicate: () => void;
@@ -157,18 +162,25 @@ export function PlanDetail({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-          <button onClick={() => navigate(`/plan/${sp.id}`)} className="pill pill-on btn-raised px-4 py-1.5 text-sm">
-            {conflict ? t('Choose version') : t('Edit')}
+          <button
+            onClick={() => navigate(blockId ? `/block/${blockId}` : `/plan/${sp.id}`)}
+            className="pill pill-on btn-raised px-4 py-1.5 text-sm"
+          >
+            {conflict && !blockId ? t('Choose version') : t('Edit')}
           </button>
           {online && !conflict && (
             <AssignToConnectedButton ready={stats.sessions > 0} ensurePublished={ensurePublished} menuBelow />
           )}
-          <button onClick={onDuplicate} className="pill px-3 py-1.5 text-sm" title={t('Make a copy to adapt for another athlete or season')}>
-            {t('Duplicate')}
-          </button>
-          <button onClick={onDownload} className="pill px-3 py-1.5 text-sm" title={t('Download the .e08plan file')}>
-            ⤓
-          </button>
+          {!blockId && (
+            <>
+              <button onClick={onDuplicate} className="pill px-3 py-1.5 text-sm" title={t('Make a copy to adapt for another athlete or season')}>
+                {t('Duplicate')}
+              </button>
+              <button onClick={onDownload} className="pill px-3 py-1.5 text-sm" title={t('Download the .e08plan file')}>
+                ⤓
+              </button>
+            </>
+          )}
           <button onClick={onDelete} className="ml-auto text-sm text-red hover:underline">
             {t('Delete')}
           </button>

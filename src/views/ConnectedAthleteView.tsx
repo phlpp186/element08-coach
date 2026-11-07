@@ -206,7 +206,15 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
           )}
 
           <section className="space-y-2">
-            <h3 className="font-heading tracking-wide text-text">{t('ASSIGNED PLANS')}</h3>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="font-heading tracking-wide text-text">{t('ASSIGNED PLANS')}</h3>
+              <button
+                onClick={() => navigate(`/block/new?athlete=${studentId}`)}
+                className="pill px-3 py-1 text-sm"
+              >
+                + {t('App block')}
+              </button>
+            </div>
             {assignments.length === 0 ? (
               <p className="text-textDim text-sm">{t('No plans assigned yet.')}</p>
             ) : (

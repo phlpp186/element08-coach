@@ -22,7 +22,7 @@ import { deleteFromLibrary, saveToLibrary, useLibrary } from '../lib/supabase/pl
 import { matchesLibrary, planNow, weekStrip, type AssignFilter, type KindFilter } from '../lib/libraryInsights';
 import { WeekStrip } from '../components/library/WeekStrip';
 import { PlanDetail } from '../components/library/PlanDetail';
-import { stampOf, type LibraryDevice } from '../lib/planLibrary';
+import { isAppPlan, stampOf, type LibraryDevice } from '../lib/planLibrary';
 import { navigate } from '../hooks/useHashRoute';
 import { fill, useT } from '../i18n';
 
@@ -91,6 +91,8 @@ export function PlansView() {
             at: pending ? sp.updatedAt : (stamp?.editedAt ?? row?.updated_at ?? sp.updatedAt),
             pending,
             conflict: !!lib.conflicts[sp.id],
+            // Opens in the block editor, not the builder.
+            appPlan: !!row && isAppPlan(row.definition),
           };
         })
         .sort(
@@ -171,6 +173,11 @@ export function PlansView() {
             {status}
           </p>
         </div>
+        {tab === 'plans' && online && (
+          <button onClick={() => navigate('/block/new')} className="pill text-sm px-3 py-1.5">
+            + {t('App block')}
+          </button>
+        )}
         {tab === 'plans' && (
           <button
             onClick={() => navigate('/plan/new')}
@@ -328,6 +335,7 @@ export function PlansView() {
               }
               pending={open.pending}
               conflict={open.conflict}
+              blockId={open.appPlan && open.cloudId ? open.cloudId : null}
               online={online}
               onClose={() => setOpenId(null)}
               onDuplicate={() => duplicate(open.sp.id)}
