@@ -8,16 +8,18 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   blankSession,
   copySession,
-  flatWeeks,
+  insertEveryWeek,
   insertSession,
   itemLine,
   newSessionId,
   parseClock,
+  sessionSources,
   slugId,
   type BlockInfo,
   type BlockPlan,
   type BlockSession,
   type DayChoice,
+  type SessionMode,
   type FlatWeek,
   type SetsItem,
 } from '../../lib/appBlock';
@@ -298,40 +300,42 @@ export function AddExerciseDialog({
   );
 }
 
+const KINDS: { id: SessionMode; label: string }[] = [
+  { id: 'general', label: 'General' },
+  { id: 'pool', label: 'Pool' },
+  { id: 'depth', label: 'Depth' },
+  { id: 'dry', label: 'Dry' },
+];
+
 export function AddSessionDialog({
   plan,
   week,
+  day: presetDay,
   onClose,
   onAdd,
 }: {
   plan: BlockPlan;
   week: FlatWeek;
+  /** The day row it was opened from. */
+  day: DayChoice;
   onClose: () => void;
   onAdd: (fn: (p: BlockPlan) => BlockPlan) => void;
 }) {
   const t = useT();
-  // One of each session in the plan, this week's first.
-  const sources = useMemo(() => {
-    const seen = new Map<string, BlockSession>();
-    const weeks = flatWeeks(plan);
-    for (const w of [weeks[week.index], ...weeks].filter(Boolean))
-      for (const s of w.week.plannedSessions ?? []) {
-        const key = s.label?.trim() || s.id;
-        if (!seen.has(key)) seen.set(key, s);
-      }
-    return [...seen.values()];
-  }, [plan, week.index]);
-  const [from, setFrom] = useState<string>(sources[0]?.id ?? '');
+  const groups = useMemo(() => sessionSources(plan, week.index), [plan, week.index]);
+  const [from, setFrom] = useState('');
   const [label, setLabel] = useState('');
   const [lines, setLines] = useState('');
-  const [day, setDay] = useState<DayChoice>(0);
-  const src = sources.find((s) => s.id === from) ?? null;
+  const [mode, setMode] = useState<SessionMode>('general');
+  const [day, setDay] = useState<DayChoice>(presetDay);
+  const [every, setEvery] = useState(false);
+  const src = groups.flatMap((g) => g.sessions).find((s) => s.id === from) ?? null;
   const ok = src ? true : !!(label.trim() || lines.trim());
 
   const add = () => {
-    const id = newSessionId();
-    const s = src ? copySession(src, id, day) : blankSession(id, label, lines.split('\n'), day);
-    onAdd((p) => insertSession(p, week.index, s));
+    const make = (id: string) =>
+      src ? copySession(src, id, day) : blankSession(id, label, lines.split('\n'), day, mode);
+    onAdd((p) => (every ? insertEveryWeek(p, week.index, make) : insertSession(p, week.index, make(newSessionId()))));
   };
 
   return (
@@ -339,12 +343,16 @@ export function AddSessionDialog({
       <label className="block">
         <span className={lbl}>{t('Start from')}</span>
         <select className="field" value={from} onChange={(e) => setFrom(e.target.value)}>
-          {sources.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.label?.trim() || t('Session')}
-            </option>
-          ))}
           <option value="">{t('A blank session')}</option>
+          {groups.map((g) => (
+            <optgroup key={g.mode} label={t(KINDS.find((k) => k.id === g.mode)!.label)}>
+              {g.sessions.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.label?.trim() || t('Session')}
+                </option>
+              ))}
+            </optgroup>
+          ))}
         </select>
       </label>
       {src ? (
@@ -355,6 +363,17 @@ export function AddSessionDialog({
         </ul>
       ) : (
         <>
+          <div>
+            <span className={lbl}>{t('Kind')}</span>
+            <div className="flex flex-wrap gap-1.5">
+              {KINDS.map((k) => (
+                <button key={k.id} className={pill(mode === k.id)} onClick={() => setMode(k.id)}>
+                  {t(k.label)}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1 text-xs text-textDim">{t('Her app shows the session as this kind.')}</p>
+          </div>
           <label className="block">
             <span className={lbl}>{t('Label')}</span>
             <input className="field" value={label} onChange={(e) => setLabel(e.target.value)} />
@@ -382,6 +401,18 @@ export function AddSessionDialog({
             {t('Any day this week')}
           </button>
         </div>
+      </div>
+      <div>
+        <span className={lbl}>{t('Where')}</span>
+        <div className="flex flex-wrap gap-1.5">
+          <button className={pill(!every)} onClick={() => setEvery(false)}>
+            {t('This week')}
+          </button>
+          <button className={pill(every)} onClick={() => setEvery(true)}>
+            {fill(t('Every week from week {n}'), { n: week.number })}
+          </button>
+        </div>
+        {every && <p className="mt-1 text-xs text-textDim">{t('Each week gets its own copy: deleting one leaves the others.')}</p>}
       </div>
       <p className="text-xs text-textDim">{t('Your own sessions stay when the block is rebuilt. Save to send them to her.')}</p>
       <div className="flex justify-end gap-2">

@@ -7,11 +7,15 @@
  *
  * Pure: no React, no Supabase, so every rule here has a test.
  */
+import { addDays } from './e08plan';
 
 // ── The plan, as far as the editor reads it ──────────────────────────────────
 
 export type Focus = 'depth' | 'pool' | 'both';
 export type Pull = 'weighted' | 'bodyweight' | 'assisted';
+/** The app's PlannedSession.mode: what kind of session she sees it as. */
+export type SessionMode = 'depth' | 'pool' | 'dry' | 'general';
+export const SESSION_MODES: SessionMode[] = ['depth', 'pool', 'dry', 'general'];
 
 export interface BlockExercise {
   id: string;
@@ -225,6 +229,49 @@ export function currentWeekIndex(weeks: FlatWeek[], today: string): number {
   for (let i = weeks.length - 1; i >= 0; i--) if (weeks[i].week.weekStart <= today) return i;
   return 0;
 }
+
+export interface FlatPhase {
+  index: number;
+  name: string;
+  type: string | null;
+  weeks: FlatWeek[];
+  /** Monday of its first week and Sunday of its last, '' without weeks. */
+  start: string;
+  end: string;
+}
+
+/** The plan's phases with their weeks numbered across the plan. */
+export function flatPhases(plan: BlockPlan): FlatPhase[] {
+  const weeks = flatWeeks(plan);
+  let at = 0;
+  return plan.phases.map((ph, index) => {
+    const n = Array.isArray(ph.weeks) ? ph.weeks.length : 0;
+    const ws = weeks.slice(at, at + n);
+    at += n;
+    const last = ws[ws.length - 1]?.week.weekStart;
+    return {
+      index,
+      name: typeof ph.name === 'string' ? ph.name.trim() : '',
+      type: typeof ph.type === 'string' ? ph.type : null,
+      weeks: ws,
+      start: ws[0]?.week.weekStart ?? '',
+      end: last ? addDays(last, 6) : '',
+    };
+  });
+}
+
+/** Today falls in this week (not just the nearest one). */
+export const isThisWeek = (w: FlatWeek, today: string): boolean =>
+  !!w.week.weekStart && w.week.weekStart <= today && today <= addDays(w.week.weekStart, 6);
+
+/** The phase holding a week, by the week's position in the plan. */
+export function phaseOfWeek(phases: FlatPhase[], weekIndex: number): number {
+  const hit = phases.find((p) => p.weeks.some((w) => w.index === weekIndex));
+  return hit ? hit.index : 0;
+}
+
+export const modeOf = (s: BlockSession): SessionMode =>
+  SESSION_MODES.includes(s.mode as SessionMode) ? (s.mode as SessionMode) : 'general';
 
 /** Floating sessions she has not placed go under "Any day this week". */
 export const isUnplaced = (s: BlockSession): boolean => !!s.floating && !s.placed;
@@ -504,13 +551,19 @@ export function copySession(from: BlockSession, id: string, day: DayChoice): Blo
 }
 
 /** A new session of plain text lines. */
-export function blankSession(id: string, label: string, lines: string[], day: DayChoice): BlockSession {
+export function blankSession(
+  id: string,
+  label: string,
+  lines: string[],
+  day: DayChoice,
+  mode: SessionMode = 'general',
+): BlockSession {
   return placeOn(
     {
       id,
       dayOfWeek: day === 'any' ? 0 : day,
       label: label.trim(),
-      mode: 'general',
+      mode,
       completedAt: null,
       exercises: lines
         .map((l) => l.trim())
@@ -527,6 +580,42 @@ function structuredCloneSafe<T>(v: T): T {
 
 export function insertSession(plan: BlockPlan, weekIndex: number, session: BlockSession): BlockPlan {
   return mapSessions(plan, (ss, w) => (w.index === weekIndex ? [...ss, session] : ss));
+}
+
+/** One new session in every week from `fromIndex` on, each its own copy with
+ *  its own ids (`c-<base36>-w<week index>`), so deleting one leaves the rest. */
+export function insertEveryWeek(
+  plan: BlockPlan,
+  fromIndex: number,
+  make: (id: string) => BlockSession,
+  now = Date.now(),
+): BlockPlan {
+  const base = newSessionId(now);
+  return mapSessions(plan, (ss, w) => (w.index >= fromIndex ? [...ss, make(`${base}-w${w.index}`)] : ss));
+}
+
+export interface SessionSource {
+  mode: SessionMode;
+  sessions: BlockSession[];
+}
+
+/** The plan's sessions to copy from, one per label (this week's first), by
+ *  kind with the dry ones first: a breath-hold session is usually a copy of
+ *  one of the block's tables. */
+export function sessionSources(plan: BlockPlan, weekIndex: number): SessionSource[] {
+  const weeks = flatWeeks(plan);
+  const seen = new Set<string>();
+  const byMode = new Map<SessionMode, BlockSession[]>();
+  for (const w of [weeks[weekIndex], ...weeks].filter(Boolean))
+    for (const s of w.week.plannedSessions ?? []) {
+      const key = (s.label?.trim() || s.id).toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const m = modeOf(s);
+      byMode.set(m, [...(byMode.get(m) ?? []), s]);
+    }
+  const order: SessionMode[] = ['dry', 'pool', 'depth', 'general'];
+  return order.filter((m) => byMode.has(m)).map((mode) => ({ mode, sessions: byMode.get(mode)! }));
 }
 
 export function deleteSession(plan: BlockPlan, sessionId: string): BlockPlan {

@@ -2,7 +2,8 @@
  * BlockCreateView, at /block/new: a new plan is either built here (the
  * builder) or an app block. For a block the coach answers its start
  * questions for one paired athlete; the block service builds it, the plan
- * goes to the coach's library assigned to her, and the block editor opens.
+ * goes to the coach's library (assigned to her now, or sent later from the
+ * editor), and the block editor opens.
  */
 import { useEffect, useState } from 'react';
 import { navigate } from '../hooks/useHashRoute';
@@ -10,7 +11,12 @@ import { fill, useT } from '../i18n';
 import { blockDefinition, DEFAULT_KG_STEP, isMonday, nextMonday, type Focus, type Pull } from '../lib/appBlock';
 import { calendarFormat, formatIso, mondayOf, todayIso } from '../lib/e08plan';
 import { useAuth } from '../lib/supabase/AuthProvider';
-import { remoteBlockService, type AppBlockSummary, type BlockFailure } from '../lib/supabase/appBlockService';
+import {
+  remoteBlockService,
+  type AppBlockSummary,
+  type BlockFailure,
+  type BlockService,
+} from '../lib/supabase/appBlockService';
 import { assignPlan, createPlan, type Json } from '../lib/supabase/coachData';
 import { useRoster } from '../lib/supabase/useRoster';
 import { PULLS } from '../components/block/BlockPanels';
@@ -32,10 +38,52 @@ export function failureText(reason: BlockFailure, message: string, t: (s: string
   return t('The block service did not answer.');
 }
 
+/** Where a created block goes: the real library, or the dev preview's mock. */
+export interface CreateDeps {
+  service: BlockService;
+  /** Insert the plans row; its id. */
+  insert(title: string, definition: Json): Promise<string>;
+  assign(planId: string, studentId: string): Promise<void>;
+  open(planId: string): void;
+}
+
+const LIVE: CreateDeps = {
+  service: remoteBlockService,
+  insert: async (title, definition) => (await createPlan(title, definition)).id,
+  assign: async (planId, studentId) => {
+    await assignPlan(planId, studentId);
+  },
+  open: (planId) => navigate(`/block/${planId}`, { replace: true }),
+};
+
 export function BlockCreateView({ presetStudentId }: { presetStudentId: string | null }) {
-  const t = useT();
   const { session, isCoach } = useAuth();
   const { athletes, loading } = useRoster();
+  return (
+    <BlockCreateForm
+      presetStudentId={presetStudentId}
+      online={!!session && isCoach}
+      athletes={athletes}
+      loading={loading}
+      deps={LIVE}
+    />
+  );
+}
+
+export function BlockCreateForm({
+  presetStudentId,
+  online,
+  athletes,
+  loading,
+  deps,
+}: {
+  presetStudentId: string | null;
+  online: boolean;
+  athletes: { studentId: string; name: string }[];
+  loading: boolean;
+  deps: CreateDeps;
+}) {
+  const t = useT();
   const [blocks, setBlocks] = useState<AppBlockSummary[] | null>(null);
   const [svcError, setSvcError] = useState<string | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
@@ -45,14 +93,14 @@ export function BlockCreateView({ presetStudentId }: { presetStudentId: string |
   const [kgStep, setKgStep] = useState(DEFAULT_KG_STEP);
   const [pull, setPull] = useState<Pull>('weighted');
   const [cycle, setCycle] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<'now' | 'later' | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const online = !!session && isCoach;
+  const { service } = deps;
 
   useEffect(() => {
     if (!online) return;
     let live = true;
-    void remoteBlockService.call({ op: 'info' }).then((r) => {
+    void service.call({ op: 'info' }).then((r) => {
       if (!live) return;
       if (r.ok && r.data.blocks) {
         setBlocks(r.data.blocks);
@@ -62,7 +110,7 @@ export function BlockCreateView({ presetStudentId }: { presetStudentId: string |
     return () => {
       live = false;
     };
-  }, [online, t]);
+  }, [online, service, t]);
 
   useEffect(() => {
     if (!studentId && athletes.length === 1) setStudentId(athletes[0].studentId);
@@ -72,12 +120,13 @@ export function BlockCreateView({ presetStudentId }: { presetStudentId: string |
   const athlete = athletes.find((a) => a.studentId === studentId) ?? null;
   const ready = !!block && !!athlete && isMonday(start) && !busy;
 
-  const create = async () => {
+  /** `send` assigns it to her now; without, it waits for Send in the editor. */
+  const create = async (send: boolean) => {
     if (!block || !athlete) return;
-    setBusy(true);
+    setBusy(send ? 'now' : 'later');
     setError(null);
     try {
-      const r = await remoteBlockService.call({
+      const r = await service.call({
         op: 'create',
         block: block.id,
         start,
@@ -91,13 +140,13 @@ export function BlockCreateView({ presetStudentId }: { presetStudentId: string |
       const plan = r.data.plan;
       const coachFor = { studentId: athlete.studentId, name: athlete.name };
       const definition = { ...blockDefinition(plan, coachFor, new Date().toISOString()), active: false };
-      const row = await createPlan(plan.name?.trim() || `${athlete.name} · ${block.name}`, definition as Json);
-      await assignPlan(row.id, athlete.studentId);
-      navigate(`/block/${row.id}`, { replace: true });
+      const id = await deps.insert(plan.name?.trim() || `${athlete.name} · ${block.name}`, definition as Json);
+      if (send) await deps.assign(id, athlete.studentId);
+      deps.open(id);
     } catch (e) {
       setError(fill(t('Could not create the block: {error}'), { error: (e as Error).message }));
     } finally {
-      setBusy(false);
+      setBusy(null);
     }
   };
 
@@ -215,15 +264,22 @@ export function BlockCreateView({ presetStudentId }: { presetStudentId: string |
               </div>
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
-            <span className="text-sm text-textDim">{t('She gets it right away. It shows in your app too.')}</span>
-            <button disabled={!ready} onClick={() => void create()} className="pill pill-on btn-raised px-4 py-2">
-              {busy
-                ? t('Creating…')
-                : athlete
-                  ? fill(t('Create and send to {name}'), { name: athlete.name })
-                  : t('Create and send')}
-            </button>
+          <div className="mt-4 space-y-3 border-t border-border pt-3">
+            <p className="text-sm text-textDim">
+              {t('Send it now and she gets it right away, or create it first and send it from the editor when it is ready. It shows in your app either way.')}
+            </p>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button disabled={!ready} onClick={() => void create(false)} className="pill px-4 py-2">
+                {busy === 'later' ? t('Creating…') : t('Create, send later')}
+              </button>
+              <button disabled={!ready} onClick={() => void create(true)} className="pill pill-on btn-raised px-4 py-2">
+                {busy === 'now'
+                  ? t('Creating…')
+                  : athlete
+                    ? fill(t('Create and send to {name}'), { name: athlete.name })
+                    : t('Create and send')}
+              </button>
+            </div>
           </div>
           {error && <p className="mt-2 text-sm text-red">{error}</p>}
         </section>

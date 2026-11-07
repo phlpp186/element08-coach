@@ -19,6 +19,7 @@ import {
 import { useAuth } from '../lib/supabase/AuthProvider';
 import { remoteBlockService } from '../lib/supabase/appBlockService';
 import {
+  assignPlan,
   getPlan,
   listCoachAssignments,
   listCompletions,
@@ -30,7 +31,7 @@ import {
   type Json,
   type PlanRow,
 } from '../lib/supabase/coachData';
-import { BlockEditor, type SaveState } from '../components/block/BlockEditor';
+import { BlockEditor, type SaveState, type SendOffer } from '../components/block/BlockEditor';
 import { useBlockDraft } from '../components/block/useBlockDraft';
 
 const coachForOf = (definition: unknown): CoachFor | undefined =>
@@ -45,6 +46,9 @@ export function BlockEditorView({ cloudPlanId }: { cloudPlanId: string }) {
   const [row, setRow] = useState<PlanRow | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [assignment, setAssignment] = useState<CoachAssignment | null>(null);
+  /** Who has the plan, once known (null until the first load). */
+  const [holders, setHolders] = useState<string[] | null>(null);
+  const [sending, setSending] = useState<{ state: SendOffer['state']; message?: string }>({ state: 'idle' });
   const [completions, setCompletions] = useState<CompletionRow[]>([]);
   const [save, setSave] = useState<SaveState>({ state: 'idle' });
   const rowRef = useRef<PlanRow | null>(null);
@@ -101,6 +105,7 @@ export function BlockEditorView({ cloudPlanId }: { cloudPlanId: string }) {
       const mine = (await listCoachAssignments()).filter((a) => a.planId === cloudPlanId);
       const a = mine.find((x) => x.studentId === studentHint) ?? mine[0] ?? null;
       setAssignment(a);
+      setHolders(mine.map((x) => x.studentId));
       setCompletions(a ? await listCompletions(a.id) : []);
     } catch {
       /* her side stays as it was; the editor works without it */
@@ -137,10 +142,10 @@ export function BlockEditorView({ cloudPlanId }: { cloudPlanId: string }) {
   const her = useMemo(() => herState(completions), [completions]);
   const phone = { status: phoneStatus(her, row?.updated_at ?? null), at: her?.at ?? null };
 
-  const doSave = async () => {
+  const doSave = async (): Promise<boolean> => {
     const p = draft.plan;
     const r = rowRef.current;
-    if (!p || !r || savingRef.current) return;
+    if (!p || !r || savingRef.current) return false;
     savingRef.current = true;
     setSave({ state: 'saving' });
     try {
@@ -152,16 +157,39 @@ export function BlockEditorView({ cloudPlanId }: { cloudPlanId: string }) {
         const now = await getPlan(r.id);
         if (now) await take(now);
         setSave({ state: 'conflict' });
-        return;
+        return false;
       }
       rowRef.current = saved;
       setRow(saved);
       markSaved();
       setSave({ state: 'saved' });
+      return true;
     } catch (e) {
       setSave({ state: 'error', message: (e as Error).message });
+      return false;
     } finally {
       savingRef.current = false;
+    }
+  };
+
+  // Made with "Create, send later": she gets it when the coach sends it,
+  // with what is on screen saved first.
+  const coachFor = draft.plan?.coachFor ?? coachForOf(row?.definition);
+  const notSent = !!coachFor && holders != null && !holders.includes(coachFor.studentId);
+  const doSend = async () => {
+    // A rebuild still on its way would land after the save and stay unsent.
+    if (!coachFor || sending.state === 'sending' || draft.busy) return;
+    setSending({ state: 'sending' });
+    try {
+      if (draft.dirty && !(await doSave())) {
+        setSending({ state: 'idle' });
+        return;
+      }
+      await assignPlan(cloudPlanId, coachFor.studentId);
+      await loadHer();
+      setSending({ state: 'idle' });
+    } catch (e) {
+      setSending({ state: 'error', message: (e as Error).message });
     }
   };
 
@@ -185,6 +213,11 @@ export function BlockEditorView({ cloudPlanId }: { cloudPlanId: string }) {
       draft={draft}
       title={draft.plan.name?.trim() || row.title}
       phone={phone}
+      send={
+        notSent && coachFor
+          ? { name: coachFor.name, state: sending.state, message: sending.message, onSend: () => void doSend() }
+          : null
+      }
       reports={reports}
       her={her}
       logHref={

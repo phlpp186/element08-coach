@@ -10,11 +10,14 @@ import {
   currentWeekIndex,
   deleteSession,
   editCovers,
+  flatPhases,
   flatWeeks,
   fmtClock,
   herState,
+  insertEveryWeek,
   insertSession,
   isMonday,
+  isThisWeek,
   itemLine,
   nextMonday,
   parseClock,
@@ -23,9 +26,11 @@ import {
   removedSessionsInWeek,
   removeLine,
   removeLocalLine,
+  phaseOfWeek,
   reportsBySession,
   sessionMetas,
   sessionSlot,
+  sessionSources,
   sessionsByDay,
   slugId,
   testValue,
@@ -429,5 +434,71 @@ describe('saving and creating', () => {
     expect(isMonday('2026-11-09')).toBe(true);
     expect(isMonday('2026-11-10')).toBe(false);
     expect(isMonday('nope')).toBe(false);
+  });
+});
+
+describe('phases', () => {
+  it('lays the weeks out by phase with their dates', () => {
+    const p = planOf();
+    p.phases[0].name = 'Start';
+    p.phases[1].type = 'build';
+    const ph = flatPhases(p);
+    expect(ph.map((x) => [x.index, x.name, x.type, x.weeks.map((w) => w.number), x.start, x.end])).toEqual([
+      [0, 'Start', null, [0, 1], '2026-11-09', '2026-11-22'],
+      [1, '', 'build', [2], '2026-11-23', '2026-11-29'],
+    ]);
+    expect(phaseOfWeek(ph, 2)).toBe(1);
+    expect(phaseOfWeek(ph, 9)).toBe(0);
+  });
+
+  it('knows whether today falls in a week', () => {
+    const w = flatWeeks(planOf())[1];
+    expect(isThisWeek(w, '2026-11-16')).toBe(true);
+    expect(isThisWeek(w, '2026-11-22')).toBe(true);
+    expect(isThisWeek(w, '2026-11-23')).toBe(false);
+  });
+});
+
+describe('a session in every week', () => {
+  const now = Date.UTC(2026, 10, 7);
+  const base = `c-${now.toString(36)}`;
+
+  it('gives each week from the start its own copy and ids', () => {
+    const src: BlockSession = {
+      ...(flatWeeks(planOf())[1].week.plannedSessions[0] as BlockSession),
+      workout: { id: 'plan:sc-w01-d0-a', blocks: [] },
+    };
+    const p = insertEveryWeek(planOf(), 1, (id) => copySession(src, id, 2), now);
+    const added = flatWeeks(p).map((w) => w.week.plannedSessions.filter((s) => s.id.startsWith('c-')));
+    expect(added[0]).toEqual([]);
+    expect(added[1].map((s) => [s.id, s.dayOfWeek, s.workout?.id, s.exercises[0].id])).toEqual([
+      [`${base}-w1`, 2, `plan:${base}-w1`, `${base}-w1-1`],
+    ]);
+    expect(added[2].map((s) => s.id)).toEqual([`${base}-w2`]);
+    // Deleting one leaves the other weeks' copies.
+    const after = deleteSession(p, `${base}-w1`);
+    expect(flatWeeks(after).flatMap((w) => w.week.plannedSessions.map((s) => s.id)).filter((id) => id.startsWith('c-'))).toEqual([
+      `${base}-w2`,
+    ]);
+  });
+
+  it('makes blank ones of a kind, floating when any day', () => {
+    const p = insertEveryWeek(planOf(), 2, (id) => blankSession(id, 'Swim', ['Easy 20 min'], 'any', 'pool'), now);
+    const s = flatWeeks(p)[2].week.plannedSessions.find((x) => x.id === `${base}-w2`)!;
+    expect(s).toMatchObject({ mode: 'pool', floating: true, placed: false, label: 'Swim' });
+  });
+});
+
+describe('sessions to copy from', () => {
+  it('one per label, this week first, dry ones first', () => {
+    const p = planOf();
+    const w2 = p.phases[1].weeks[0].plannedSessions;
+    w2.push({ ...blankSession('sc-w02-d4-t', 'Table', ['Hold table'], 4), mode: 'dry' });
+    w2.push({ ...blankSession('sc-w02-d5-p', 'session a', ['Dup by label'], 5), mode: 'pool' });
+    const got = sessionSources(p, 2).map((g) => [g.mode, g.sessions.map((s) => s.id)]);
+    expect(got).toEqual([
+      ['dry', ['sc-w02-d4-t']],
+      ['general', ['sc-w02-d0-a', 'sc-w02-d2-b', 'sc-w01-fl-swim']],
+    ]);
   });
 });
