@@ -708,5 +708,7 @@
   "Open a session an athlete exported from the app (.xlsx)": "アプリからエクスポートしたセッションを開く（.xlsx）",
   "Onboarding notes and the intro questionnaire, local to this browser. Send the invite code from an athlete’s page and their entry links to the app by itself.": "オンボーディングのメモと事前アンケート。このブラウザにのみ保存されます。アスリートのページから招待コードを送ると、エントリーが自動でアプリにリンクされます。",
   "on the app": "アプリ利用中",
-  "invite sent": "招待済み"
+  "invite sent": "招待済み",
+  "Built in the app": "アプリで作成",
+  "This plan has workouts, loads or tests that the web builder cannot keep. Edit it in the ELEMENT | 08 app: your changes there reach your athletes.": "このプランには、Webエディターでは保持できないワークアウト、重量、テストが含まれています。ELEMENT | 08 アプリで編集してください。アプリでの変更はアスリートに届きます。"
 }

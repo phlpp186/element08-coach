@@ -708,5 +708,7 @@
   "Open a session an athlete exported from the app (.xlsx)": "เปิดเซสชันที่ส่งออกจากแอป (.xlsx)",
   "Onboarding notes and the intro questionnaire, local to this browser. Send the invite code from an athlete’s page and their entry links to the app by itself.": "บันทึกการเริ่มต้นและแบบสอบถามแรกเข้า เก็บในเบราว์เซอร์นี้เท่านั้น ส่งรหัสเชิญจากหน้าของนักกีฬา แล้วรายการจะลิงก์กับแอปเอง",
   "on the app": "อยู่ในแอป",
-  "invite sent": "ส่งคำเชิญแล้ว"
+  "invite sent": "ส่งคำเชิญแล้ว",
+  "Built in the app": "สร้างในแอป",
+  "This plan has workouts, loads or tests that the web builder cannot keep. Edit it in the ELEMENT | 08 app: your changes there reach your athletes.": "แผนนี้มีเวิร์กเอาต์ น้ำหนัก หรือการทดสอบที่ตัวแก้ไขบนเว็บเก็บไว้ไม่ได้ แก้ไขในแอป ELEMENT | 08 แทน การเปลี่ยนแปลงในแอปจะส่งถึงนักกีฬาของคุณ"
 }

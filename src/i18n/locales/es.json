@@ -708,5 +708,7 @@
   "Open a session an athlete exported from the app (.xlsx)": "Abrir una sesión exportada desde la app (.xlsx)",
   "Onboarding notes and the intro questionnaire, local to this browser. Send the invite code from an athlete’s page and their entry links to the app by itself.": "Notas de incorporación y cuestionario inicial, solo en este navegador. Envía el código de invitación desde la página de un atleta y su ficha se vincula sola con la app.",
   "on the app": "en la app",
-  "invite sent": "invitación enviada"
+  "invite sent": "invitación enviada",
+  "Built in the app": "Creado en la app",
+  "This plan has workouts, loads or tests that the web builder cannot keep. Edit it in the ELEMENT | 08 app: your changes there reach your athletes.": "Este plan tiene entrenamientos, cargas o tests que el editor web no puede conservar. Edítalo en la app ELEMENT | 08: tus cambios allí llegan a tus atletas."
 }

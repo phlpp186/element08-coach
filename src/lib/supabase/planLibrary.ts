@@ -18,6 +18,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 import {
   builderToDefinition,
   definitionToBuilder,
+  isAppPlan,
   isDeletedDefinition,
   isLibraryDefinition,
   isTemplateDefinition,
@@ -200,7 +201,11 @@ async function pushRow(
   return row;
 }
 
-export type SaveResult = { ok: true; cloudId: string } | { ok: false; conflict: LibraryRow } | { ok: false; offline: true };
+export type SaveResult =
+  | { ok: true; cloudId: string }
+  | { ok: false; conflict: LibraryRow }
+  | { ok: false; offline: true }
+  | { ok: false; appPlan: true };
 
 /** Send a saved plan to the library. The local save already happened; on
  *  failure the plan stays marked unsent and the next sync retries. */
@@ -214,6 +219,12 @@ export async function saveToLibrary(savedId: string, plan: BuilderPlan): Promise
     if (!link) return { ok: true, cloudId: (await createRow(savedId, plan)).id };
     const row = await fetchRow(link.cloudPlanId);
     if (!row) return { ok: true, cloudId: (await createRow(savedId, plan)).id };
+    // The builder would drop what makes it an app plan (workouts, loads,
+    // tests) for every athlete on it. The builder says so and saves nothing.
+    if (isAppPlan(row.definition)) {
+      writeMeta(savedId, { ...meta, dirty: false });
+      return { ok: false, appPlan: true };
+    }
     // Unknown base: a plan this browser assigned before the library existed.
     const base = meta.base ?? row.updated_at;
     if (row.updated_at !== base && !isDeletedDefinition(row.definition)) {

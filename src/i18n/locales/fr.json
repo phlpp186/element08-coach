@@ -708,5 +708,7 @@
   "Open a session an athlete exported from the app (.xlsx)": "Ouvrir une séance exportée depuis l’app (.xlsx)",
   "Onboarding notes and the intro questionnaire, local to this browser. Send the invite code from an athlete’s page and their entry links to the app by itself.": "Notes d’accueil et questionnaire d’intro, uniquement dans ce navigateur. Envoyez le code d’invitation depuis la page d’un athlète et sa fiche se relie toute seule à l’app.",
   "on the app": "dans l’app",
-  "invite sent": "invitation envoyée"
+  "invite sent": "invitation envoyée",
+  "Built in the app": "Créé dans l'app",
+  "This plan has workouts, loads or tests that the web builder cannot keep. Edit it in the ELEMENT | 08 app: your changes there reach your athletes.": "Ce plan contient des séances, des charges ou des tests que l'éditeur web ne peut pas conserver. Modifie-le dans l'app ELEMENT | 08 : tes changements y parviennent à tes athlètes."
 }

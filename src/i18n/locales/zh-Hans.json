@@ -708,5 +708,7 @@
   "Open a session an athlete exported from the app (.xlsx)": "打开从应用导出的训练（.xlsx）",
   "Onboarding notes and the intro questionnaire, local to this browser. Send the invite code from an athlete’s page and their entry links to the app by itself.": "入门笔记和初始问卷，只保存在此浏览器中。从运动员页面发送邀请码，其条目会自动关联到应用。",
   "on the app": "已在应用中",
-  "invite sent": "已发送邀请"
+  "invite sent": "已发送邀请",
+  "Built in the app": "在 App 中创建",
+  "This plan has workouts, loads or tests that the web builder cannot keep. Edit it in the ELEMENT | 08 app: your changes there reach your athletes.": "此计划包含网页编辑器无法保留的训练、负重或测试。请在 ELEMENT | 08 App 中编辑：你在那里的修改会同步给你的运动员。"
 }

@@ -708,5 +708,7 @@
   "Open a session an athlete exported from the app (.xlsx)": "앱에서 내보낸 세션 열기(.xlsx)",
   "Onboarding notes and the intro questionnaire, local to this browser. Send the invite code from an athlete’s page and their entry links to the app by itself.": "온보딩 메모와 사전 설문지, 이 브라우저에만 저장됩니다. 선수 페이지에서 초대 코드를 보내면 항목이 자동으로 앱과 연결됩니다.",
   "on the app": "앱 사용 중",
-  "invite sent": "초대 보냄"
+  "invite sent": "초대 보냄",
+  "Built in the app": "앱에서 만든 플랜",
+  "This plan has workouts, loads or tests that the web builder cannot keep. Edit it in the ELEMENT | 08 app: your changes there reach your athletes.": "이 플랜에는 웹 편집기가 유지할 수 없는 운동, 중량 또는 테스트가 있습니다. ELEMENT | 08 앱에서 수정하세요. 앱에서 바꾼 내용은 선수에게 전달됩니다."
 }

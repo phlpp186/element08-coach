@@ -25,7 +25,8 @@ import { editedAgo } from '../views/PlansView';
 import { fill, useT } from '../i18n';
 
 export type LibraryStatus = 'idle' | 'saving' | 'synced' | 'offline' | 'conflict';
-export type PublishOutcome = 'ok' | 'conflict' | 'offline';
+/** 'appPlan': an app-only plan, not saved from here (isAppPlan). */
+export type PublishOutcome = 'ok' | 'conflict' | 'offline' | 'appPlan';
 
 const DEVICE: Record<LibraryDevice, string> = {
   iphone: 'iPhone',
@@ -82,6 +83,10 @@ export function useLibrarySave() {
       setConflict({ id, plan, row: r.conflict });
       setStatus('conflict');
       return 'conflict';
+    }
+    if ('appPlan' in r) {
+      setStatus('idle');
+      return 'appPlan';
     }
     setStatus('offline');
     return 'offline';

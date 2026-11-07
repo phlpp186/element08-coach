@@ -67,6 +67,29 @@ export function isLibraryDefinition(definition: unknown): boolean {
   return Array.isArray(definition.phases);
 }
 
+/** A plan only the app can edit: built from an app template (the S&C block),
+ *  a coach's copy for one athlete, or one with workouts, "% e1RM" loads,
+ *  tests or a daily list. The builder's model has none of these, so a web save
+ *  would drop them from every athlete's copy. */
+export function isAppPlan(definition: unknown): boolean {
+  if (!isObj(definition)) return false;
+  const d = definition;
+  if (isObj(d.source) || isObj(d.coachFor)) return true;
+  if ((Array.isArray(d.tests) && d.tests.length) || (Array.isArray(d.daily) && d.daily.length))
+    return true;
+  const phases = Array.isArray(d.phases) ? d.phases : [];
+  return phases.some((ph) =>
+    (isObj(ph) && Array.isArray(ph.weeks) ? ph.weeks : []).some((w) =>
+      (isObj(w) && Array.isArray(w.plannedSessions) ? w.plannedSessions : []).some(
+        (s) =>
+          isObj(s) &&
+          (isObj(s.workout) ||
+            (Array.isArray(s.exercises) && s.exercises.some((e) => isObj(e) && isObj(e.target)))),
+      ),
+    ),
+  );
+}
+
 export function isTemplateDefinition(definition: unknown): boolean {
   return isObj(definition) && definition.format === 'e08template';
 }

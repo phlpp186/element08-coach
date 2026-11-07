@@ -708,5 +708,7 @@
   "Open a session an athlete exported from the app (.xlsx)": "開啟從 App 匯出的訓練（.xlsx）",
   "Onboarding notes and the intro questionnaire, local to this browser. Send the invite code from an athlete’s page and their entry links to the app by itself.": "入門筆記和初始問卷，只儲存在此瀏覽器中。從運動員頁面傳送邀請碼，其項目會自動關聯到 App。",
   "on the app": "已在 App 中",
-  "invite sent": "已傳送邀請"
+  "invite sent": "已傳送邀請",
+  "Built in the app": "在 App 中建立",
+  "This plan has workouts, loads or tests that the web builder cannot keep. Edit it in the ELEMENT | 08 app: your changes there reach your athletes.": "此計畫包含網頁編輯器無法保留的訓練、負重或測試。請在 ELEMENT | 08 App 中編輯：你在那裡的修改會同步給你的運動員。"
 }

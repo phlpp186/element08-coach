@@ -3,6 +3,7 @@ import {
   builderToDefinition,
   copyOfPlan,
   definitionToBuilder,
+  isAppPlan,
   isLibraryDefinition,
   stampOf,
   tombstone,
@@ -164,5 +165,28 @@ describe('copyOfPlan', () => {
     expect(copyOfPlan({ library: { v: 1, editedOn: 'web', editedAt: '2026-11-01T10:00:00Z' } })).toBeNull();
     expect(copyOfPlan({})).toBeNull();
     expect(copyOfPlan(null)).toBeNull();
+  });
+});
+
+describe('isAppPlan', () => {
+  const week = (sessions: unknown[]) => ({
+    phases: [{ id: 'p', weeks: [{ weekStart: '2026-11-09', plannedSessions: sessions }] }],
+  });
+  it('a plan the builder made, or a plain app plan, opens in the builder', () => {
+    expect(isAppPlan(appPlan())).toBe(false);
+    expect(isAppPlan(week([{ id: 's', exercises: [{ id: 'e', description: '3x5' }] }]))).toBe(
+      false,
+    );
+    expect(isAppPlan(null)).toBe(false);
+  });
+  it('the S&C block, a coach copy, workouts, % loads, tests or a daily list do not', () => {
+    expect(isAppPlan({ ...appPlan(), source: { id: 'sc-base-block', v: 11 } })).toBe(true);
+    expect(isAppPlan({ ...appPlan(), coachFor: { studentId: 'x', name: 'J' } })).toBe(true);
+    expect(isAppPlan({ ...appPlan(), tests: [{ id: 't' }] })).toBe(true);
+    expect(isAppPlan({ ...appPlan(), daily: [{ id: 'd' }] })).toBe(true);
+    expect(isAppPlan(week([{ id: 's', workout: { id: 'plan:s' }, exercises: [] }]))).toBe(true);
+    expect(
+      isAppPlan(week([{ id: 's', exercises: [{ id: 'e', target: { pct: [70, 75] } }] }])),
+    ).toBe(true);
   });
 });
