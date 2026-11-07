@@ -83,6 +83,12 @@ export interface Athlete {
   competitions: Competition[];
   progress: ProgressNote[];
   createdAt: string;
+  /** Cloud student id (profiles.id) once this entry is linked to an athlete
+   *  connected on the app. Linked, it is the coach's one record for that
+   *  person: the connected page edits these notes instead of a separate set. */
+  studentId?: string;
+  /** Invite code sent from this athlete's page, not redeemed yet. */
+  invite?: { code: string; createdAt: string };
 }
 
 /** The coach's private notes about a CONNECTED (cloud/app) athlete — the same

@@ -111,6 +111,22 @@ export async function createInvite(): Promise<string> {
   throw new Error('Could not generate a unique invite code.');
 }
 
+export interface InviteStatus {
+  code: string;
+  /** The athlete who redeemed it, null while unused. */
+  usedBy: string | null;
+  expiresAt: string;
+}
+
+/** State of the coach's own invite codes (RLS: invites_coach_all). */
+export async function inviteStatuses(codes: string[]): Promise<InviteStatus[]> {
+  if (codes.length === 0) return [];
+  const rows = unwrap(
+    await supabase.from('invites').select('code, used_by, expires_at').in('code', codes),
+  ) as { code: string; used_by: string | null; expires_at: string }[];
+  return rows.map((r) => ({ code: r.code, usedBy: r.used_by, expiresAt: r.expires_at }));
+}
+
 /** Sever a coach↔student link (migration 0006 RPC). */
 export async function disconnect(linkId: string): Promise<void> {
   const { error } = await supabase.rpc('disconnect_link', { link_id: linkId });

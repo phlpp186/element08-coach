@@ -188,7 +188,10 @@ function BlockStrip({
       <div className="flex h-8 overflow-hidden rounded">
         {blocks.map((b, i) => {
           const pct = ((b.endT - b.startT) / total) * 100;
-          const c = colors[b.type];
+          // The app also writes Attempt (a max hold) and Swim blocks; an unknown
+          // type must not take the whole page down with it.
+          const c =
+            colors[b.type as keyof typeof colors] ?? ((b.type as string) === 'Attempt' ? colors.Hold : colors.Rest);
           return (
             <div
               key={i}

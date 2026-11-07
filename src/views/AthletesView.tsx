@@ -13,6 +13,7 @@ import type { Athlete } from '../lib/types';
 import { ConnectedAthletes } from '../components/ConnectedAthletes';
 import { CloudBackup } from '../components/CloudBackup';
 import { InfoTip } from '../components/InfoTip';
+import { inviteExpired } from '../lib/athleteLink';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import { useT } from '../i18n';
 
@@ -49,7 +50,7 @@ export function AthletesView() {
           <h2 className="text-lg">{t('Athletes')}</h2>
           <p className="text-textDim text-sm">{t('Your roster lives in this browser. Export it to back up or move devices.')}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <input ref={fileRef} type="file" accept=".e08coach,application/json" onChange={onImport} className="hidden" />
           <button
             onClick={() => fileRef.current?.click()}
@@ -68,6 +69,13 @@ export function AthletesView() {
           <InfoTip
             text={t('Your roster lives only in this browser. Export saves it (athletes, notes, saved plans) to an .e08coach file; Import restores that file on another browser or device. Use it to back up or move your data.')}
           />
+          <button
+            onClick={() => navigate('/session-file')}
+            className="pill text-sm px-3 py-1.5"
+            title={t('Open a session an athlete exported from the app (.xlsx)')}
+          >
+            {t('Session file')}
+          </button>
           <button onClick={addAthlete} className="pill pill-on btn-raised text-sm px-3 py-1.5">
             + {t('Add athlete')}
           </button>
@@ -81,7 +89,7 @@ export function AthletesView() {
       {showLocalHeading && (
         <div className="pt-2">
           <h3 className="font-heading tracking-wide text-text">{t('YOUR NOTES')}</h3>
-          <p className="text-textDim text-xs">{t('Local to this browser, for prospects or athletes not on the app.')}</p>
+          <p className="text-textDim text-xs">{t('Onboarding notes and the intro questionnaire, local to this browser. Send the invite code from an athlete’s page and their entry links to the app by itself.')}</p>
         </div>
       )}
 
@@ -118,7 +126,13 @@ function AthleteCard({ athlete, planCount }: { athlete: Athlete; planCount: numb
         </span>
         <div className="min-w-0">
           <div className="text-text truncate">{athlete.name.trim() || t('Unnamed athlete')}</div>
-          {athlete.location && <div className="text-xs text-textDim truncate">{athlete.location}</div>}
+          {athlete.studentId ? (
+            <div className="text-xs text-accent">✓ {t('on the app')}</div>
+          ) : athlete.invite && !inviteExpired(athlete.invite) ? (
+            <div className="text-xs text-highlight">{t('invite sent')}</div>
+          ) : (
+            athlete.location && <div className="text-xs text-textDim truncate">{athlete.location}</div>
+          )}
         </div>
       </div>
 

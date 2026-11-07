@@ -8,6 +8,7 @@ import { useSyncExternalStore } from 'react';
 import { uid } from './e08plan';
 import type { Athlete, CoachNote, SavedPlan } from './types';
 import { emptyAthlete } from './types';
+import { mergeNoteIntoAthlete } from './athleteLink';
 
 const ATHLETES_KEY = 'element08.coach.athletes';
 const PLANS_KEY = 'element08.coach.plans';
@@ -119,6 +120,39 @@ export function createAthlete(name = ''): Athlete {
 
 export function updateAthlete(id: string, patch: Partial<Athlete>): void {
   athletes.set(athletes.get().map((a) => (a.id === id ? { ...a, ...patch } : a)));
+}
+
+/** Current roster outside React (for background checks). */
+export function getAthletes(): Athlete[] {
+  return athletes.get();
+}
+
+/** The notebook entry linked to a connected athlete, if any. */
+export function useLinkedAthlete(studentId: string): Athlete | undefined {
+  return useAthletes().find((a) => a.studentId === studentId);
+}
+
+/**
+ * Join a notebook entry and a connected athlete into one record. Notes the
+ * coach kept on the connected page move into the entry (nothing is dropped:
+ * text that differs is kept on both sides of a blank line), and no other
+ * entry stays linked to the same athlete.
+ */
+export function linkAthlete(athleteId: string, studentId: string): void {
+  const note = coachNotes.get().find((n) => n.studentId === studentId);
+  athletes.set(
+    athletes.get().map((a) => {
+      if (a.id === athleteId) return { ...a, ...mergeNoteIntoAthlete(a, note), studentId, invite: undefined };
+      if (a.studentId === studentId) return { ...a, studentId: undefined };
+      return a;
+    }),
+  );
+  if (note) coachNotes.set(coachNotes.get().filter((n) => n.studentId !== studentId));
+}
+
+/** Local only: the athlete stays connected on the app. */
+export function unlinkAthlete(athleteId: string): void {
+  updateAthlete(athleteId, { studentId: undefined });
 }
 
 export function deleteAthlete(id: string): void {

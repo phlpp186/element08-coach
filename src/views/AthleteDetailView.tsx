@@ -21,6 +21,7 @@ import {
 import { Sparkline } from '../components/Sparkline';
 import { CoachNotesEditor } from '../components/CoachNotesEditor';
 import { IntakeEditor } from '../components/IntakeEditor';
+import { AppConnectionCard } from '../components/AppConnectionCard';
 import { deleteFromLibrary } from '../lib/supabase/planLibrary';
 import { navigate } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
@@ -67,6 +68,8 @@ export function AthleteDetailView({ athleteId }: { athleteId: string }) {
           {t('Delete')}
         </button>
       </div>
+
+      <AppConnectionCard athlete={athlete} />
 
       {/* Coach's CRM block (contact / location / coaching period / notes /
           competitions) — shared with the connected-athlete detail. */}

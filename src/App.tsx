@@ -9,6 +9,7 @@ import { PlanBuilderView } from './views/PlanBuilderView';
 import { PlansView } from './views/PlansView';
 import { ExercisesView } from './views/ExercisesView';
 import { BillingView } from './views/BillingView';
+import { SessionFileView } from './views/SessionFileView';
 import { AuthBar } from './components/AuthBar';
 import { CompletionBell } from './components/CompletionBell';
 import { BillingDueReminder } from './components/BillingDueReminder';
@@ -17,6 +18,7 @@ import { AppFooter } from './components/AppFooter';
 import { useT } from './i18n';
 import { useAuth } from './lib/supabase/AuthProvider';
 import { useLibrarySync } from './lib/supabase/planLibrary';
+import { useInviteLinking } from './lib/supabase/useInviteLinking';
 import { LanguageSwitcher } from './i18n/LanguageSwitcher';
 
 const NAV: { id: string; label: string; to: string }[] = [
@@ -32,6 +34,7 @@ export function App() {
   const route = useRoute();
   const { session, isCoach } = useAuth();
   useLibrarySync(!!session && isCoach);
+  useInviteLinking(!!session && isCoach);
   const top = route.segments[0] ?? 'athletes';
   const t = useT();
 
@@ -91,6 +94,10 @@ function Outlet() {
 
   if (top === 'billing') {
     return <BillingView />;
+  }
+
+  if (top === 'session-file') {
+    return <SessionFileView />;
   }
 
   if (top === 'plan') {

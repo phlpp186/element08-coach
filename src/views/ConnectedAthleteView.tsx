@@ -28,12 +28,16 @@ import {
 } from '../lib/supabase/athleteProfileCloud';
 import { CoachNotesEditor } from '../components/CoachNotesEditor';
 import { IntakeEditor } from '../components/IntakeEditor';
-import { useCoachNote, updateCoachNote } from '../lib/store';
+import { linkAthlete, updateAthlete, updateCoachNote, useAthletes, useCoachNote, useLinkedAthlete } from '../lib/store';
 
 export function ConnectedAthleteView({ studentId }: { studentId: string }) {
   const t = useT();
   const { session } = useAuth();
   const note = useCoachNote(studentId);
+  // Linked to a notebook entry: that entry IS the coach's record for this
+  // athlete, so the notes below edit it instead of a second, separate set.
+  const linked = useLinkedAthlete(studentId);
+  const unlinkedEntries = useAthletes().filter((a) => !a.studentId);
   const [name, setName] = useState(t('Athlete'));
   const [pbs, setPbs] = useState<AthletePB[]>([]);
   const [goals, setGoals] = useState<AthleteGoal[]>([]);
@@ -236,21 +240,59 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
           </section>
 
           <section className="space-y-3">
-            <div>
-              <h3 className="font-heading tracking-wide text-text">{t('YOUR NOTES')}</h3>
-              <p className="text-xs text-textDim">
-                {t('Private to you, not shared with the athlete. Kept on this device (backs up with your roster file).')}
-              </p>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h3 className="font-heading tracking-wide text-text">{t('YOUR NOTES')}</h3>
+                <p className="text-xs text-textDim">
+                  {t('Private to you, not shared with the athlete. Kept on this device (backs up with your roster file).')}
+                </p>
+              </div>
+              {linked ? (
+                <button onClick={() => navigate(`/athletes/${linked.id}`)} className="pill px-3 py-1.5 text-sm">
+                  {t('Notebook page')} ›
+                </button>
+              ) : (
+                unlinkedEntries.length > 0 && (
+                  <label className="flex flex-wrap items-center gap-2 text-xs text-textDim">
+                    {t('Onboarded with Add athlete? Link that entry:')}
+                    <select
+                      className="field w-auto py-1 text-sm"
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value) linkAthlete(e.target.value, studentId);
+                      }}
+                    >
+                      <option value="">{t('Choose an athlete')}</option>
+                      {unlinkedEntries.map((a) => (
+                        <option key={a.id} value={a.id}>
+                          {a.name.trim() || t('Unnamed athlete')}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )
+              )}
             </div>
-            <CoachNotesEditor value={note} onPatch={(p) => updateCoachNote(studentId, p)} />
+            {linked ? (
+              <CoachNotesEditor value={linked} onPatch={(p) => updateAthlete(linked.id, p)} />
+            ) : (
+              <CoachNotesEditor value={note} onPatch={(p) => updateCoachNote(studentId, p)} />
+            )}
           </section>
 
           <section className="space-y-3">
             <h3 className="font-heading tracking-wide text-text">{t('Intro questionnaire')}</h3>
-            <IntakeEditor
-              value={note.intake}
-              onChange={(p) => updateCoachNote(studentId, { intake: { ...note.intake, ...p } })}
-            />
+            {linked ? (
+              <IntakeEditor
+                value={linked.intake}
+                onChange={(p) => updateAthlete(linked.id, { intake: { ...linked.intake, ...p } })}
+              />
+            ) : (
+              <IntakeEditor
+                value={note.intake}
+                onChange={(p) => updateCoachNote(studentId, { intake: { ...note.intake, ...p } })}
+              />
+            )}
           </section>
 
         </>
