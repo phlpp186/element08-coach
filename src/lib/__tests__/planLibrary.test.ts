@@ -5,6 +5,8 @@ import {
   definitionToBuilder,
   isAppPlan,
   isLibraryDefinition,
+  isUsablePlanId,
+  newDefId,
   stampOf,
   tombstone,
 } from '../planLibrary';
@@ -188,5 +190,16 @@ describe('isAppPlan', () => {
     expect(
       isAppPlan(week([{ id: 's', exercises: [{ id: 'e', target: { pct: [70, 75] } }] }])),
     ).toBe(true);
+  });
+});
+
+describe('isUsablePlanId', () => {
+  it('only takes a positive number, like the app', () => {
+    expect(isUsablePlanId(0)).toBe(false);
+    expect(isUsablePlanId(-1)).toBe(false);
+    expect(isUsablePlanId(NaN)).toBe(false);
+    expect(isUsablePlanId('12')).toBe(false);
+    expect(isUsablePlanId(undefined)).toBe(false);
+    expect(isUsablePlanId(newDefId())).toBe(true);
   });
 });

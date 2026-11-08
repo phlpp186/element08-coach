@@ -8,7 +8,8 @@
 import { useEffect, useState } from 'react';
 import { navigate } from '../hooks/useHashRoute';
 import { fill, useT } from '../i18n';
-import { blockDefinition, DEFAULT_KG_STEP, isMonday, nextMonday, type Focus, type Pull } from '../lib/appBlock';
+import { DEFAULT_KG_STEP, isMonday, newBlockDefinition, nextMonday, type Focus, type Pull } from '../lib/appBlock';
+import { newDefId } from '../lib/planLibrary';
 import { calendarFormat, formatIso, mondayOf, todayIso } from '../lib/e08plan';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import {
@@ -139,7 +140,7 @@ export function BlockCreateForm({
       }
       const plan = r.data.plan;
       const coachFor = { studentId: athlete.studentId, name: athlete.name };
-      const definition = { ...blockDefinition(plan, coachFor, new Date().toISOString()), active: false };
+      const definition = newBlockDefinition(plan, coachFor, new Date().toISOString(), newDefId());
       const id = await deps.insert(plan.name?.trim() || `${athlete.name} · ${block.name}`, definition as Json);
       if (send) await deps.assign(id, athlete.studentId);
       deps.open(id);

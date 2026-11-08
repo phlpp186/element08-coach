@@ -869,6 +869,18 @@ export function blockDefinition(plan: BlockPlan, coachFor: CoachFor | undefined,
   };
 }
 
+/** The definition of a block made here (`create`): the service builds it
+ *  with `id: 0`, the template's placeholder, and every app holding two such
+ *  plans would match both rows to one plan. */
+export function newBlockDefinition(
+  plan: BlockPlan,
+  coachFor: CoachFor | undefined,
+  at: string,
+  id: number,
+): Obj {
+  return { ...blockDefinition(plan, coachFor, at), id, active: false };
+}
+
 /** A Monday on or after `today`, the default test week. */
 export function nextMonday(today: string): string {
   const d = new Date(`${today}T00:00:00Z`);

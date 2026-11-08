@@ -12,7 +12,8 @@
  *   edit, so only the others get it.
  *
  * Per-plan state (`base`, unsent `dirty`) lives in localStorage next to the
- * cloud links (cloudPlanLinks.ts).
+ * cloud links (cloudPlanLinks.ts). Every write for one plan goes through
+ * `lock` (../planLock.ts), one at a time.
  */
 import { useEffect, useSyncExternalStore } from 'react';
 import {
@@ -22,10 +23,12 @@ import {
   isDeletedDefinition,
   isLibraryDefinition,
   isTemplateDefinition,
+  isUsablePlanId,
   newDefId,
   stampOf,
   tombstone,
 } from '../planLibrary';
+import { createPlanLock } from '../planLock';
 import type { BuilderPlan } from '../e08plan';
 import { deletePlan, getSavedPlans, newPlanId, putLibraryPlan } from '../store';
 import { supabase } from './client';
@@ -46,6 +49,17 @@ export interface LibraryRow {
 
 const COLUMNS = 'id, title, definition, updated_at';
 const META_KEY = 'element08.coach.libraryMeta';
+
+const lock = createPlanLock();
+/** What this browser last wrote to each plan's row, so the same save twice
+ *  (Save, then Assign) does not send a second version to the athletes. */
+const lastSent = new Map<string, { json: string; at: string }>();
+
+/** After a write: still unsent only if a newer save of the plan is waiting. */
+function written(savedId: string, plan: BuilderPlan, row: LibraryRow, n: number): void {
+  writeMeta(savedId, { base: row.updated_at, dirty: !lock.latest(savedId, n) });
+  lastSent.set(savedId, { json: JSON.stringify(plan), at: row.updated_at });
+}
 
 interface Meta {
   base?: string;
@@ -150,7 +164,7 @@ function savedFromRow(savedId: string, row: LibraryRow, athleteId: string | null
   });
 }
 
-async function createRow(savedId: string, plan: BuilderPlan): Promise<LibraryRow> {
+async function createRow(savedId: string, plan: BuilderPlan, n: number): Promise<LibraryRow> {
   const uid = await userId();
   if (!uid) throw new Error('Not signed in.');
   const defId = getCloudPlanLink(savedId)?.defId ?? newDefId();
@@ -167,7 +181,7 @@ async function createRow(savedId: string, plan: BuilderPlan): Promise<LibraryRow
   if (error) throw new Error(error.message);
   const row = data as LibraryRow;
   setCloudPlanLink(savedId, { cloudPlanId: row.id, defId });
-  writeMeta(savedId, { base: row.updated_at, dirty: false });
+  written(savedId, plan, row, n);
   remember(row);
   return row;
 }
@@ -179,6 +193,7 @@ async function pushRow(
   cloudId: string,
   defId: number,
   base: string,
+  n: number,
 ): Promise<LibraryRow | null> {
   const current = state.rows[cloudId] ?? (await fetchRow(cloudId));
   const at = new Date().toISOString();
@@ -196,7 +211,7 @@ async function pushRow(
   if (error) throw new Error(error.message);
   if (!data) return null;
   const row = data as LibraryRow;
-  writeMeta(savedId, { base: row.updated_at, dirty: false });
+  written(savedId, plan, row, n);
   remember(row);
   return row;
 }
@@ -208,22 +223,36 @@ export type SaveResult =
   | { ok: false; appPlan: true };
 
 /** Send a saved plan to the library. The local save already happened; on
- *  failure the plan stays marked unsent and the next sync retries. */
-export async function saveToLibrary(savedId: string, plan: BuilderPlan): Promise<SaveResult> {
-  const meta = readMeta()[savedId] ?? {};
-  writeMeta(savedId, { ...meta, dirty: true });
+ *  failure the plan stays marked unsent and the next sync retries. Saves of
+ *  one plan run one after another (`lock`). */
+export function saveToLibrary(savedId: string, plan: BuilderPlan): Promise<SaveResult> {
+  const n = lock.want(savedId);
+  writeMeta(savedId, { ...readMeta()[savedId], dirty: true });
   refreshPending();
+  return lock.run(savedId, () => saveNow(savedId, plan, n));
+}
+
+async function saveNow(savedId: string, plan: BuilderPlan, n: number): Promise<SaveResult> {
+  // Read inside the lock: the save before this one may have moved `base` on.
+  const meta = readMeta()[savedId] ?? {};
   try {
     if (!(await userId())) return { ok: false, offline: true };
+    // Deleted while this save waited: sending it would bring it back.
+    if (!getSavedPlans().some((p) => p.id === savedId)) return { ok: false, offline: true };
     const link = getCloudPlanLink(savedId);
-    if (!link) return { ok: true, cloudId: (await createRow(savedId, plan)).id };
+    if (!link) return { ok: true, cloudId: (await createRow(savedId, plan, n)).id };
     const row = await fetchRow(link.cloudPlanId);
-    if (!row) return { ok: true, cloudId: (await createRow(savedId, plan)).id };
+    if (!row) return { ok: true, cloudId: (await createRow(savedId, plan, n)).id };
     // The builder would drop what makes it an app plan (workouts, loads,
     // tests) for every athlete on it. The builder says so and saves nothing.
     if (isAppPlan(row.definition)) {
-      writeMeta(savedId, { ...meta, dirty: false });
+      if (lock.latest(savedId, n)) writeMeta(savedId, { ...meta, dirty: false });
       return { ok: false, appPlan: true };
+    }
+    const sent = lastSent.get(savedId);
+    if (sent && sent.at === row.updated_at && sent.json === JSON.stringify(plan)) {
+      writeMeta(savedId, { base: row.updated_at, dirty: !lock.latest(savedId, n) });
+      return { ok: true, cloudId: row.id };
     }
     // Unknown base: a plan this browser assigned before the library existed.
     const base = meta.base ?? row.updated_at;
@@ -231,14 +260,14 @@ export async function saveToLibrary(savedId: string, plan: BuilderPlan): Promise
       setState({ conflicts: { ...state.conflicts, [savedId]: row } });
       return { ok: false, conflict: row };
     }
-    const saved = await pushRow(savedId, plan, link.cloudPlanId, link.defId, row.updated_at);
+    const saved = await pushRow(savedId, plan, link.cloudPlanId, link.defId, row.updated_at, n);
     if (!saved) {
       const now = await fetchRow(link.cloudPlanId);
       if (now) {
         setState({ conflicts: { ...state.conflicts, [savedId]: now } });
         return { ok: false, conflict: now };
       }
-      return { ok: true, cloudId: (await createRow(savedId, plan)).id };
+      return { ok: true, cloudId: (await createRow(savedId, plan, n)).id };
     }
     return { ok: true, cloudId: saved.id };
   } catch {
@@ -285,14 +314,17 @@ export async function deleteFromLibrary(savedId: string): Promise<void> {
   writeMeta(savedId, null);
   removeCloudPlanLink(savedId);
   refreshPending();
+  lastSent.delete(savedId);
   if (!link) return;
-  const row = await fetchRow(link.cloudPlanId).catch(() => null);
-  if (!row) return;
-  const at = new Date().toISOString();
-  await supabase
-    .from('plans')
-    .update({ definition: tombstone(row.definition, at) as Json, updated_at: at })
-    .eq('id', link.cloudPlanId);
+  await lock.run(savedId, async () => {
+    const row = await fetchRow(link.cloudPlanId).catch(() => null);
+    if (!row) return;
+    const at = new Date().toISOString();
+    await supabase
+      .from('plans')
+      .update({ definition: tombstone(row.definition, at) as Json, updated_at: at })
+      .eq('id', link.cloudPlanId);
+  });
   const rows = { ...state.rows };
   delete rows[link.cloudPlanId];
   setState({ rows });
@@ -343,6 +375,59 @@ export async function keepPreviousFor(
 
 // ── Sync ─────────────────────────────────────────────────────────────────────
 
+/** One listed row against this browser's copy, inside the plan's lock.
+ *  `listedBase` is the plan's base when the rows were listed: if a save has
+ *  moved it on since, the listed row is older than this browser's copy and
+ *  the next sync looks again. */
+async function syncRow(
+  sid: string,
+  row: LibraryRow,
+  deleted: boolean,
+  listedBase: string | undefined,
+): Promise<void> {
+  const m = readMeta()[sid] ?? {};
+  if (m.base !== listedBase) return;
+  if (state.conflicts[sid]) return;
+  const link = getCloudPlanLink(sid);
+  if (!link || link.cloudPlanId !== row.id) return;
+  const local = getSavedPlans().find((p) => p.id === sid);
+  const n = lock.current(sid);
+  if (deleted) {
+    if (m.dirty && local) {
+      await pushRow(sid, local.plan, row.id, link.defId, row.updated_at, n);
+    } else {
+      if (local) deletePlan(sid);
+      removeCloudPlanLink(sid);
+      writeMeta(sid, null);
+    }
+    return;
+  }
+  if (!local) {
+    // The copy here was lost (cleared storage): take the library's.
+    savedFromRow(sid, row, null);
+    writeMeta(sid, { base: row.updated_at, dirty: false });
+    return;
+  }
+  if (m.base === undefined) {
+    // Assigned before the library existed. The web wrote that row, so the
+    // copy here is the newer one, unless the library has been at it since.
+    if (stampOf(row.definition)) {
+      savedFromRow(sid, row, local.athleteId);
+      writeMeta(sid, { base: row.updated_at, dirty: false });
+    } else {
+      await pushRow(sid, local.plan, row.id, link.defId, row.updated_at, n);
+    }
+  } else if (row.updated_at !== m.base) {
+    if (m.dirty) setState({ conflicts: { ...state.conflicts, [sid]: row } });
+    else {
+      savedFromRow(sid, row, local.athleteId);
+      writeMeta(sid, { base: row.updated_at, dirty: false });
+    }
+  } else if (m.dirty) {
+    await pushRow(sid, local.plan, row.id, link.defId, row.updated_at, n);
+  }
+}
+
 let running: Promise<void> | null = null;
 
 export function syncLibrary(): Promise<void> {
@@ -383,15 +468,14 @@ async function runSync(): Promise<void> {
     templates: all.filter((r) => isTemplateDefinition(r.definition)),
   });
 
-  const links = getCloudPlanLinks();
-  const savedByCloud = new Map(Object.entries(links).map(([sid, l]) => [l.cloudPlanId, sid]));
-  const saved = new Map(getSavedPlans().map((p) => [p.id, p]));
-  const meta = readMeta();
+  const listedLinks = getCloudPlanLinks();
+  const listedMeta = readMeta();
   const seen = new Set<string>();
 
   for (const row of lib) {
     const deleted = isDeletedDefinition(row.definition);
-    const sid = savedByCloud.get(row.id);
+    // Read now, not at the listing: a save may have linked a new row since.
+    const sid = Object.entries(getCloudPlanLinks()).find(([, l]) => l.cloudPlanId === row.id)?.[0];
     try {
       if (!sid) {
         if (deleted) continue;
@@ -400,50 +484,14 @@ async function runSync(): Promise<void> {
         savedFromRow(id, row, null);
         setCloudPlanLink(id, {
           cloudPlanId: row.id,
-          defId: typeof defId === 'number' ? defId : newDefId(),
+          defId: isUsablePlanId(defId) ? defId : newDefId(),
         });
         writeMeta(id, { base: row.updated_at, dirty: false });
         seen.add(id);
         continue;
       }
       seen.add(sid);
-      const local = saved.get(sid);
-      const m = meta[sid] ?? {};
-      if (state.conflicts[sid]) continue;
-      if (deleted) {
-        if (m.dirty && local) {
-          await pushRow(sid, local.plan, row.id, links[sid].defId, row.updated_at);
-        } else {
-          if (local) deletePlan(sid);
-          removeCloudPlanLink(sid);
-          writeMeta(sid, null);
-        }
-        continue;
-      }
-      if (!local) {
-        // The copy here was lost (cleared storage): take the library's.
-        savedFromRow(sid, row, null);
-        writeMeta(sid, { base: row.updated_at, dirty: false });
-        continue;
-      }
-      if (m.base === undefined) {
-        // Assigned before the library existed. The web wrote that row, so the
-        // copy here is the newer one, unless the library has been at it since.
-        if (stampOf(row.definition)) {
-          savedFromRow(sid, row, local.athleteId);
-          writeMeta(sid, { base: row.updated_at, dirty: false });
-        } else {
-          await pushRow(sid, local.plan, row.id, links[sid].defId, row.updated_at);
-        }
-      } else if (row.updated_at !== m.base) {
-        if (m.dirty) setState({ conflicts: { ...state.conflicts, [sid]: row } });
-        else {
-          savedFromRow(sid, row, local.athleteId);
-          writeMeta(sid, { base: row.updated_at, dirty: false });
-        }
-      } else if (m.dirty) {
-        await pushRow(sid, local.plan, row.id, links[sid].defId, row.updated_at);
-      }
+      await lock.run(sid, () => syncRow(sid, row, deleted, listedMeta[sid]?.base));
     } catch {
       /* one row failing must not stop the rest; the next sync retries it */
     }
@@ -453,7 +501,13 @@ async function runSync(): Promise<void> {
   for (const p of getSavedPlans()) {
     if (seen.has(p.id)) continue;
     try {
-      await createRow(p.id, p.plan);
+      await lock.run(p.id, async () => {
+        // A save created its row while this sync ran: nothing to upload.
+        const link = getCloudPlanLink(p.id);
+        if (link && link.cloudPlanId !== listedLinks[p.id]?.cloudPlanId) return;
+        const now = getSavedPlans().find((x) => x.id === p.id);
+        if (now) await createRow(p.id, now.plan, lock.current(p.id));
+      });
     } catch {
       /* retried next sync */
     }

@@ -5,6 +5,7 @@ import {
   addLocalLine,
   blankSession,
   blockDefinition,
+  newBlockDefinition,
   canRemoveLine,
   copySession,
   currentWeekIndex,
@@ -430,6 +431,15 @@ describe('saving and creating', () => {
     expect(d.library).toEqual({ v: 1, editedOn: 'web', editedAt: '2026-11-07T10:00:00Z' });
     expect(d.coachFor).toEqual({ studentId: 's1', name: 'Ana' });
     expect(d.phases).toBe(p.phases);
+  });
+
+  it('gives a new block a real plan id, never the template’s 0', () => {
+    const p = { ...planOf(), id: 0 } as BlockPlan;
+    const d = newBlockDefinition(p, { studentId: 's1', name: 'Ana' }, '2026-11-08T10:00:00Z', 1762596000123);
+    expect(d.id).toBe(1762596000123);
+    expect(d.active).toBe(false);
+    expect(d.coachFor).toEqual({ studentId: 's1', name: 'Ana' });
+    expect(d.library).toEqual({ v: 1, editedOn: 'web', editedAt: '2026-11-08T10:00:00Z' });
   });
 
   it('picks and checks the test-week Monday', () => {

@@ -294,3 +294,9 @@ export function builderToDefinition(
 
 /** A fresh, stable app Plan id for a plan first saved on the web. */
 export const newDefId = (): number => Date.now() + Math.floor(Math.random() * 1000);
+
+/** A Plan id the app can keep: a positive number. The app never matches
+ *  plans by any other (app src/lib/planLibrary/stamp.ts isUsablePlanId). */
+export function isUsablePlanId(id: unknown): id is number {
+  return typeof id === 'number' && Number.isFinite(id) && id > 0;
+}
