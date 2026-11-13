@@ -824,7 +824,6 @@
   "Create, send later": "作成して後で送信",
   "Cues, breathe-up, how it should feel.": "ポイント、ブリーズアップ、どう感じるべきか。",
   "She sees the notes above the lines and rates against the target.": "選手は項目の上にメモを見て、目標と比べて評価します。",
-  "Notes and effort · {label}, week {n}": "メモときつさ · {label}、第{n}週",
   "Target {n}": "目標 {n}",
-  "Notes and effort": "メモときつさ"
+  "The app runs these lines as a workout, so they stay as they are: take one out with ✕ or add one from the exercise list.": "アプリはこれらの行をワークアウトとして実行するため、そのままにします。✕で外すか、エクササイズ一覧から追加してください。"
 }

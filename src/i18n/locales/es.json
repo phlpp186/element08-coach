@@ -824,7 +824,6 @@
   "Create, send later": "Crear, enviar después",
   "Cues, breathe-up, how it should feel.": "Indicaciones, respiración previa, cómo debería sentirse.",
   "She sees the notes above the lines and rates against the target.": "Ella ve las notas encima de las líneas y valora su esfuerzo frente al objetivo.",
-  "Notes and effort · {label}, week {n}": "Notas y esfuerzo · {label}, semana {n}",
   "Target {n}": "Objetivo {n}",
-  "Notes and effort": "Notas y esfuerzo"
+  "The app runs these lines as a workout, so they stay as they are: take one out with ✕ or add one from the exercise list.": "La app ejecuta estas líneas como un entrenamiento, así que se quedan como están: quita una con ✕ o añade una de la lista de ejercicios."
 }

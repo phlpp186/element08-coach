@@ -824,7 +824,6 @@
   "Create, send later": "创建，稍后发送",
   "Cues, breathe-up, how it should feel.": "要点、屏气前呼吸、应有的感受。",
   "She sees the notes above the lines and rates against the target.": "她会在条目上方看到备注，并对照目标打分。",
-  "Notes and effort · {label}, week {n}": "备注与强度 · {label}，第 {n} 周",
   "Target {n}": "目标 {n}",
-  "Notes and effort": "备注与强度"
+  "The app runs these lines as a workout, so they stay as they are: take one out with ✕ or add one from the exercise list.": "应用会把这些行作为训练来运行，所以它们保持不变：用 ✕ 移除一行，或从练习列表中添加。"
 }

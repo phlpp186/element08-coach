@@ -10,16 +10,20 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   accessories,
+  addedAsBuilder,
   addExercise,
   addLocalLine,
+  applyAddedEdit,
   canRemoveLine,
   currentWeekIndex,
+  dayOf,
   deleteSession,
   flatPhases,
   flatWeeks,
   isBlockSession,
   isThisWeek,
   isUnplaced,
+  linesLocked,
   modeOf,
   newAddId,
   phaseOfWeek,
@@ -29,11 +33,12 @@ import {
   removeLocalLine,
   sessionInfoOf,
   sessionSlot,
-  setSessionInfo,
+  testPrefixes,
   toggleRemoved,
   undoDrop,
   type BlockExercise,
   type BlockSession,
+  type BlockTest,
   type DayChoice,
   type FlatPhase,
   type FlatWeek,
@@ -45,10 +50,20 @@ import {
   type SessionMode,
   type SetsItem,
 } from '../../lib/appBlock';
-import { addDays, calendarFormat, DAY_LABELS, formatIso, MESO_LABEL, todayIso, type MesoType } from '../../lib/e08plan';
+import {
+  addDays,
+  calendarFormat,
+  DAY_LABELS,
+  formatIso,
+  MESO_LABEL,
+  todayIso,
+  type BuilderSession,
+  type MesoType,
+} from '../../lib/e08plan';
 import { fill, useT } from '../../i18n';
 import type { BlockDraft, DraftStatus } from './useBlockDraft';
-import { AddExerciseDialog, AddSessionDialog, SessionInfoDialog } from './BlockDialogs';
+import { AddExerciseDialog, AddSessionDialog, DayPicker } from './BlockDialogs';
+import { SessionEditor } from '../sessions';
 import { HerNumbers, HowItWorks } from './BlockPanels';
 
 export interface SaveState {
@@ -100,7 +115,11 @@ interface Handlers {
   onRemove: (s: BlockSession, line: BlockExercise, everyFrom: number | null) => void;
   onUndoLine: (r: RemovedLine) => void;
   onAddExercise: (s: BlockSession, w: FlatWeek) => void;
-  onEditInfo: (s: BlockSession, w: FlatWeek) => void;
+  /** The added session open in the builder's session editor. */
+  editing: string | null;
+  tests: BlockTest[];
+  onEdit: (id: string | null) => void;
+  onApplyEdit: (id: string, edit: BuilderSession, day: DayChoice) => void;
   onDelete: (s: BlockSession) => void;
   onUndoDelete: (id: string) => void;
   onAddSession: (w: FlatWeek, day: DayChoice) => void;
@@ -140,7 +159,7 @@ export function BlockEditor({
   const [open, setOpen] = useState<Set<number>>(() => new Set([phaseOfWeek(phases, current)]));
   const [adding, setAdding] = useState<{ session: BlockSession; week: FlatWeek } | null>(null);
   const [addingSession, setAddingSession] = useState<{ week: FlatWeek; day: DayChoice } | null>(null);
-  const [editingInfo, setEditingInfo] = useState<{ session: BlockSession; week: FlatWeek } | null>(null);
+  const [editing, setEditing] = useState<string | null>(null);
   const [showHow, setShowHow] = useState(() => typeof window === 'undefined' || window.matchMedia('(min-width: 1024px)').matches);
   const info = draft.info;
   const canServer = draft.status === 'ready' && !draft.busy;
@@ -166,7 +185,10 @@ export function BlockEditor({
     },
     onUndoLine: (r) => void draft.change({ edits: undoDrop(src?.edits, r.drop) }),
     onAddExercise: (session, week) => setAdding({ session, week }),
-    onEditInfo: (session, week) => setEditingInfo({ session, week }),
+    editing,
+    tests: plan.tests ?? [],
+    onEdit: setEditing,
+    onApplyEdit: (id, edit, day) => draft.local((p) => applyAddedEdit(p, id, edit, day)),
     onDelete: (s) => {
       if (isBlockSession(s.id)) void draft.change({ removed: toggleRemoved(src?.removed, s.id, true) });
       else if (confirm(t('Delete this session you added? It cannot be brought back.')))
@@ -251,17 +273,6 @@ export function BlockEditor({
           }}
           busy={draft.busy}
           blockSession={isBlockSession(adding.session.id) && !!sessionSlot(adding.session.id)}
-        />
-      )}
-      {editingInfo && (
-        <SessionInfoDialog
-          session={editingInfo.session}
-          week={editingInfo.week}
-          onClose={() => setEditingInfo(null)}
-          onSave={(next) => {
-            draft.local((p) => setSessionInfo(p, editingInfo.session.id, next));
-            setEditingInfo(null);
-          }}
         />
       )}
       {addingSession && (
@@ -523,6 +534,7 @@ function SessionCard({
   const kind = MODE_TAG[modeOf(s)];
   const weekday = report ? new Date(report.at).toLocaleDateString([], { weekday: 'short' }) : '';
   const info = sessionInfoOf(s);
+  if (!fromBlock && h.editing === s.id) return <AddedSessionEditor session={s} week={week} h={h} />;
 
   return (
     <div className={`rounded-lg border bg-panel px-2.5 py-2 ${report ? 'border-recover/50' : 'border-border'}`}>
@@ -621,8 +633,8 @@ function SessionCard({
           {t('+ exercise')}
         </button>
         {!fromBlock && (
-          <button onClick={() => h.onEditInfo(s, week)} disabled={!can} className="text-xs text-textDim hover:text-accent disabled:opacity-40">
-            {t('Notes and effort')}
+          <button onClick={() => h.onEdit(s.id)} disabled={!can} className="text-xs text-textDim hover:text-accent disabled:opacity-40">
+            {t('Edit')}
           </button>
         )}
         <button onClick={() => h.onDelete(s)} disabled={!can} className="text-xs text-textDim hover:text-red disabled:opacity-40">
@@ -630,6 +642,61 @@ function SessionCard({
         </button>
       </div>
     </div>
+  );
+}
+
+/** A session the coach added, open in the plan builder's session editor
+ *  (Philipp, 2026-11-13: the same layout as the builder). Every change goes
+ *  into the draft at once, as the builder's does; the whole session is sent
+ *  each time, so one the draft refused while busy is in the next. */
+function AddedSessionEditor({ session: s, week, h }: { session: BlockSession; week: FlatWeek; h: Handlers }) {
+  const t = useT();
+  const [edit, setEdit] = useState<BuilderSession>(() => addedAsBuilder(s));
+  const [day, setDay] = useState<DayChoice>(() => dayOf(s));
+  const locked = linesLocked(s);
+  const prefixes = useMemo(() => testPrefixes(h.tests, s), [h.tests, s]);
+  // Workout lines change only through ✕ and "+ exercise": show the plan's.
+  const shown = locked ? { ...edit, exercises: addedAsBuilder(s).exercises } : edit;
+  return (
+    <SessionEditor
+      session={shown}
+      onChange={(patch) => {
+        const next = { ...edit, ...patch };
+        setEdit(next);
+        h.onApplyEdit(s.id, next, day);
+      }}
+      onClose={() => {
+        h.onApplyEdit(s.id, edit, day);
+        h.onEdit(null);
+      }}
+      onDelete={() => h.onDelete(s)}
+      prefixes={locked ? undefined : prefixes}
+      locked={
+        locked
+          ? {
+              hint: t('The app runs these lines as a workout, so they stay as they are: take one out with ✕ or add one from the exercise list.'),
+              onRemove: (id) => {
+                const line = s.exercises.find((x) => x.id === id);
+                if (line) h.onRemove(s, line, null);
+              },
+              add: (
+                <button onClick={() => h.onAddExercise(s, week)} className="text-xs text-accent hover:underline">
+                  {t('+ exercise')}
+                </button>
+              ),
+            }
+          : undefined
+      }
+      extra={
+        <DayPicker
+          day={day}
+          onChange={(d) => {
+            setDay(d);
+            h.onApplyEdit(s.id, edit, d);
+          }}
+        />
+      }
+    />
   );
 }
 

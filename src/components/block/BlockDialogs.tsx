@@ -346,33 +346,23 @@ function SessionInfoFields({ info, onChange }: { info: SessionInfo; onChange: (i
   );
 }
 
-/** Notes and target effort of a session the coach added. */
-export function SessionInfoDialog({
-  session,
-  week,
-  onClose,
-  onSave,
-}: {
-  session: BlockSession;
-  week: FlatWeek;
-  onClose: () => void;
-  onSave: (info: SessionInfo) => void;
-}) {
+/** The weekday, or "Any day this week" (she places it herself). */
+export function DayPicker({ day, onChange }: { day: DayChoice; onChange: (d: DayChoice) => void }) {
   const t = useT();
-  const [info, setInfo] = useState<SessionInfo>(() => sessionInfoOf(session));
-  const label = session.label?.trim() || t('Session');
   return (
-    <Modal title={fill(t('Notes and effort · {label}, week {n}'), { label, n: week.number })} onClose={onClose}>
-      <SessionInfoFields info={info} onChange={setInfo} />
-      <div className="flex justify-end gap-2">
-        <button onClick={onClose} className="pill px-3 py-1.5 text-sm">
-          {t('Cancel')}
-        </button>
-        <button onClick={() => onSave(info)} className="pill pill-on btn-raised px-4 py-1.5 text-sm">
-          {t('Done')}
+    <div>
+      <span className={lbl}>{t('Day')}</span>
+      <div className="flex flex-wrap gap-1.5">
+        {DAY_LABELS.map((d, i) => (
+          <button key={d} className={pill(day === i)} onClick={() => onChange(i)}>
+            {t(d)}
+          </button>
+        ))}
+        <button className={pill(day === 'any')} onClick={() => onChange('any')}>
+          {t('Any day this week')}
         </button>
       </div>
-    </Modal>
+    </div>
   );
 }
 
@@ -475,19 +465,7 @@ export function AddSessionDialog({
         </>
       )}
       <SessionInfoFields info={info} onChange={setInfo} />
-      <div>
-        <span className={lbl}>{t('Day')}</span>
-        <div className="flex flex-wrap gap-1.5">
-          {DAY_LABELS.map((d, i) => (
-            <button key={d} className={pill(day === i)} onClick={() => setDay(i)}>
-              {t(d)}
-            </button>
-          ))}
-          <button className={pill(day === 'any')} onClick={() => setDay('any')}>
-            {t('Any day this week')}
-          </button>
-        </div>
-      </div>
+      <DayPicker day={day} onChange={setDay} />
       <div>
         <span className={lbl}>{t('Where')}</span>
         <div className="flex flex-wrap gap-1.5">

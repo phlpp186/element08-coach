@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   accessories,
+  addedAsBuilder,
   addExercise,
   addLocalLine,
+  applyAddedEdit,
+  dayOf,
+  linesLocked,
+  testPrefixes,
   blankSession,
   blockDefinition,
   newBlockDefinition,
@@ -553,5 +558,59 @@ describe('notes and target effort', () => {
     const all = flatWeeks(p).flatMap((w) => w.week.plannedSessions);
     expect(sessionInfoOf(all.find((s) => s.id === ids[0])!)).toEqual({ notes: 'Only this week.', target: 4 });
     expect(sessionInfoOf(all.find((s) => s.id === ids[1])!)).toEqual(NO_INFO);
+  });
+});
+
+describe('editing an added session in the builder layout', () => {
+  const find = (p: ReturnType<typeof planOf>, id: string) =>
+    flatWeeks(p).flatMap((w) => w.week.plannedSessions).find((x) => x.id === id)!;
+
+  it('round-trips through the builder fields and writes what changed', () => {
+    const s = blankSession('c-1', 'Pool', ['8 x 50 m', '4 x 25 m'], 2, 'pool', { notes: 'Easy.', target: 5 });
+    const p = insertSession(planOf(), 1, { ...s, exercises: s.exercises.map((e, i) => (i === 0 ? { ...e, ref: 'swim' } : e)) });
+    const b = addedAsBuilder(find(p, 'c-1'));
+    expect(b).toMatchObject({ label: 'Pool', body: 'Easy.', coachTarget: 5, mode: 'pool', sessionType: '' });
+    const next = applyAddedEdit(
+      p,
+      'c-1',
+      {
+        ...b,
+        label: ' Pool, technique ',
+        body: '',
+        coachTarget: undefined,
+        sessionType: 'DYN',
+        exercises: [
+          { ...b.exercises[0], description: '10 x 50 m' },
+          { id: b.exercises[1].id, description: ' ' },
+          { id: 'ex-new', description: 'Relax', dose: [{ unit: 'sets', value: '2' }] },
+        ],
+      },
+      4,
+    );
+    const e = find(next, 'c-1');
+    expect(e).toMatchObject({ label: 'Pool, technique', sessionType: 'DYN', dayOfWeek: 4 });
+    expect('sessionNotes' in e || 'coachTarget' in e).toBe(false);
+    // The line keeps its id and what hung on it; an empty one goes; a dose is written into the text.
+    expect(e.exercises.map((x) => x.id)).toEqual([s.exercises[0].id, 'ex-new']);
+    expect(e.exercises[0]).toMatchObject({ description: '10 x 50 m', ref: 'swim' });
+    expect(e.exercises[1].description).toMatch(/^Relax · /);
+  });
+
+  it('keeps the lines of a workout copy, the rest still changes', () => {
+    const src = { ...blankSession('sc-w01-d0-str', 'Strength A', ['Back squat: 3 x 5'], 0, 'general'), workout: { id: 'plan:sc-w01-d0-str', blocks: [] } };
+    const p = insertSession(planOf(), 1, copySession(src, 'c-w', 0));
+    const c = find(p, 'c-w');
+    expect(linesLocked(c)).toBe(true);
+    const next = find(applyAddedEdit(p, 'c-w', { ...addedAsBuilder(c), label: 'Strength A, light', exercises: [] }, 'any'), 'c-w');
+    expect(next.exercises.map((x) => x.description)).toEqual(['Back squat: 3 x 5']);
+    expect(next).toMatchObject({ label: 'Strength A, light', floating: true, placed: false });
+    expect(dayOf(next)).toBe('any');
+  });
+
+  it("keeps each test line's name in front, the text after it is the coach's", () => {
+    const tests = [{ id: 'back_squat_3rm', name: 'Back squat 3RM', fields: [] }];
+    const s = { ...blankSession('c-t', 'Tests', ['Back squat 3RM: Work up to a clean 3RM', 'Warm up well'], 1), tests: ['back_squat_3rm'] };
+    expect(testPrefixes(tests, s)).toEqual({ [s.exercises[0].id]: 'Back squat 3RM:' });
+    expect(testPrefixes(tests, { ...s, tests: [] })).toEqual({});
   });
 });

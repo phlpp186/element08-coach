@@ -177,16 +177,37 @@ function SessionChip({
   );
 }
 
-function SessionEditor({
+/** Lines another editor keeps in step with something else (the block
+ *  editor's workout lines): shown as they are, changed only by ✕ and by
+ *  `add`, its own "+ exercise". */
+export interface LockedLines {
+  hint: string;
+  onRemove: (exerciseId: string) => void;
+  add: ReactNode;
+}
+
+/** The inline session editor. The plan builder uses it as is; the block
+ *  editor passes `locked`, `prefixes` and `extra` for the sessions a coach
+ *  added to an athlete's app block. */
+export function SessionEditor({
   session,
   onChange,
   onClose,
   onDelete,
+  locked,
+  prefixes,
+  extra,
 }: {
   session: BuilderSession;
   onChange: (patch: Partial<BuilderSession>) => void;
   onClose: () => void;
   onDelete: () => void;
+  locked?: LockedLines;
+  /** A fixed start per exercise id ("Back squat 3RM:"), shown before the
+   *  input and kept on every edit. */
+  prefixes?: Record<string, string>;
+  /** Fields under the title (the block editor's day). */
+  extra?: ReactNode;
 }) {
   const t = useT();
   const [dropping, setDropping] = useState(false);
@@ -221,8 +242,35 @@ function SessionEditor({
         value={session.label}
         onChange={(e) => onChange({ label: e.target.value })}
       />
+      {extra}
 
-      {/* Structured exercises (mode #2). Drop target for library chips. */}
+      {locked ? (
+        <div className="space-y-2">
+          <span className="block text-xs text-textDim uppercase tracking-wide">
+            {t("Exercises")}
+          </span>
+          <p className="text-xs text-textDim">{locked.hint}</p>
+          {session.exercises.map((ex, i) => (
+            <div key={ex.id} className="flex gap-2 items-start">
+              <span className="text-textDim text-xs font-mono w-4 shrink-0 pt-0.5">
+                {i + 1}
+              </span>
+              <span className="min-w-0 flex-1 break-words text-sm text-text/90">
+                {ex.description}
+              </span>
+              <button
+                onClick={() => locked.onRemove(ex.id)}
+                className="text-red text-sm px-1"
+                title={t("Remove exercise")}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          {locked.add}
+        </div>
+      ) : (
+      /* Structured exercises (mode #2). Drop target for library chips. */
       <div
         className={`space-y-2 rounded-lg p-1 transition-colors ${
           dropping ? "outline outline-1 outline-accent bg-accent/5" : ""
@@ -258,19 +306,37 @@ function SessionEditor({
               <span className="text-textDim text-xs font-mono w-4 shrink-0">
                 {i + 1}
               </span>
-              <ExerciseInput
-                value={ex.description}
-                placeholder={t("e.g. 3×25m bi-fins, 5 min rest")}
-                onChange={(v) => updateExercise(ex.id, { description: v })}
-                onPick={(v) => {
-                  const dose = defaultDoseFor(v);
-                  updateExercise(ex.id, {
-                    description: v,
-                    ...(dose && !ex.dose?.length ? { dose } : {}),
-                  });
-                }}
-              />
-              {!ex.dose?.length && doseOpen !== ex.id && (
+              {prefixes?.[ex.id] ? (
+                <>
+                  <span className="shrink-0 text-sm text-textDim">
+                    {prefixes[ex.id]}
+                  </span>
+                  <ExerciseInput
+                    value={ex.description.slice(prefixes[ex.id].length).trimStart()}
+                    placeholder=""
+                    onChange={(v) =>
+                      updateExercise(ex.id, { description: `${prefixes[ex.id]} ${v}` })
+                    }
+                    onPick={(v) =>
+                      updateExercise(ex.id, { description: `${prefixes[ex.id]} ${v}` })
+                    }
+                  />
+                </>
+              ) : (
+                <ExerciseInput
+                  value={ex.description}
+                  placeholder={t("e.g. 3×25m bi-fins, 5 min rest")}
+                  onChange={(v) => updateExercise(ex.id, { description: v })}
+                  onPick={(v) => {
+                    const dose = defaultDoseFor(v);
+                    updateExercise(ex.id, {
+                      description: v,
+                      ...(dose && !ex.dose?.length ? { dose } : {}),
+                    });
+                  }}
+                />
+              )}
+              {!prefixes?.[ex.id] && !ex.dose?.length && doseOpen !== ex.id && (
                 <button
                   onClick={() => {
                     if (!ex.dose?.length)
@@ -346,6 +412,7 @@ function SessionEditor({
           {t("+ exercise")}
         </button>
       </div>
+      )}
 
       {/* Free-text notes (mode #1), use either or both */}
       <div className="space-y-1">

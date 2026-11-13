@@ -7,7 +7,7 @@
  *
  * Pure: no React, no Supabase, so every rule here has a test.
  */
-import { addDays } from './e08plan';
+import { addDays, exerciseText, type BuilderSession } from './e08plan';
 
 // ── The plan, as far as the editor reads it ──────────────────────────────────
 
@@ -582,6 +582,72 @@ export function blankSession(
     ),
     day,
   );
+}
+
+// ── Editing a session the coach added ────────────────────────────────────────
+
+/** A session the coach added, as the plan builder's session editor edits it
+ *  (components/sessions SessionEditor): the same layout as in the builder. */
+export function addedAsBuilder(s: BlockSession): BuilderSession {
+  const target = validTarget(s.coachTarget);
+  return {
+    id: s.id,
+    dayOfWeek: s.dayOfWeek,
+    label: s.label ?? '',
+    body: typeof s.sessionNotes === 'string' ? s.sessionNotes : '',
+    exercises: s.exercises.map((e) => ({ id: e.id, description: e.description })),
+    mode: modeOf(s),
+    sessionType: typeof s.sessionType === 'string' ? s.sessionType : '',
+    ...(target != null ? { coachTarget: target } : {}),
+  };
+}
+
+/** Lines the app runs as a workout (START WORKOUT, weights from her tests):
+ *  their text has to match the workout, so the editor shows them as they are
+ *  and only ✕ and "+ exercise" change them (removeLocalLine, addLocalLine),
+ *  which keep the two together (Philipp, 2026-11-13). */
+export const linesLocked = (s: BlockSession): boolean => !!s.workout;
+
+/** Each test line's fixed start ("Back squat 3RM:"): saving her results ticks
+ *  a line by its test's name (the app's tickTestLines), so an edit keeps it. */
+export function testPrefixes(tests: BlockTest[], s: BlockSession): Record<string, string> {
+  const ids = Array.isArray(s.tests) ? (s.tests as unknown[]).filter((x) => typeof x === 'string') : [];
+  const names = tests.filter((t) => ids.includes(t.id)).map((t) => `${t.name}:`);
+  const out: Record<string, string> = {};
+  for (const e of s.exercises) {
+    const p = names.find((n) => e.description.startsWith(n));
+    if (p) out[e.id] = p;
+  }
+  return out;
+}
+
+/** The day an added session sits on, "any" when she places it herself. */
+export const dayOf = (s: BlockSession): DayChoice => (isUnplaced(s) ? 'any' : s.dayOfWeek);
+
+/** The plan with one added session as the builder's editor has it, on `day`.
+ *  Lines keep their id (and what the app hung on it); a dose is written into
+ *  the line's text, as the builder sends it; empty lines go. */
+export function applyAddedEdit(plan: BlockPlan, sessionId: string, edit: BuilderSession, day: DayChoice): BlockPlan {
+  return mapSessions(plan, (ss) =>
+    ss.some((s) => s.id === sessionId) ? ss.map((s) => (s.id === sessionId ? editedSession(s, edit, day) : s)) : ss,
+  );
+}
+
+function editedSession(s: BlockSession, e: BuilderSession, day: DayChoice): BlockSession {
+  const byId = new Map(s.exercises.map((x) => [x.id, x]));
+  const exercises = linesLocked(s)
+    ? s.exercises
+    : e.exercises.flatMap((x): BlockExercise[] => {
+        const description = exerciseText(x);
+        if (!description) return [];
+        return [{ ...(byId.get(x.id) ?? { completedAt: null }), id: x.id, description }];
+      });
+  const type = e.sessionType.trim();
+  const next = withInfo(
+    { ...without(s, 'sessionType'), label: e.label.trim(), mode: e.mode, exercises, ...(type ? { sessionType: type } : {}) },
+    { notes: e.body, target: e.coachTarget ?? null },
+  );
+  return day === dayOf(s) ? next : placeOn(next, day);
 }
 
 /** What the coach tells her about a session besides its lines. */

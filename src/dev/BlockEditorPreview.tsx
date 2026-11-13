@@ -62,6 +62,7 @@ function session(
   const drop = new Set((src.edits?.drop ?? []).filter((d) => editCovers(d, id)).map((d) => d.ex));
   const adds = (src.edits?.add ?? []).filter((a) => editCovers(a, id) && !drop.has(a.id));
   const lines: BlockExercise[] = [];
+  const items: SetsItem[] = [];
   for (const p of parts) {
     if (typeof p === 'string') {
       lines.push({ id: '', description: p });
@@ -71,8 +72,12 @@ function session(
     const item = swapped ? { ...p, id: swapped, name: NAMES[swapped] ?? swapped, pct: undefined } : p;
     if (drop.has(p.id) || src.excluded?.includes(p.id)) continue;
     lines.push({ id: '', description: itemLine(item), ref: item.id });
+    items.push(item);
   }
-  for (const a of adds) lines.push({ id: '', description: itemLine(a.item), ref: a.item.id, edit: a.id });
+  for (const a of adds) {
+    lines.push({ id: '', description: itemLine(a.item), ref: a.item.id, edit: a.id });
+    items.push(a.item);
+  }
   return {
     id,
     dayOfWeek: day,
@@ -80,6 +85,8 @@ function session(
     mode: 'general',
     completedAt: null,
     exercises: lines.map((l, i) => ({ ...l, id: `${id}-${i + 1}`, completedAt: null })),
+    // Lifts run in the app's player, as the real block's do.
+    ...(items.length ? { workout: { id: `plan:${id}`, name: label, blocks: [{ kind: 'sets', items }] } } : {}),
     ...extra,
   };
 }
@@ -95,7 +102,10 @@ function build(src: BlockSource, prev: BlockPlan | null, name = 'Mia · Toy Bloc
     const sessions =
       n === 0
         ? [
-            session(`${w}-d0-a`, 0, 'Session A', ['Squat test: work up to a hard 3', 'Resting heart rate on waking'], src),
+            session(`${w}-d0-a`, 0, 'Session A', ['Squat 3RM: work up to a hard 3', 'Resting HR: on waking'], src, {
+              tests: ['sq3', 'rhr'],
+              testRound: 'baseline',
+            }),
             session(`${w}-d3-b`, 3, 'Session B', ['Deadlift test: work up to a hard 3'], src),
           ]
         : [
