@@ -27,6 +27,7 @@ import {
 import { formatPB, type AthletePB } from '../lib/supabase/athleteProfileCloud';
 import { sessionChips, sessionNoteLines } from '../lib/sessionNotes';
 import { HYPOXIA_FLAG_MIN, HYPOXIA_LABEL, hypoxiaTone } from '../lib/hypoxia';
+import { mentalChip } from '../lib/mental';
 
 const NOTE_LINES = 3;
 
@@ -365,9 +366,12 @@ function FeedItem({
                   {t('Effort')} {Math.max(0, Math.min(10, e.rating))}/10
                 </span>
               )}
-              {e.mental != null && (
-                <span className="rounded-full bg-abyss px-2 py-0.5 text-xs text-text">
-                  {t('Mental')} {Math.max(0, Math.min(10, e.mental))}/10
+              {mentalChip(e.mental, t) && (
+                <span
+                  className="rounded-full bg-abyss px-2 py-0.5 text-xs text-text"
+                  title={mentalChip(e.mental, t)!.title}
+                >
+                  {mentalChip(e.mental, t)!.text}
                 </span>
               )}
               {flagged && (

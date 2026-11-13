@@ -14,6 +14,7 @@ import { splitAtCurrentWeek } from '../lib/planWeekOrder';
 import { AttachedSessionDetail } from '../components/AttachedSessionDetail';
 import { useT, tr } from '../i18n';
 import { HYPOXIA_FLAG_MIN, HYPOXIA_LABEL, hypoxiaLevel, hypoxiaTone } from '../lib/hypoxia';
+import { mentalChip } from '../lib/mental';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import {
   getPlan,
@@ -241,7 +242,7 @@ export function ConnectedPlanView({
                     {typeof c.rating === 'number'
                       ? ` · ★ ${Math.max(0, Math.min(10, c.rating))}/10`
                       : ''}
-                    {typeof c.mental === 'number' ? ` · ${t('Mental')} ${c.mental}/10` : ''}
+                    {mentalChip(c.mental, t) ? ` · ${mentalChip(c.mental, t)!.text}` : ''}
                     {(hypoxiaLevel(c.hypoxia) ?? 0) >= HYPOXIA_FLAG_MIN
                       ? ` · ${t(HYPOXIA_LABEL[hypoxiaLevel(c.hypoxia)!])}`
                       : ''}
@@ -437,9 +438,9 @@ function SessionRow({
                     ★ {Math.max(0, Math.min(10, completion.rating))}/10
                   </span>
                 )}
-                {typeof completion?.mental === 'number' && (
-                  <span className="text-textDim">
-                    {t('Mental')} {Math.max(0, Math.min(10, completion.mental))}/10
+                {mentalChip(completion?.mental, t) && (
+                  <span className="text-textDim" title={mentalChip(completion?.mental, t)!.title}>
+                    {mentalChip(completion?.mental, t)!.text}
                   </span>
                 )}
                 {hyp != null && (
