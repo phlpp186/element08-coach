@@ -27,6 +27,8 @@ import {
   type AthleteGoal,
 } from '../lib/supabase/athleteProfileCloud';
 import { CoachNotesEditor } from '../components/CoachNotesEditor';
+import { CycleCard } from '../components/CycleCard';
+import { useAthleteCycle } from '../lib/supabase/useAthleteCycle';
 import { IntakeEditor } from '../components/IntakeEditor';
 import { linkAthlete, updateAthlete, updateCoachNote, useAthletes, useCoachNote, useLinkedAthlete } from '../lib/store';
 
@@ -80,6 +82,11 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
     setLoading(true);
     load();
   }, [load]);
+
+  // The cycle days this athlete shares with this coach, if they named them.
+  // Keyed by a string so a fresh array of the same assignments does not refetch.
+  const assignmentKey = assignments.map((a) => `${a.id}:${a.planId}`).join(',');
+  const cycle = useAthleteCycle(studentId, userId, assignmentKey);
 
   // Live: the athlete updating PBs/goals or completing a session reflects here.
   useEffect(() => {
@@ -203,6 +210,10 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
                 ))}
               </ul>
             </section>
+          )}
+
+          {cycle.shared && (
+            <CycleCard name={name} days={cycle.days} sessions={cycle.sessions} today={cycle.today} />
           )}
 
           <section className="space-y-2">

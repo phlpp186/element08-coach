@@ -9,7 +9,15 @@ import { AuthProvider } from "./lib/supabase/AuthProvider";
 const previewName =
   import.meta.env.DEV && new URLSearchParams(location.search).get("preview");
 
-if (previewName === "connection") {
+if (previewName === "cycle") {
+  void import("./dev/CyclePreview").then(({ CyclePreview }) => {
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <CyclePreview />
+      </StrictMode>,
+    );
+  });
+} else if (previewName === "connection") {
   void import("./dev/ConnectionPreview").then(({ ConnectionPreview }) => {
     createRoot(document.getElementById("root")!).render(
       <StrictMode>

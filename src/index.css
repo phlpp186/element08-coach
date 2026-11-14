@@ -15,6 +15,9 @@
  * numbers. */
 :root {
   /* Chalk Dark — warm charcoal surfaces, sky-cyan accent, pink highlight. */
+  /* Period days on the coach's cycle card: one berry in every theme, because
+     each theme's own red sits too close to its accent (coral, Audi red). */
+  --c-period: 186 72 132;
   --c-deep: 31 29 26; /* page background */
   --c-abyss: 22 20 18; /* input fields / recessed insets */
   --c-sunken: 13 12 10; /* chart well — recessed below the page */

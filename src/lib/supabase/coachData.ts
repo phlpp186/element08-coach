@@ -428,3 +428,37 @@ export function subscribeToTables(tables: string[], cb: () => void): RealtimeCha
 export function unsubscribeChannel(ch: RealtimeChannel): void {
   void supabase.removeChannel(ch);
 }
+
+// ─── Shared cycle days (athlete owns; a NAMED coach reads, migration 0021) ──
+
+export interface CycleDayRow {
+  date: string;
+  period: boolean;
+  symptoms: string[] | null;
+  note: string | null;
+  felt: number | null;
+}
+
+/** True when this athlete named the signed-in coach in their cycle sharing
+ *  (a consent row in athlete_cycle_share; the coach may read their own). */
+export async function isCycleSharedWithMe(studentId: string): Promise<boolean> {
+  const uid = await currentUserId();
+  if (!uid) return false;
+  const rows = unwrap(
+    await supabase.from('athlete_cycle_share').select('student_id').eq('student_id', studentId).eq('coach_id', uid),
+  ) as unknown as { student_id: string }[];
+  return rows.length > 0;
+}
+
+/** The cycle days the athlete shares, from `since` (YYYY-MM-DD) on. Row-level
+ *  security returns nothing unless the coach is named and the link is active. */
+export async function listSharedCycleDays(studentId: string, since: string): Promise<CycleDayRow[]> {
+  return unwrap(
+    await supabase
+      .from('athlete_cycle_days')
+      .select('date, period, symptoms, note, felt')
+      .eq('student_id', studentId)
+      .gte('date', since)
+      .order('date'),
+  ) as unknown as CycleDayRow[];
+}

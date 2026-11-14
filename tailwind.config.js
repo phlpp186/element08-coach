@@ -20,6 +20,7 @@ export default {
         recover:   'rgb(var(--c-recover) / <alpha-value>)',
         amber:     'rgb(var(--c-amber) / <alpha-value>)',
         red:       'rgb(var(--c-red) / <alpha-value>)',
+        period:    'rgb(var(--c-period) / <alpha-value>)',
         surface:   'rgb(var(--c-surface) / <alpha-value>)',
         profile:   'rgb(var(--c-profile) / <alpha-value>)',
         hero:      'rgb(var(--c-hero) / <alpha-value>)',
