@@ -72,18 +72,17 @@ export function isLibraryDefinition(definition: unknown): boolean {
  *  tests or a daily list. The builder's model has none of these, so a web save
  *  would drop them from every athlete's copy. */
 /** A fitness programme a coach wrote (in a template or on the session in the
- *  app's plan editor): circuits only, under the session's own id. It rides
- *  along untouched (BuilderSession.app), so it does not make a plan app-only,
- *  unlike a plan's own strength workout with sets and loads. */
+ *  app's plan editor), under the session's own id: marked `programme`, or,
+ *  written before that mark existed, circuits only. It rides along untouched
+ *  (BuilderSession.app), so it does not make a plan app-only, unlike a
+ *  plan's own strength workout with sets and loads. Same rule as the app's
+ *  src/lib/coachTemplates/sessionParts.ts. */
 function isCoachProgramme(s: Obj): boolean {
   const w = s.workout;
-  return (
-    isObj(w) &&
-    w.id === `plan:${String(s.id)}` &&
-    Array.isArray(w.blocks) &&
-    w.blocks.length > 0 &&
-    w.blocks.every((b) => isObj(b) && b.kind === 'circuit')
-  );
+  if (!isObj(w) || w.id !== `plan:${String(s.id)}`) return false;
+  if (!Array.isArray(w.blocks) || w.blocks.length === 0) return false;
+  if (w.programme === true) return true;
+  return w.blocks.every((b) => isObj(b) && b.kind === 'circuit');
 }
 
 export function isAppPlan(definition: unknown): boolean {

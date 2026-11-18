@@ -890,7 +890,6 @@
   "A table needs at least one row with a time.": "Une table a besoin d'au moins une ligne avec un temps.",
   "A template holds up to 20 parts.": "Un modèle contient jusqu'à 20 parties.",
   "Add at least one part.": "Ajoutez au moins une partie.",
-  "Ask back": "Retour demandé",
   "Attempt": "Tentative",
   "Check the rest time.": "Vérifiez le temps de repos.",
   "Click to change: rest, hold, recover": "Cliquez pour changer : repos, apnée, récupération",
@@ -899,7 +898,6 @@
   "Dry table": "Table à sec",
   "EQ": "EQ",
   "Effort is 1 to 10.": "L'effort va de 1 à 10.",
-  "Every exercise needs a name and a work time.": "Chaque exercice a besoin d'un nom et d'un temps d'effort.",
   "Fitness programme": "Programme fitness",
   "From an older template. It still sends as before; here it can only be moved or removed.": "Issu d'un ancien modèle. Il s'envoie toujours comme avant ; ici, on peut seulement le déplacer ou le retirer.",
   "Give the template a name.": "Donnez un nom au modèle.",
@@ -942,5 +940,7 @@
   "Move exercise up": "Monter l'exercice",
   "Move exercise down": "Descendre l'exercice",
   "Move session up": "Monter la séance",
-  "Move session down": "Descendre la séance"
+  "Move session down": "Descendre la séance",
+  "Every exercise needs a name and a time or reps.": "Chaque exercice a besoin d'un nom et d'un temps ou de répétitions.",
+  "Click to switch between time and reps": "Cliquez pour passer du temps aux répétitions"
 }

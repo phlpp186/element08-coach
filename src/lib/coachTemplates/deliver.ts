@@ -189,10 +189,13 @@ export function blockLine(
     case 'program': {
       const items = ex.items
         .map((it) => {
-          const work = t('deliver.programItem', {
-            name: it.name.trim(),
-            time: formatValue(it.workSec, 's', false),
-          });
+          const work =
+            it.reps != null
+              ? t('deliver.reps', { n: it.reps, what: it.name.trim() })
+              : t('deliver.programItem', {
+                  name: it.name.trim(),
+                  time: formatValue(it.workSec, 's', false),
+                });
           return it.restSec > 0
             ? t('deliver.joinRest', {
                 what: work,
@@ -221,15 +224,10 @@ export function blockLine(
   return name ? t('deliver.line', { name, body }) : body;
 }
 
-/** The notes a student reads: the coach's notes, then what to report back. */
-export function sessionNotesFor(template: CoachTemplate, t: Tr): string {
-  const ask: string[] = [];
-  if (template.ask.effort) ask.push(t('deliver.askItems.effort'));
-  if (template.ask.eq) ask.push(t('deliver.askItems.eq'));
-  if (template.ask.notes) ask.push(t('deliver.askItems.notes'));
-  return [template.notes.trim(), ask.length ? t('deliver.ask', { items: ask.join(', ') }) : '']
-    .filter(Boolean)
-    .join('\n\n');
+/** The notes a student reads: the coach's notes. (What to report back is not
+ *  written any more: the app always asks for effort and has a notes field.) */
+export function sessionNotesFor(template: CoachTemplate): string {
+  return template.notes.trim();
 }
 
 /** A dry template as the .e08plan training file the timer can run, with this
@@ -276,27 +274,53 @@ export function programFileFor(
 }
 
 /** The fitness programmes of a template as ONE workout the fitness player
- *  runs: a circuit per programme part, each exercise on its own clock. The
- *  rest after a round's last exercise is the rest between rounds. Null when
- *  the template has no programme. `id` must be `plan:<session id>`, which is
- *  how the player finds a plan session's workout (lib/season/planWorkout). */
+ *  runs, a block per programme part. Null when the template has none. `id`
+ *  must be `plan:<session id>`, which is how the player finds a plan
+ *  session's workout (lib/season/planWorkout).
+ *
+ *  All exercises on the clock: a circuit, each on its own clock, which runs
+ *  by itself; the rest after a round's last exercise is the rest between
+ *  rounds. Any exercise for repetitions: the athlete has to say when a set is
+ *  done, so the part becomes sets, every round listed in turn (one set per
+ *  exercise), which the player runs round by round. */
 export function workoutFor(template: CoachTemplate, id: string): Workout | null {
   const blocks: Workout['blocks'] = [];
   for (const b of template.blocks) {
     if (b.exercise.kind !== 'program' || b.exercise.items.length === 0) continue;
     const items = b.exercise.items;
+    const ref = (name: string) => {
+      const clean = name.trim().slice(0, 60);
+      return { id: `custom:${clean.toLowerCase()}`, name: clean };
+    };
+    if (items.some((it) => it.reps != null)) {
+      const round = items.map((it) =>
+        it.reps != null
+          ? {
+              ...ref(it.name),
+              measure: 'reps' as const,
+              sets: 1,
+              reps: it.reps,
+              restSec: it.restSec,
+            }
+          : {
+              ...ref(it.name),
+              measure: 'time' as const,
+              sets: 1,
+              sec: it.workSec,
+              restSec: it.restSec,
+            },
+      );
+      blocks.push({
+        kind: 'sets',
+        items: Array.from({ length: b.reps }, () => round.map((x) => ({ ...x }))).flat(),
+        rounds: b.reps,
+      });
+      continue;
+    }
     const last = items[items.length - 1];
     blocks.push({
       kind: 'circuit',
-      moves: items.map((it) => {
-        const name = it.name.trim().slice(0, 60);
-        return {
-          id: `custom:${name.toLowerCase()}`,
-          name,
-          sec: it.workSec,
-          restSec: it.restSec,
-        };
-      }),
+      moves: items.map((it) => ({ ...ref(it.name), sec: it.workSec, restSec: it.restSec })),
       // Builds that do not know per-move clocks run every move on these.
       workSec: items[0].workSec,
       restSec: items[0].restSec,
@@ -305,7 +329,7 @@ export function workoutFor(template: CoachTemplate, id: string): Workout | null 
     });
   }
   if (!blocks.length) return null;
-  return { id, name: template.name.trim(), blocks };
+  return { id, name: template.name.trim(), programme: true, blocks };
 }
 
 export interface DeliveredSession {
@@ -330,7 +354,7 @@ export function buildPlannedSessions(
       t,
     ),
   );
-  const notes = sessionNotesFor(template, t);
+  const notes = sessionNotesFor(template);
   const program = programFileFor(template, resolved, author);
   const fitnessRoute = FITNESS_WORKOUTS.find((w) =>
     template.blocks.some((b) => b.exercise.kind === 'fitness' && b.exercise.workout === w.id),

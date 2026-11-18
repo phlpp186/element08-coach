@@ -890,7 +890,6 @@
   "A table needs at least one row with a time.": "Eine Tabelle braucht mindestens eine Zeile mit einer Zeit.",
   "A template holds up to 20 parts.": "Eine Vorlage fasst bis zu 20 Teile.",
   "Add at least one part.": "Füge mindestens einen Teil hinzu.",
-  "Ask back": "Rückmeldung",
   "Attempt": "Versuch",
   "Check the rest time.": "Prüfe die Pausenzeit.",
   "Click to change: rest, hold, recover": "Klicken zum Ändern: Pause, Halten, Erholen",
@@ -899,7 +898,6 @@
   "Dry table": "Trockentabelle",
   "EQ": "EQ",
   "Effort is 1 to 10.": "Belastung: 1 bis 10.",
-  "Every exercise needs a name and a work time.": "Jede Übung braucht einen Namen und eine Arbeitszeit.",
   "Fitness programme": "Fitnessprogramm",
   "From an older template. It still sends as before; here it can only be moved or removed.": "Aus einer älteren Vorlage. Wird weiter wie bisher gesendet; hier lässt es sich nur verschieben oder entfernen.",
   "Give the template a name.": "Gib der Vorlage einen Namen.",
@@ -942,5 +940,7 @@
   "Move exercise up": "Übung nach oben",
   "Move exercise down": "Übung nach unten",
   "Move session up": "Einheit nach oben",
-  "Move session down": "Einheit nach unten"
+  "Move session down": "Einheit nach unten",
+  "Every exercise needs a name and a time or reps.": "Jede Übung braucht einen Namen und eine Zeit oder Wiederholungen.",
+  "Click to switch between time and reps": "Klicken, um zwischen Zeit und Wiederholungen zu wechseln"
 }

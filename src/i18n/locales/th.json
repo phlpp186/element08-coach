@@ -890,7 +890,6 @@
   "A table needs at least one row with a time.": "ตารางต้องมีอย่างน้อยหนึ่งแถวที่มีเวลา",
   "A template holds up to 20 parts.": "เทมเพลตมีได้สูงสุด 20 ส่วน",
   "Add at least one part.": "เพิ่มอย่างน้อยหนึ่งส่วน",
-  "Ask back": "ขอให้รายงานกลับ",
   "Attempt": "ลองทำ",
   "Check the rest time.": "ตรวจสอบเวลาพัก",
   "Click to change: rest, hold, recover": "คลิกเพื่อเปลี่ยน: พัก กลั้น ฟื้นตัว",
@@ -899,7 +898,6 @@
   "Dry table": "ตารางฝึกบนบก",
   "EQ": "EQ",
   "Effort is 1 to 10.": "ความหนักคือ 1 ถึง 10",
-  "Every exercise needs a name and a work time.": "ทุกท่าต้องมีชื่อและเวลาทำ",
   "Fitness programme": "โปรแกรมฟิตเนส",
   "From an older template. It still sends as before; here it can only be moved or removed.": "มาจากเทมเพลตแบบเก่า ยังส่งได้เหมือนเดิม ที่นี่ย้ายหรือลบได้เท่านั้น",
   "Give the template a name.": "ตั้งชื่อเทมเพลต",
@@ -942,5 +940,7 @@
   "Move exercise up": "เลื่อนแบบฝึกขึ้น",
   "Move exercise down": "เลื่อนแบบฝึกลง",
   "Move session up": "เลื่อนเซสชันขึ้น",
-  "Move session down": "เลื่อนเซสชันลง"
+  "Move session down": "เลื่อนเซสชันลง",
+  "Every exercise needs a name and a time or reps.": "ทุกท่าต้องมีชื่อ และเวลาหรือจำนวนครั้ง",
+  "Click to switch between time and reps": "คลิกเพื่อสลับระหว่างเวลาและจำนวนครั้ง"
 }

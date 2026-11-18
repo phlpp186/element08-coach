@@ -890,7 +890,6 @@
   "A table needs at least one row with a time.": "テーブルには時間のある行が1つ以上必要です。",
   "A template holds up to 20 parts.": "テンプレートは最大20パートです。",
   "Add at least one part.": "パートを1つ以上追加してください。",
-  "Ask back": "報告してもらう項目",
   "Attempt": "アテンプト",
   "Check the rest time.": "休憩時間を確認してください。",
   "Click to change: rest, hold, recover": "クリックで切り替え：休憩、ホールド、回復",
@@ -899,7 +898,6 @@
   "Dry table": "ドライテーブル",
   "EQ": "EQ",
   "Effort is 1 to 10.": "強度は1〜10です。",
-  "Every exercise needs a name and a work time.": "各種目に名前と運動時間が必要です。",
   "Fitness programme": "フィットネスプログラム",
   "From an older template. It still sends as before; here it can only be moved or removed.": "以前のテンプレートのパートです。これまでどおり送信されます。ここでは移動と削除のみできます。",
   "Give the template a name.": "テンプレートに名前を付けてください。",
@@ -942,5 +940,7 @@
   "Move exercise up": "エクササイズを上へ",
   "Move exercise down": "エクササイズを下へ",
   "Move session up": "セッションを上へ",
-  "Move session down": "セッションを下へ"
+  "Move session down": "セッションを下へ",
+  "Every exercise needs a name and a time or reps.": "各種目に名前と、時間または回数が必要です。",
+  "Click to switch between time and reps": "クリックで時間と回数を切り替え"
 }

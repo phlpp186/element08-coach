@@ -40,14 +40,32 @@ export interface TrainingGroup {
 export interface Workout {
   id: string;
   name?: string;
-  blocks: {
-    kind: 'circuit';
-    moves: { id: string; name?: string; sec?: number; restSec?: number }[];
-    workSec: number;
-    restSec: number;
-    rounds: number;
-    roundRestSec: number;
-  }[];
+  /** A coach's programme, as opposed to a plan's own workout. */
+  programme?: true;
+  blocks: (
+    | {
+        kind: 'circuit';
+        moves: { id: string; name?: string; sec?: number; restSec?: number }[];
+        workSec: number;
+        restSec: number;
+        rounds: number;
+        roundRestSec: number;
+      }
+    | {
+        /** Exercises for repetitions: every round listed in turn. */
+        kind: 'sets';
+        items: {
+          id: string;
+          name?: string;
+          measure: 'reps' | 'time';
+          sets: number;
+          reps?: number;
+          sec?: number;
+          restSec: number;
+        }[];
+        rounds?: number;
+      }
+  )[];
 }
 
 export interface PlannedSession {

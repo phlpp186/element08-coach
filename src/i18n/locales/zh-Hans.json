@@ -890,7 +890,6 @@
   "A table needs at least one row with a time.": "表格至少需要一行带时间的内容。",
   "A template holds up to 20 parts.": "一个模板最多 20 个部分。",
   "Add at least one part.": "请至少添加一个部分。",
-  "Ask back": "请运动员反馈",
   "Attempt": "尝试",
   "Check the rest time.": "请检查休息时间。",
   "Click to change: rest, hold, recover": "点击切换：休息、闭气、恢复",
@@ -899,7 +898,6 @@
   "Dry table": "干式表格",
   "EQ": "EQ",
   "Effort is 1 to 10.": "强度为 1 到 10。",
-  "Every exercise needs a name and a work time.": "每个动作都需要名称和运动时间。",
   "Fitness programme": "体能计划",
   "From an older template. It still sends as before; here it can only be moved or removed.": "来自旧版模板。仍按原样发送；在这里只能移动或移除。",
   "Give the template a name.": "请为模板命名。",
@@ -942,5 +940,7 @@
   "Move exercise up": "上移练习",
   "Move exercise down": "下移练习",
   "Move session up": "上移训练",
-  "Move session down": "下移训练"
+  "Move session down": "下移训练",
+  "Every exercise needs a name and a time or reps.": "每个动作都需要名称，以及时间或次数。",
+  "Click to switch between time and reps": "点击在时间和次数之间切换"
 }

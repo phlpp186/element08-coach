@@ -16,7 +16,8 @@
  *     dry      a table the breath-hold timer runs: `rows` are the Free
  *              Session's own TrainingBlocks, the block's `reps` its rounds.
  *     program  a fitness programme the fitness timer runs: `items` (a name,
- *              work seconds, rest seconds), the block's `reps` its rounds.
+ *              then EITHER work seconds OR `reps`, and rest seconds), the
+ *              block's `reps` its rounds.
  *   Kinds only older templates hold. They are read, sent and inserted as
  *   before, shown read-only in the editor, and never created again:
  *     depth, pool  a target that may be relative to the athlete's PB
@@ -93,10 +94,15 @@ export const FITNESS_WORKOUTS: {
   },
 ];
 
-/** One exercise of a fitness programme: work on the clock, then rest. */
+/** One exercise of a fitness programme: work on the clock, or a number of
+ *  repetitions the athlete ticks off, then rest. */
 export interface ProgramItem {
   name: string;
+  /** Work seconds. Kept but not used while `reps` is set, so switching an
+   *  exercise back to time finds its old value. */
   workSec: number;
+  /** Set = done for this many repetitions instead of on the clock. */
+  reps?: number;
   /** 0 = straight into the next exercise. */
   restSec: number;
 }
@@ -144,7 +150,9 @@ export interface TemplateBlock {
   exercise: TemplateExercise;
 }
 
-/** What the coach wants reported back. Written into the student's notes. */
+/** No longer shown or sent (Philipp, 2026-11-18: the app always asks for
+ *  effort and always has a notes field). Still written, with its defaults,
+ *  because builds before that read it. */
 export interface TemplateAsk {
   effort: boolean;
   eq: boolean;
@@ -182,6 +190,7 @@ export const MAX_TEXT = 500;
 export const MAX_PART_TEXT = 2000;
 export const MAX_ITEMS = 20;
 export const MAX_ITEM_SEC = 3600;
+export const MAX_ITEM_REPS = 999;
 
 let seq = 0;
 /** Client-side id. Templates are created offline too, so the id cannot wait
@@ -354,7 +363,9 @@ export function validateTemplate(t: CoachTemplate): TemplateIssue[] {
           ex.items.some(
             (it) =>
               !it.name.trim() ||
-              !(Number.isFinite(it.workSec) && it.workSec > 0 && it.workSec <= MAX_ITEM_SEC) ||
+              (it.reps != null
+                ? !(Number.isInteger(it.reps) && it.reps >= 1 && it.reps <= MAX_ITEM_REPS)
+                : !(Number.isFinite(it.workSec) && it.workSec > 0 && it.workSec <= MAX_ITEM_SEC)) ||
               !(Number.isFinite(it.restSec) && it.restSec >= 0 && it.restSec <= MAX_ITEM_SEC),
           )
         ) {
@@ -469,6 +480,9 @@ function parseExercise(v: unknown): TemplateExercise | null {
           name: str(io.name, MAX_NAME),
           workSec: Math.max(0, Math.round(num(io.workSec, 0))),
           restSec: Math.max(0, Math.round(num(io.restSec, 0))),
+          ...(typeof io.reps === 'number' && Number.isFinite(io.reps)
+            ? { reps: Math.max(0, Math.min(MAX_ITEM_REPS, Math.round(io.reps))) }
+            : {}),
         });
       }
       return { kind: 'program', items: items.slice(0, MAX_ITEMS) };

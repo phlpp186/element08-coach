@@ -1,7 +1,9 @@
 /**
  * The session template editor, as approved in the app repo's
- * docs/mockups/templates-simple.html (option 1): a name, then type, target
- * effort and ask-back on one line, the notes, and the parts side by side.
+ * docs/mockups/templates-simple.html (option 1): a name, then type and
+ * target effort on one line, the notes, and the parts side by side. (The
+ * mockup's ask-back chips were taken out again, Philipp 2026-11-18: the app
+ * always asks for effort and always has a notes field.)
  * A coach adds three kinds of part in any order: exercises as free text, a
  * dry table the app's breath-hold timer runs, and a fitness programme the
  * app's fitness timer runs. The phone app has the same editor over the same
@@ -24,6 +26,7 @@ import {
   validateTemplate,
   type CoachTemplate,
   type PartKind,
+  type ProgramItem,
   type TemplateBlock,
   type TemplateExercise,
   type TemplateIssueCode,
@@ -67,7 +70,7 @@ const ISSUE: Record<TemplateIssueCode, string> = {
   noBlocks: 'Add at least one part.',
   tooManyBlocks: 'A template holds up to 20 parts.',
   reps: 'Rounds must be 1 to 50.',
-  items: 'Every exercise needs a name and a work time.',
+  items: 'Every exercise needs a name and a time or reps.',
   target: 'Set a target above zero.',
   rest: 'Check the rest time.',
   dryRows: 'A table needs at least one row with a time.',
@@ -287,27 +290,59 @@ function Part({
       {ex.kind === 'program' && (
         <div className="space-y-1.5">
           <Rounds value={block.reps} onChange={(reps) => onChange({ ...block, reps })} />
-          <div className="flex items-center gap-2 text-[11px] text-textDim">
-            <span className="min-w-0 flex-1">{t('Exercise')}</span>
-            <span className="w-16 text-center">{t('Work')}</span>
-            <span className="w-16 text-center">{t('Rest')}</span>
-            <span className="w-6" />
-          </div>
           {ex.items.map((it, i) => {
-            const set = (patch: Partial<typeof it>) =>
-              setEx({ ...ex, items: ex.items.map((y, j) => (j === i ? { ...it, ...patch } : y)) });
+            const set = (item: ProgramItem) =>
+              setEx({ ...ex, items: ex.items.map((y, j) => (j === i ? item : y)) });
+            const byReps = it.reps != null;
+            // Time or repetitions: click the unit to switch; the other value is kept.
+            const toggle = () => {
+              if (!byReps) return set({ ...it, reps: 10 });
+              const { reps: _reps, ...timed } = it;
+              void _reps;
+              set({ ...timed, workSec: timed.workSec > 0 ? timed.workSec : 30 });
+            };
             return (
-              <div key={i} className="flex items-center gap-2">
+              <div key={i} className="flex flex-wrap items-center gap-2">
                 <input
-                  className="field min-w-0 flex-1 px-2 py-1 text-sm"
+                  className="field min-w-[8rem] flex-1 px-2 py-1 text-sm"
                   value={it.name}
                   maxLength={60}
-                  onChange={(e) => set({ name: e.target.value })}
+                  onChange={(e) => set({ ...it, name: e.target.value })}
                   placeholder={t('e.g. Plank')}
                   aria-label={t('Exercise')}
                 />
-                <TimeField value={it.workSec} onChange={(workSec) => set({ workSec })} label={t('Work')} />
-                <TimeField value={it.restSec} onChange={(restSec) => set({ restSec })} label={t('Rest')} />
+                <button
+                  onClick={toggle}
+                  className="pill w-16 px-2 py-1 text-xs text-amber"
+                  title={t('Click to switch between time and reps')}
+                >
+                  {byReps ? t('Reps') : t('Time')}
+                </button>
+                {byReps ? (
+                  <input
+                    type="number"
+                    min={1}
+                    max={999}
+                    className="field w-16 px-2 py-1 text-center text-sm"
+                    aria-label={t('Reps')}
+                    value={it.reps || ''}
+                    onChange={(e) =>
+                      set({ ...it, reps: Math.max(0, Math.round(Number(e.target.value) || 0)) })
+                    }
+                  />
+                ) : (
+                  <TimeField
+                    value={it.workSec}
+                    onChange={(workSec) => set({ ...it, workSec })}
+                    label={t('Time')}
+                  />
+                )}
+                <span className="text-[11px] text-textDim">{t('Rest')}</span>
+                <TimeField
+                  value={it.restSec}
+                  onChange={(restSec) => set({ ...it, restSec })}
+                  label={t('Rest')}
+                />
                 {x(
                   () => setEx({ ...ex, items: ex.items.filter((_, j) => j !== i) }),
                   t('Remove row'),
@@ -450,17 +485,6 @@ export function TemplateEditor({
         >
           {tpl.effort != null ? `${tpl.effort} / 10` : t('none')}
         </button>
-        <span className={`${label} ml-3 mr-1`}>{t('Ask back')}</span>
-        {(['effort', 'eq', 'notes'] as const).map((k) => (
-          <button
-            key={k}
-            onClick={() => update({ ask: { ...tpl.ask, [k]: !tpl.ask[k] } })}
-            className={chip(tpl.ask[k])}
-            aria-pressed={tpl.ask[k]}
-          >
-            {t({ effort: 'Effort', eq: 'EQ', notes: 'Notes' }[k])}
-          </button>
-        ))}
       </div>
       {effortOpen && (
         <div className="flex flex-wrap items-center gap-1.5">

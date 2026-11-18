@@ -890,7 +890,6 @@
   "A table needs at least one row with a time.": "表格至少需要一行帶時間的內容。",
   "A template holds up to 20 parts.": "一個範本最多 20 個部分。",
   "Add at least one part.": "請至少加入一個部分。",
-  "Ask back": "請運動員回報",
   "Attempt": "嘗試",
   "Check the rest time.": "請檢查休息時間。",
   "Click to change: rest, hold, recover": "點擊切換：休息、閉氣、恢復",
@@ -899,7 +898,6 @@
   "Dry table": "乾式表格",
   "EQ": "EQ",
   "Effort is 1 to 10.": "強度為 1 到 10。",
-  "Every exercise needs a name and a work time.": "每個動作都需要名稱和運動時間。",
   "Fitness programme": "體能計畫",
   "From an older template. It still sends as before; here it can only be moved or removed.": "來自舊版範本。仍照原樣傳送；在這裡只能移動或移除。",
   "Give the template a name.": "請為範本命名。",
@@ -942,5 +940,7 @@
   "Move exercise up": "上移練習",
   "Move exercise down": "下移練習",
   "Move session up": "上移訓練",
-  "Move session down": "下移訓練"
+  "Move session down": "下移訓練",
+  "Every exercise needs a name and a time or reps.": "每個動作都需要名稱，以及時間或次數。",
+  "Click to switch between time and reps": "點擊在時間和次數之間切換"
 }

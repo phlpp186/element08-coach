@@ -890,7 +890,6 @@
   "A table needs at least one row with a time.": "테이블에는 시간이 있는 줄이 하나 이상 필요합니다.",
   "A template holds up to 20 parts.": "템플릿에는 파트를 20개까지 넣을 수 있습니다.",
   "Add at least one part.": "파트를 하나 이상 추가하세요.",
-  "Ask back": "보고 요청",
   "Attempt": "시도",
   "Check the rest time.": "휴식 시간을 확인하세요.",
   "Click to change: rest, hold, recover": "클릭하여 변경: 휴식, 홀드, 회복",
@@ -899,7 +898,6 @@
   "Dry table": "드라이 테이블",
   "EQ": "EQ",
   "Effort is 1 to 10.": "강도는 1~10입니다.",
-  "Every exercise needs a name and a work time.": "모든 운동에 이름과 운동 시간이 필요합니다.",
   "Fitness programme": "피트니스 프로그램",
   "From an older template. It still sends as before; here it can only be moved or removed.": "이전 템플릿의 파트입니다. 전과 같이 전송됩니다. 여기서는 이동하거나 삭제만 할 수 있습니다.",
   "Give the template a name.": "템플릿 이름을 입력하세요.",
@@ -942,5 +940,7 @@
   "Move exercise up": "운동 위로 이동",
   "Move exercise down": "운동 아래로 이동",
   "Move session up": "세션 위로 이동",
-  "Move session down": "세션 아래로 이동"
+  "Move session down": "세션 아래로 이동",
+  "Every exercise needs a name and a time or reps.": "모든 운동에 이름과 시간 또는 횟수가 필요합니다.",
+  "Click to switch between time and reps": "클릭하여 시간과 횟수 전환"
 }

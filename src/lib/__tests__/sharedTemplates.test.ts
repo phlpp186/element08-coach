@@ -373,6 +373,29 @@ describe('a template in the plan builder', () => {
     expect(isAppPlan(def)).toBe(true);
   });
 
+  it('a programme with reps reaches the app as sets, and keeps the plan editable', () => {
+    const t = mixed();
+    const ex = t.blocks[2].exercise;
+    if (ex.kind !== 'program') throw new Error('fixture');
+    ex.items[0] = { name: 'Squat', workSec: 30, restSec: 20, reps: 12 };
+    const s = builderSessionFromTemplate(t, [], 1, OPTS)!;
+    expect(s.exercises[3].description).toBe('3 × [12 × Squat, rest 20s · Hollow hold 30s, rest 30s]');
+    const def = builderToDefinition(plan(s), 123, null, NOW);
+    const wire = (def.phases as { weeks: { plannedSessions: Record<string, unknown>[] }[] }[])[0].weeks[0]
+      .plannedSessions[0];
+    const w = wire.workout as { programme?: boolean; blocks: { kind: string; rounds?: number; items: unknown[] }[] };
+    expect(w.programme).toBe(true);
+    expect(w.blocks[0]).toMatchObject({ kind: 'sets', rounds: 3 });
+    expect(w.blocks[0].items).toHaveLength(6);
+    delete wire.templateRef;
+    expect(isAppPlan(def)).toBe(false);
+  });
+
+  it('what to report back is not written into the notes', () => {
+    const s = builderSessionFromTemplate(mixed(), [], 1, OPTS)!;
+    expect(s.body).toBe('Keep the holds relaxed.');
+  });
+
   it('an older template with a PB target waits for its number', () => {
     const t = templateFromDefinition(PHONE_V1)!;
     expect(builderSessionFromTemplate(t, resolveTemplate(t, {}), 0, OPTS)).toBeNull();
