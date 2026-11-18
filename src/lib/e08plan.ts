@@ -197,6 +197,22 @@ export interface BuilderSession {
   sessionType: string;
   /** Coach's target perceived effort for this session, 1-10. 0/undefined = none. */
   coachTarget?: number;
+  /** What a shared template brought that the builder does not edit: the link
+   *  to the template, its dry table (coachRun.program, started in the app's
+   *  breath-hold timer) and its fitness programme (workout, run by the app's
+   *  fitness timer). Written into the session as it is. */
+  app?: {
+    templateRef?: { id: string; name: string };
+    coachRun?: { program?: unknown; route?: string };
+    workout?: { id: string; [k: string]: unknown };
+  };
+}
+
+/** The app finds a session's workout by this id (its PLAN_WORKOUT_PREFIX plus
+ *  the session id), so a copied session's workout must follow its new id. */
+export function sessionExtras(s: Pick<BuilderSession, 'id' | 'app'>): BuilderSession['app'] {
+  if (!s.app) return undefined;
+  return s.app.workout ? { ...s.app, workout: { ...s.app.workout, id: `plan:${s.id}` } } : s.app;
 }
 
 export interface BuilderWeek {
@@ -385,6 +401,7 @@ function toPlanned(s: BuilderSession, dayOfWeek: number, label: string): Planned
       ? { coachTarget: Math.round(s.coachTarget) }
       : {}),
     sessionNotes: s.body.trim(),
+    ...sessionExtras(s),
   };
 }
 

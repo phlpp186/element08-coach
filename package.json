@@ -8,7 +8,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "sync:shared": "node scripts/sync-shared-templates.mjs",
+    "check:shared": "node scripts/sync-shared-templates.mjs --check"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",

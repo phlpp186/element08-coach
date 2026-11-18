@@ -83,7 +83,9 @@ export function isAppPlan(definition: unknown): boolean {
       (isObj(w) && Array.isArray(w.plannedSessions) ? w.plannedSessions : []).some(
         (s) =>
           isObj(s) &&
-          (isObj(s.workout) ||
+          // A workout a shared template brought rides along untouched
+          // (BuilderSession.app), so the builder may edit such a plan.
+          ((isObj(s.workout) && !isObj(s.templateRef)) ||
             (Array.isArray(s.exercises) && s.exercises.some((e) => isObj(e) && isObj(e.target)))),
       ),
     ),
@@ -115,6 +117,9 @@ interface WireSession {
   sessionType?: string;
   coachTarget?: number;
   sessionNotes?: string;
+  templateRef?: { id: string; name: string };
+  coachRun?: { program?: unknown; route?: string };
+  workout?: { id: string; [k: string]: unknown };
 }
 interface WireWeek {
   weekStart?: string;
@@ -146,6 +151,16 @@ function toSession(s: WireSession, planMode: PlanMode): BuilderSession {
     mode: MODES.includes(s.mode as PlanMode) ? (s.mode as PlanMode) : planMode,
     sessionType: s.sessionType ?? '',
     ...(typeof s.coachTarget === 'number' ? { coachTarget: s.coachTarget } : {}),
+    // Kept on the builder session too, so a copied week carries them.
+    ...(isObj(s.templateRef)
+      ? {
+          app: {
+            templateRef: s.templateRef,
+            ...(isObj(s.coachRun) ? { coachRun: s.coachRun } : {}),
+            ...(isObj(s.workout) ? { workout: s.workout } : {}),
+          },
+        }
+      : {}),
   };
 }
 

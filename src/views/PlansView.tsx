@@ -23,7 +23,8 @@ import { matchesLibrary, planNow, weekStrip, type AssignFilter, type KindFilter 
 import { WeekStrip } from '../components/library/WeekStrip';
 import { PlanDetail } from '../components/library/PlanDetail';
 import { isAppPlan, stampOf, type LibraryDevice } from '../lib/planLibrary';
-import { navigate } from '../hooks/useHashRoute';
+import { navigate, useRoute } from '../hooks/useHashRoute';
+import { TemplatesLibrary } from '../components/templates/TemplatesLibrary';
 import { fill, useT } from '../i18n';
 
 const DEVICE_LABEL: Record<LibraryDevice, string> = {
@@ -68,7 +69,11 @@ export function PlansView() {
   const { session, isCoach } = useAuth();
   const lib = useLibrary();
   const { namesByCloudPlanId, byCloudPlanId } = useCoachAssignments();
-  const [tab, setTab] = useState<'plans' | 'templates'>('plans');
+  // /plan?tab=templates opens the Templates tab (the template editor's way back).
+  const route = useRoute();
+  const [tab, setTab] = useState<'plans' | 'templates'>(
+    route.query.get('tab') === 'templates' ? 'templates' : 'plans',
+  );
   const [kind, setKind] = useState<KindFilter>('all');
   const [assign, setAssign] = useState<AssignFilter>('all');
   const [search, setSearch] = useState('');
@@ -190,11 +195,11 @@ export function PlansView() {
 
       <div className="flex gap-2">
         {tabBtn('plans', `${t('Plans')} · ${plans.length}`)}
-        {online && tabBtn('templates', `${t('App templates')} · ${lib.templates.length}`)}
+        {online && tabBtn('templates', `${t('Templates')} · ${lib.templates.length}`)}
       </div>
 
       {tab === 'templates' ? (
-        <TemplatesList />
+        <TemplatesLibrary editedAgo={(iso) => editedAgo(iso, t)} />
       ) : rowsFor.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-10 text-center text-textDim">
           <p className="mb-3">{t('No saved plans yet.')}</p>
@@ -356,56 +361,5 @@ export function PlansView() {
         {t('Plans made here or in the app show up in both. Assigned plans show who has them.')}
       </p>
     </main>
-  );
-}
-
-const TPL_TYPE: Record<string, string> = {
-  dry: 'Dry',
-  depth: 'Depth',
-  pool: 'Pool',
-  fitness: 'Fitness',
-};
-
-function TemplatesList() {
-  const t = useT();
-  const { templates } = useLibrary();
-  if (templates.length === 0) {
-    return (
-      <div className="rounded-xl border border-dashed border-border p-10 text-center text-textDim">
-        {t('No app templates yet. Make one in the app: Coaching › Templates.')}
-      </div>
-    );
-  }
-  return (
-    <div className="space-y-2">
-      <p className="text-sm text-textDim">
-        {t('App templates are the dry and session programmes you make in the app (Coaching › Templates) and send to athletes. They are listed here so you can see them; edit them in the app. Not the same as Builder templates under Exercises, which you reuse while building plans.')}
-      </p>
-      <div className="board">
-        {templates.map((r) => {
-          const tpl = (r.definition as { template?: Record<string, unknown> }).template ?? {};
-          const blocks = Array.isArray(tpl.blocks) ? (tpl.blocks as { name?: string }[]) : [];
-          const used = typeof tpl.useCount === 'number' ? tpl.useCount : 0;
-          return (
-            <div
-              key={r.id}
-              className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border/60 px-4 py-3 text-sm last:border-b-0"
-            >
-              <span className="min-w-0 flex-1">
-                <span className="font-heading">{String(tpl.name ?? r.title)}</span>
-                <span className="block truncate text-xs text-textDim">
-                  {blocks.map((b) => b.name).filter(Boolean).join(' · ')}
-                </span>
-              </span>
-              <span className="text-textDim">{t(TPL_TYPE[String(tpl.type)] ?? 'Template')}</span>
-              <span className="text-textDim">
-                {used > 0 ? fill(t('used {n}×'), { n: used }) : t('not sent yet')}
-              </span>
-              <span className="text-textDim">{editedAgo(r.updated_at, t)}</span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
   );
 }

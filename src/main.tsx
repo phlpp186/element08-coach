@@ -51,6 +51,16 @@ if (previewName === "cycle") {
       );
     },
   );
+} else if (previewName === "templateeditor") {
+  void import("./dev/TemplateEditorPreview").then(
+    ({ TemplateEditorPreview }) => {
+      createRoot(document.getElementById("root")!).render(
+        <StrictMode>
+          <TemplateEditorPreview />
+        </StrictMode>,
+      );
+    },
+  );
 } else if (previewName === "measure") {
   void import("./dev/MeasurePreview").then(({ MeasurePreview }) => {
     createRoot(document.getElementById("root")!).render(
