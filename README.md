@@ -72,7 +72,7 @@ plan's comp date), a dated **progress log**, and **attached plans**. Plans are n
 (survive a refresh) and can be linked to an athlete; **Build a plan for [athlete]** pre-fills the
 author + name and, if they have an upcoming competition, starts a season sized to it.
 
-### Roadmap (see app repo `appstore/TODO.md` T53/T54)
+### Roadmap (see app repo `docs/TODO.md` T53/T54)
 
 - **Per-exercise typed fields** (lung volume / discipline): the app's `PlannedExercise`
   is currently `{ id, description }` only, so structured detail goes in the description
