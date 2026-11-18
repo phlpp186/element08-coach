@@ -938,5 +938,9 @@
   "runs in the timer": "タイマーで実行",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "このブラウザに保存された {n} 件のテンプレートをここへ移動中です。移動が確認されるまでブラウザに残ります。",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "「{name}」にはPB基準の {discipline} 目標があります。このプランでのメートル数：",
-  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "「{name}」にはPB基準の {discipline} 目標があります。このプランでの秒数："
+  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "「{name}」にはPB基準の {discipline} 目標があります。このプランでの秒数：",
+  "Move exercise up": "エクササイズを上へ",
+  "Move exercise down": "エクササイズを下へ",
+  "Move session up": "セッションを上へ",
+  "Move session down": "セッションを下へ"
 }

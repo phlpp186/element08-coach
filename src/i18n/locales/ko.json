@@ -938,5 +938,9 @@
   "runs in the timer": "타이머에서 실행",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "이 브라우저에 저장된 템플릿 {n}개를 여기로 옮기는 중입니다. 이동이 확인될 때까지 브라우저에 남아 있습니다.",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "“{name}”에는 PB 기준 {discipline} 목표가 있습니다. 이 플랜의 미터 값:",
-  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "“{name}”에는 PB 기준 {discipline} 목표가 있습니다. 이 플랜의 초 값:"
+  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "“{name}”에는 PB 기준 {discipline} 목표가 있습니다. 이 플랜의 초 값:",
+  "Move exercise up": "운동 위로 이동",
+  "Move exercise down": "운동 아래로 이동",
+  "Move session up": "세션 위로 이동",
+  "Move session down": "세션 아래로 이동"
 }

@@ -938,5 +938,9 @@
   "runs in the timer": "รันในตัวจับเวลา",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "เทมเพลต {n} รายการที่บันทึกในเบราว์เซอร์นี้กำลังถูกย้ายมาที่นี่ จะยังอยู่ในเบราว์เซอร์จนกว่าจะยืนยันการย้าย",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "“{name}” มีเป้าหมาย {discipline} ที่เทียบกับ PB ระบุเมตรสำหรับแผนนี้:",
-  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "“{name}” มีเป้าหมาย {discipline} ที่เทียบกับ PB ระบุวินาทีสำหรับแผนนี้:"
+  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "“{name}” มีเป้าหมาย {discipline} ที่เทียบกับ PB ระบุวินาทีสำหรับแผนนี้:",
+  "Move exercise up": "เลื่อนแบบฝึกขึ้น",
+  "Move exercise down": "เลื่อนแบบฝึกลง",
+  "Move session up": "เลื่อนเซสชันขึ้น",
+  "Move session down": "เลื่อนเซสชันลง"
 }

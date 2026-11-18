@@ -938,5 +938,9 @@
   "runs in the timer": "se lance dans le minuteur",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "{n} modèle(s) enregistrés dans ce navigateur sont encore en cours de déplacement ici. Ils restent dans le navigateur jusqu'à confirmation.",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "« {name} » a un objectif {discipline} relatif à un record. Mètres pour ce plan :",
-  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "« {name} » a un objectif {discipline} relatif à un record. Secondes pour ce plan :"
+  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "« {name} » a un objectif {discipline} relatif à un record. Secondes pour ce plan :",
+  "Move exercise up": "Monter l'exercice",
+  "Move exercise down": "Descendre l'exercice",
+  "Move session up": "Monter la séance",
+  "Move session down": "Descendre la séance"
 }

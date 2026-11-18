@@ -938,5 +938,9 @@
   "runs in the timer": "läuft im Timer",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "{n} Vorlage(n) aus diesem Browser werden noch hierher verschoben. Sie bleiben im Browser, bis der Umzug bestätigt ist.",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "„{name}“ hat ein {discipline}-Ziel relativ zu einem PB. Meter für diesen Plan:",
-  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "„{name}“ hat ein {discipline}-Ziel relativ zu einem PB. Sekunden für diesen Plan:"
+  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "„{name}“ hat ein {discipline}-Ziel relativ zu einem PB. Sekunden für diesen Plan:",
+  "Move exercise up": "Übung nach oben",
+  "Move exercise down": "Übung nach unten",
+  "Move session up": "Einheit nach oben",
+  "Move session down": "Einheit nach unten"
 }

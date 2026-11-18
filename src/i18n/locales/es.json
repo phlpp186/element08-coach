@@ -938,5 +938,9 @@
   "runs in the timer": "se ejecuta en el temporizador",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "{n} plantilla(s) guardadas en este navegador aún se están moviendo aquí. Siguen en el navegador hasta que se confirme el traslado.",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "«{name}» tiene un objetivo de {discipline} relativo a una MP. Metros para este plan:",
-  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "«{name}» tiene un objetivo de {discipline} relativo a una MP. Segundos para este plan:"
+  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "«{name}» tiene un objetivo de {discipline} relativo a una MP. Segundos para este plan:",
+  "Move exercise up": "Subir ejercicio",
+  "Move exercise down": "Bajar ejercicio",
+  "Move session up": "Subir sesión",
+  "Move session down": "Bajar sesión"
 }

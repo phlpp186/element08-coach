@@ -938,5 +938,9 @@
   "runs in the timer": "在计时器中运行",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "保存在此浏览器中的 {n} 个模板正在移到这里。在确认完成之前，它们会保留在浏览器中。",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "“{name}”有一个相对 PB 的 {discipline} 目标。本计划的米数：",
-  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "“{name}”有一个相对 PB 的 {discipline} 目标。本计划的秒数："
+  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "“{name}”有一个相对 PB 的 {discipline} 目标。本计划的秒数：",
+  "Move exercise up": "上移练习",
+  "Move exercise down": "下移练习",
+  "Move session up": "上移训练",
+  "Move session down": "下移训练"
 }

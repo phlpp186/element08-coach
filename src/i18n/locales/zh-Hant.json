@@ -938,5 +938,9 @@
   "runs in the timer": "在計時器中執行",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "儲存在此瀏覽器中的 {n} 個範本正在移到這裡。在確認完成之前，它們會保留在瀏覽器中。",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "「{name}」有一個相對 PB 的 {discipline} 目標。本計畫的公尺數：",
-  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "「{name}」有一個相對 PB 的 {discipline} 目標。本計畫的秒數："
+  "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "「{name}」有一個相對 PB 的 {discipline} 目標。本計畫的秒數：",
+  "Move exercise up": "上移練習",
+  "Move exercise down": "下移練習",
+  "Move session up": "上移訓練",
+  "Move session down": "下移訓練"
 }
