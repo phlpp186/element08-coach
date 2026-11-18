@@ -71,6 +71,21 @@ export function isLibraryDefinition(definition: unknown): boolean {
  *  a coach's copy for one athlete, or one with workouts, "% e1RM" loads,
  *  tests or a daily list. The builder's model has none of these, so a web save
  *  would drop them from every athlete's copy. */
+/** A fitness programme a coach wrote (in a template or on the session in the
+ *  app's plan editor): circuits only, under the session's own id. It rides
+ *  along untouched (BuilderSession.app), so it does not make a plan app-only,
+ *  unlike a plan's own strength workout with sets and loads. */
+function isCoachProgramme(s: Obj): boolean {
+  const w = s.workout;
+  return (
+    isObj(w) &&
+    w.id === `plan:${String(s.id)}` &&
+    Array.isArray(w.blocks) &&
+    w.blocks.length > 0 &&
+    w.blocks.every((b) => isObj(b) && b.kind === 'circuit')
+  );
+}
+
 export function isAppPlan(definition: unknown): boolean {
   if (!isObj(definition)) return false;
   const d = definition;
@@ -83,9 +98,7 @@ export function isAppPlan(definition: unknown): boolean {
       (isObj(w) && Array.isArray(w.plannedSessions) ? w.plannedSessions : []).some(
         (s) =>
           isObj(s) &&
-          // A workout a shared template brought rides along untouched
-          // (BuilderSession.app), so the builder may edit such a plan.
-          ((isObj(s.workout) && !isObj(s.templateRef)) ||
+          ((isObj(s.workout) && !isCoachProgramme(s)) ||
             (Array.isArray(s.exercises) && s.exercises.some((e) => isObj(e) && isObj(e.target)))),
       ),
     ),
@@ -152,10 +165,10 @@ function toSession(s: WireSession, planMode: PlanMode): BuilderSession {
     sessionType: s.sessionType ?? '',
     ...(typeof s.coachTarget === 'number' ? { coachTarget: s.coachTarget } : {}),
     // Kept on the builder session too, so a copied week carries them.
-    ...(isObj(s.templateRef)
+    ...(isObj(s.templateRef) || isObj(s.coachRun) || isCoachProgramme(s as Obj)
       ? {
           app: {
-            templateRef: s.templateRef,
+            ...(isObj(s.templateRef) ? { templateRef: s.templateRef } : {}),
             ...(isObj(s.coachRun) ? { coachRun: s.coachRun } : {}),
             ...(isObj(s.workout) ? { workout: s.workout } : {}),
           },

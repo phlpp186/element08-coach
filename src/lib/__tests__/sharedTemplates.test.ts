@@ -361,10 +361,15 @@ describe('a template in the plan builder', () => {
     const back = definitionToBuilder(fromPhone).weeks[0].sessions[0];
     expect(back.app?.workout?.id).toBe(`plan:${s.id}`);
     expect(back.app?.coachRun?.program).toBeTruthy();
-    // A workout with no template behind it is still the app's alone.
     const wire = (def.phases as { weeks: { plannedSessions: Record<string, unknown>[] }[] }[])[0].weeks[0]
       .plannedSessions[0];
+    // A programme added to the session in the app's plan editor has no
+    // template behind it and is still a coach's programme.
     delete wire.templateRef;
+    expect(isAppPlan(def)).toBe(false);
+    expect(definitionToBuilder({ ...def, library: undefined }).weeks[0].sessions[0].app?.workout).toBeTruthy();
+    // A plan's own strength workout stays the app's alone.
+    wire.workout = { id: `plan:${String(wire.id)}`, blocks: [{ kind: 'sets', items: [] }] };
     expect(isAppPlan(def)).toBe(true);
   });
 
