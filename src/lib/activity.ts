@@ -12,6 +12,7 @@
  */
 import { HYPOXIA_DAYS, HYPOXIA_FLAG_MIN, hypoxiaLevel, type HypoxiaLevel } from './hypoxia';
 import { addDays, mondayOf } from './e08plan';
+import { isNotDone, isPastGrace } from './notDone';
 import { daysBetween } from './planHelpers';
 
 /** Below this, updated_at vs completed_at is write latency, not an edit. */
@@ -25,6 +26,7 @@ export interface CompletionLike {
   rating: number | null;
   mental?: number | null;
   hypoxia?: number | null;
+  not_done_at?: string | null;
 }
 
 export type EventKind = 'completed' | 'updated';
@@ -178,17 +180,21 @@ export const MISSED_MIN = 2;
 export const QUIET_DAYS = 7;
 export const EFFORT_FLOOR = 7;
 
-/** Planned sessions in plan weeks that have fully ended with no completion.
+/** Planned sessions the athlete neither did nor answered: the plan week has
+ *  fully ended, the grace after the planned day is over (lib/notDone), and
+ *  there is no report. `answeredIds` holds the sessions reported done AND the
+ *  ones reported "not done": an athlete who said why is not a silent miss.
  *  Sessions dated before the plan's own start (the dimmed part of a first week
  *  that begins mid-week) do not count. Undated plans count 0. */
-export function missedSessions(plan: unknown, doneIds: ReadonlySet<string>, todayIso: string): number {
+export function missedSessions(plan: unknown, answeredIds: ReadonlySet<string>, todayIso: string): number {
   const start = (plan as PlanDefLike | null)?.startDate ?? null;
   let n = 0;
   for (const s of planSessions(plan)) {
     if (!s.weekStart || !s.date) continue;
     if (addDays(s.weekStart, 7) > todayIso) continue; // week not over yet
+    if (!isPastGrace(s.date, todayIso)) continue;
     if (start && ISO_RE.test(start) && s.date < start) continue;
-    if (!doneIds.has(s.id)) n += 1;
+    if (!answeredIds.has(s.id)) n += 1;
   }
   return n;
 }
@@ -251,8 +257,8 @@ export function needsALook(input: {
     const hypSince = nowMs - HYPOXIA_DAYS * 86_400_000;
     for (const a of mine) {
       const rows = byAssignment.get(a.id) ?? [];
-      const done = new Set(rows.filter((c) => c.completed_at).map((c) => c.exercise_id));
-      missed += missedSessions(a.plan, done, todayIso);
+      const answered = new Set(rows.filter((c) => c.completed_at || isNotDone(c)).map((c) => c.exercise_id));
+      missed += missedSessions(a.plan, answered, todayIso);
       for (const c of rows) {
         const ev = completionEvent(c);
         if (!ev) continue;

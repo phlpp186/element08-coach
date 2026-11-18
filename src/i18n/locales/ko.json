@@ -878,5 +878,11 @@
   "Headache": "두통",
   "Bloating": "더부룩함",
   "Mood": "기분",
-  "Poor sleep": "수면 부족"
+  "Poor sleep": "수면 부족",
+  "Not done": "하지 않음",
+  "Sick": "아픔",
+  "Tired": "피로",
+  "No time": "시간 없음",
+  "No pool": "수영장 없음",
+  "Injury": "부상"
 }

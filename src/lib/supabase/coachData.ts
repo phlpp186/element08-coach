@@ -52,6 +52,11 @@ export interface CompletionRow {
   /** Worst hypoxia sign 1-4 (lib/hypoxia). */
   hypoxia?: number | null;
   remarks: string | null;
+  /** Set when the athlete reported the session as NOT done (completed_at is
+   *  then null). Absent before migration 0026. */
+  not_done_at?: string | null;
+  /** Why not: a reason id from lib/notDone, or null. */
+  skip_reason?: string | null;
   session: Json | null;
   updated_at: string;
 }
@@ -387,9 +392,11 @@ export async function listCompletionSummaries(
   if (!assignmentIds.length) return [];
   const cols = 'id, assignment_id, exercise_id, completed_at, rating, updated_at';
   const q = (select: string) => supabase.from('completions').select(select).in('assignment_id', assignmentIds);
-  const res = await q(`${cols}, mental, hypoxia`);
-  // Until migration 0018 adds the two columns, naming them fails the query.
-  if (res.error && /mental|hypoxia/i.test(res.error.message)) return unwrap(await q(cols)) as never;
+  // Naming a column the database does not have yet fails the query, so each
+  // optional group is dropped in turn: 0026 (not done), then 0018 (ratings).
+  let res = await q(`${cols}, mental, hypoxia, not_done_at`);
+  if (res.error && /not_done_at/i.test(res.error.message)) res = await q(`${cols}, mental, hypoxia`);
+  if (res.error && /mental|hypoxia/i.test(res.error.message)) res = await q(cols);
   return unwrap(res) as never;
 }
 

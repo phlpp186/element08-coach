@@ -14,6 +14,7 @@ import { splitAtCurrentWeek } from '../lib/planWeekOrder';
 import { AttachedSessionDetail } from '../components/AttachedSessionDetail';
 import { useT, tr } from '../i18n';
 import { HYPOXIA_FLAG_MIN, HYPOXIA_LABEL, hypoxiaLevel, hypoxiaTone } from '../lib/hypoxia';
+import { isNotDone, SKIP_REASON_LABEL } from '../lib/notDone';
 import { mentalChip } from '../lib/mental';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import {
@@ -143,6 +144,12 @@ export function ConnectedPlanView({
     for (const c of completions) if (c.completed_at) m.set(c.exercise_id, c);
     return m;
   }, [completions]);
+  // Sessions the athlete reported as NOT done (reason and note for the coach).
+  const notDoneBySession = useMemo(() => {
+    const m = new Map<string, CompletionRow>();
+    for (const c of completions) if (isNotDone(c)) m.set(c.exercise_id, c);
+    return m;
+  }, [completions]);
 
   const flat = useMemo(() => flattenPlan(plan), [plan]);
 
@@ -270,6 +277,7 @@ export function ConnectedPlanView({
               isCurrent={weekKey(w) === currentKey}
               multiPhase={multiPhase}
               doneBySession={doneBySession}
+              notDoneBySession={notDoneBySession}
               focusSessionId={focusSessionId}
               t={t}
             />
@@ -291,6 +299,7 @@ export function ConnectedPlanView({
               isCurrent={false}
               multiPhase={multiPhase}
               doneBySession={doneBySession}
+              notDoneBySession={notDoneBySession}
               focusSessionId={focusSessionId}
               t={t}
             />
@@ -307,6 +316,7 @@ function WeekSection({
   isCurrent,
   multiPhase,
   doneBySession,
+  notDoneBySession,
   focusSessionId,
   t,
 }: {
@@ -314,6 +324,7 @@ function WeekSection({
   isCurrent: boolean;
   multiPhase: boolean;
   doneBySession: Map<string, CompletionRow>;
+  notDoneBySession: Map<string, CompletionRow>;
   focusSessionId: string | null;
   t: (s: string) => string;
 }) {
@@ -350,6 +361,7 @@ function WeekSection({
               key={ses.id}
               session={ses}
               completion={doneBySession.get(ses.id) ?? null}
+              notDone={notDoneBySession.get(ses.id) ?? null}
               focused={ses.id === focusSessionId}
               t={t}
             />
@@ -361,14 +373,18 @@ function WeekSection({
 }
 
 // ─── One session card with completion overlay ────────────────────────────────
-function SessionRow({
+/** Exported for the dev preview (src/dev/NotDonePreview). */
+export function SessionRow({
   session,
   completion,
+  notDone,
   focused,
   t,
 }: {
   session: PlannedSession;
   completion: CompletionRow | null;
+  /** The athlete's "not done" report, when there is one and no done report. */
+  notDone: CompletionRow | null;
   focused: boolean;
   t: (s: string) => string;
 }) {
@@ -378,6 +394,8 @@ function SessionRow({
     if (focused) setOpen(true);
   }, [focused]);
   const done = !!completion?.completed_at;
+  const skipped = !done && !!notDone;
+  const reason = notDone?.skip_reason ? SKIP_REASON_LABEL[notDone.skip_reason] : null;
   const hyp = hypoxiaLevel(completion?.hypoxia);
   const day = typeof session.dayOfWeek === 'number' ? DAY_LABELS[session.dayOfWeek] : null;
   const title = session.label?.trim() || session.sessionType || t('Session');
@@ -386,11 +404,11 @@ function SessionRow({
   return (
     <div
       id={`ses-${session.id}`}
-      className={`scroll-mt-4 rounded-lg border p-3 ${done ? 'border-recover/50 bg-recover/5' : 'border-border bg-panel'} ${focused ? 'ring-2 ring-accent' : ''}`}
+      className={`scroll-mt-4 rounded-lg border p-3 ${done ? 'border-recover/50 bg-recover/5' : skipped ? 'border-dashed border-border bg-panel' : 'border-border bg-panel'} ${focused ? 'ring-2 ring-accent' : ''}`}
     >
       <div className="flex items-start gap-2">
         <span className={`mt-0.5 text-sm ${done ? 'text-recover' : 'text-textDim'}`}>
-          {done ? '✓' : '○'}
+          {done ? '✓' : skipped ? '✕' : '○'}
         </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
@@ -422,6 +440,23 @@ function SessionRow({
           )}
           {session.sessionNotes && (
             <p className="mt-1 text-xs text-textDim italic">{session.sessionNotes}</p>
+          )}
+
+          {skipped && (
+            <div className="mt-2 space-y-1.5 border-t border-border pt-2">
+              <div className="flex items-center gap-2 flex-wrap text-xs">
+                <span className="rounded-full bg-amber/15 px-2 py-0.5 text-amber">
+                  {t('Not done')}
+                  {reason ? ` · ${t(reason)}` : ''}
+                </span>
+                {notDone?.not_done_at && (
+                  <span className="text-textDim">
+                    {new Date(notDone.not_done_at).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+              {notDone?.remarks && <p className="text-sm text-text">“{notDone.remarks}”</p>}
+            </div>
           )}
 
           {done && (

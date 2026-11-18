@@ -67,6 +67,14 @@ if (previewName === "cycle") {
       </StrictMode>,
     );
   });
+} else if (previewName === "notdone") {
+  void import("./dev/NotDonePreview").then(({ NotDonePreview }) => {
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <NotDonePreview />
+      </StrictMode>,
+    );
+  });
 } else if (previewName === "activity") {
   void import("./dev/ActivityPreview").then(({ ActivityPreview }) => {
     createRoot(document.getElementById("root")!).render(

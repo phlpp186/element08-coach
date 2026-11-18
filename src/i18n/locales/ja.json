@@ -878,5 +878,11 @@
   "Headache": "頭痛",
   "Bloating": "お腹の張り",
   "Mood": "気分",
-  "Poor sleep": "睡眠不足"
+  "Poor sleep": "睡眠不足",
+  "Not done": "未実施",
+  "Sick": "体調不良",
+  "Tired": "疲労",
+  "No time": "時間がない",
+  "No pool": "プールなし",
+  "Injury": "けが"
 }

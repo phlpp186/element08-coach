@@ -878,5 +878,11 @@
   "Headache": "Mal de tête",
   "Bloating": "Ballonnements",
   "Mood": "Humeur",
-  "Poor sleep": "Mauvais sommeil"
+  "Poor sleep": "Mauvais sommeil",
+  "Not done": "Pas fait",
+  "Sick": "Malade",
+  "Tired": "Fatigue",
+  "No time": "Pas le temps",
+  "No pool": "Pas de piscine",
+  "Injury": "Blessure"
 }

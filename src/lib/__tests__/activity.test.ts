@@ -91,10 +91,19 @@ describe('missedSessions', () => {
   it('counts only ended weeks, and nothing before the plan start', () => {
     // Sunday of week 1: week 1 has not ended yet.
     expect(missedSessions(plan, new Set(), '2026-10-04')).toBe(0);
-    // Week 1 over: Wed + Sat missed, the Monday before the start is ignored.
-    expect(missedSessions(plan, new Set(), '2026-10-05')).toBe(2);
-    expect(missedSessions(plan, new Set(['w1-wed']), '2026-10-05')).toBe(1);
-    expect(missedSessions(plan, new Set(), '2026-10-12')).toBe(4);
+    // Week 1 over. Wed (30 Sep) is past its 4 days of grace, Sat (3 Oct) is
+    // not; the Monday before the start is ignored.
+    expect(missedSessions(plan, new Set(), '2026-10-05')).toBe(1);
+    expect(missedSessions(plan, new Set(['w1-wed']), '2026-10-05')).toBe(0);
+  });
+  // Philipp, 2026-11-18: athletes with busy jobs train a few days late, so a
+  // session is missed only from the fifth day after its planned day.
+  it('gives every session four days of grace', () => {
+    expect(missedSessions(plan, new Set(), '2026-10-07')).toBe(1); // Sat + 4 = 7 Oct
+    expect(missedSessions(plan, new Set(), '2026-10-08')).toBe(2);
+    // Week 2 over on the 12th: Tue (6 Oct) counts, Thu (8 Oct) not until the 13th.
+    expect(missedSessions(plan, new Set(), '2026-10-12')).toBe(3);
+    expect(missedSessions(plan, new Set(), '2026-10-13')).toBe(4);
   });
   it('skips undated plans', () => {
     expect(missedSessions({ phases: [{ weeks: [{ plannedSessions: [{ id: 'a' }] }] }] }, new Set(), '2030-01-01')).toBe(0);
