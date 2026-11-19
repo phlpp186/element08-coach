@@ -309,28 +309,31 @@ export interface CoachAssignment {
   doneCount: number;
   /** When the plan was assigned (assignments.assigned_at). */
   assignedAt: string | null;
+  /** False for a plan the athlete no longer has (unassigned): only listed
+   *  when asked for with `includeInactive`. */
+  active: boolean;
 }
 
 /** Who the coach has assigned which plan to, with completion counts. Scoped to
  *  the coach's own plans (titles resolved locally). */
-export async function listCoachAssignments(): Promise<CoachAssignment[]> {
+export async function listCoachAssignments(opts: { includeInactive?: boolean } = {}): Promise<CoachAssignment[]> {
   const plans = await listMyPlans();
   if (!plans.length) return [];
   const titleById = new Map(plans.map((p) => [p.id, p.title]));
-  const rows = unwrap(
-    await supabase
-      .from('assignments')
-      .select('id, plan_id, student_id, assigned_at, student:profiles!assignments_student_id_fkey(display_name)')
-      .in(
-        'plan_id',
-        plans.map((p) => p.id),
-      )
-      .eq('active', true),
-  ) as unknown as {
+  let query = supabase
+    .from('assignments')
+    .select('id, plan_id, student_id, assigned_at, active, student:profiles!assignments_student_id_fkey(display_name)')
+    .in(
+      'plan_id',
+      plans.map((p) => p.id),
+    );
+  if (!opts.includeInactive) query = query.eq('active', true);
+  const rows = unwrap(await query) as unknown as {
     id: string;
     plan_id: string;
     student_id: string;
     assigned_at: string | null;
+    active: boolean;
     student: { display_name: string } | null;
   }[];
 
@@ -357,6 +360,7 @@ export async function listCoachAssignments(): Promise<CoachAssignment[]> {
     studentName: r.student?.display_name?.trim() || 'Athlete',
     doneCount: counts.get(r.id) ?? 0,
     assignedAt: r.assigned_at ?? null,
+    active: r.active !== false,
   }));
 }
 

@@ -1,20 +1,20 @@
 /**
- * CoachOverview — the "Overview" tab: four summary tiles over a Gantt-style
- * swimlane of every active student plan, each plan cut into weeks coloured by
- * adherence with the athlete's effort trend beside it, so a coach with many
- * athletes sees at a glance where each one is, how it is going and when their
- * plan finishes. Data + auth live here; OverviewBody is the pure rendering
- * (also used by the dev harness). Coach-only; live via the roster's Realtime.
+ * CoachOverview — the "Overview" tab: four summary tiles over one lane per
+ * athlete with every session as a dot, some weeks back and some ahead, so a
+ * coach sees who trained when, how hard it felt, where the reports thin out
+ * and whose plan runs out. Data + auth live here; OverviewBody is the pure
+ * rendering (also used by the dev harness). Coach-only; live via the roster's
+ * Realtime.
  */
 import { useAuth } from '../lib/supabase/AuthProvider';
-import { useCoachOverview, type OverviewRow } from '../lib/supabase/useCoachOverview';
-import { CoachTimeline, OverviewTiles } from '../components/CoachTimeline';
+import { useCoachOverview, type OverviewAthlete, type OverviewRow } from '../lib/supabase/useCoachOverview';
+import { OverviewTiles, SessionDots } from '../components/CoachTimeline';
 import { useT } from '../i18n';
 
 export function CoachOverview() {
   const t = useT();
   const { session, isCoach, loading: authLoading } = useAuth();
-  const { rows, loading, error, todayIso } = useCoachOverview();
+  const { rows, athletes, loading, error, todayIso } = useCoachOverview();
 
   if (authLoading) return null;
   if (!session || !isCoach) {
@@ -27,16 +27,18 @@ export function CoachOverview() {
     );
   }
 
-  return <OverviewBody rows={rows} todayIso={todayIso} loading={loading} error={error} />;
+  return <OverviewBody rows={rows} athletes={athletes} todayIso={todayIso} loading={loading} error={error} />;
 }
 
 export function OverviewBody({
   rows,
+  athletes,
   todayIso,
   loading,
   error,
 }: {
   rows: OverviewRow[];
+  athletes: OverviewAthlete[];
   todayIso: string;
   loading: boolean;
   error: string | null;
@@ -47,7 +49,7 @@ export function OverviewBody({
       <div>
         <h2 className="text-lg">{t('Plan overview')}</h2>
         <p className="text-textDim text-sm">
-          {t('Every active plan on one timeline: how each week went, how hard it felt and when it finishes.')}
+          {t('Every athlete on one timeline: each session a dot, the past weeks and what is planned next.')}
         </p>
       </div>
 
@@ -62,7 +64,7 @@ export function OverviewBody({
       ) : (
         <>
           <OverviewTiles rows={rows} />
-          <CoachTimeline rows={rows} todayIso={todayIso} />
+          <SessionDots athletes={athletes} todayIso={todayIso} />
         </>
       )}
     </main>
