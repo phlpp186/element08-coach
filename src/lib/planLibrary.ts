@@ -71,6 +71,20 @@ export function isLibraryDefinition(definition: unknown): boolean {
  *  a coach's copy for one athlete, or one with workouts, "% e1RM" loads,
  *  tests or a daily list. The builder's model has none of these, so a web save
  *  would drop them from every athlete's copy. */
+/** A fitness programme a coach wrote (in a template or on the session in the
+ *  app's plan editor), under the session's own id: marked `programme`, or,
+ *  written before that mark existed, circuits only. It rides along untouched
+ *  (BuilderSession.app), so it does not make a plan app-only, unlike a
+ *  plan's own strength workout with sets and loads. Same rule as the app's
+ *  src/lib/coachTemplates/sessionParts.ts. */
+function isCoachProgramme(s: Obj): boolean {
+  const w = s.workout;
+  if (!isObj(w) || w.id !== `plan:${String(s.id)}`) return false;
+  if (!Array.isArray(w.blocks) || w.blocks.length === 0) return false;
+  if (w.programme === true) return true;
+  return w.blocks.every((b) => isObj(b) && b.kind === 'circuit');
+}
+
 export function isAppPlan(definition: unknown): boolean {
   if (!isObj(definition)) return false;
   const d = definition;
@@ -83,7 +97,7 @@ export function isAppPlan(definition: unknown): boolean {
       (isObj(w) && Array.isArray(w.plannedSessions) ? w.plannedSessions : []).some(
         (s) =>
           isObj(s) &&
-          (isObj(s.workout) ||
+          ((isObj(s.workout) && !isCoachProgramme(s)) ||
             (Array.isArray(s.exercises) && s.exercises.some((e) => isObj(e) && isObj(e.target)))),
       ),
     ),
@@ -110,11 +124,14 @@ interface WireSession {
   id?: string;
   dayOfWeek?: number;
   label?: string;
-  exercises?: { id?: string; description?: string }[];
+  exercises?: { id?: string; description?: string; run?: unknown }[];
   mode?: string;
   sessionType?: string;
   coachTarget?: number;
   sessionNotes?: string;
+  templateRef?: { id: string; name: string };
+  coachRun?: { program?: unknown; route?: string };
+  workout?: { id: string; [k: string]: unknown };
 }
 interface WireWeek {
   weekStart?: string;
@@ -142,10 +159,21 @@ function toSession(s: WireSession, planMode: PlanMode): BuilderSession {
     exercises: (s.exercises ?? []).map((e) => ({
       id: e.id || uid('ex'),
       description: e.description ?? '',
+      ...(e.run === 'dry' || e.run === 'program' ? { run: e.run } : {}),
     })),
     mode: MODES.includes(s.mode as PlanMode) ? (s.mode as PlanMode) : planMode,
     sessionType: s.sessionType ?? '',
     ...(typeof s.coachTarget === 'number' ? { coachTarget: s.coachTarget } : {}),
+    // Kept on the builder session too, so a copied week carries them.
+    ...(isObj(s.templateRef) || isObj(s.coachRun) || isCoachProgramme(s as Obj)
+      ? {
+          app: {
+            ...(isObj(s.templateRef) ? { templateRef: s.templateRef } : {}),
+            ...(isObj(s.coachRun) ? { coachRun: s.coachRun } : {}),
+            ...(isObj(s.workout) ? { workout: s.workout } : {}),
+          },
+        }
+      : {}),
   };
 }
 
@@ -235,6 +263,8 @@ const BUILDER_SESSION_KEYS = new Set([
   'sessionNotes',
 ]);
 
+const BUILDER_AND_RUN_KEYS = new Set([...BUILDER_SESSION_KEYS, 'templateRef', 'coachRun', 'workout']);
+
 function appOnly(o: unknown, keys: Set<string>): Obj {
   if (!isObj(o)) return {};
   return Object.fromEntries(Object.entries(o).filter(([k]) => !keys.has(k)));
@@ -266,10 +296,19 @@ export function builderToDefinition(
       return {
         ...w,
         targetMix: mix,
-        plannedSessions: w.plannedSessions.map((s) => ({
-          ...appOnly(oldSessions.get(s.id), BUILDER_SESSION_KEYS),
-          ...s,
-        })),
+        plannedSessions: w.plannedSessions.map((s) => {
+          const old = oldSessions.get(s.id);
+          // A table or a coach's programme on the old row is something the
+          // builder shows and edits (toSession puts it in `app`), so what the
+          // builder now says wins: removed there means removed here. Anything
+          // else the app set stays.
+          const owned =
+            old && (isObj(old.templateRef) || isObj(old.coachRun) || isCoachProgramme(old));
+          return {
+            ...appOnly(old, owned ? BUILDER_AND_RUN_KEYS : BUILDER_SESSION_KEYS),
+            ...s,
+          };
+        }),
       };
     }),
   }));

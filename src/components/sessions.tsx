@@ -9,14 +9,60 @@ import {
 import { ExerciseInput } from "./ExerciseInput";
 import {
   defaultDoseFor,
+  materializeSessionTemplate,
   recordUseByDescription,
   saveSessionTemplate,
   useSessionTemplates,
-  type SessionTemplate,
 } from "../lib/library";
 import { DoseChips, DoseEditor } from "./dose";
-import { useT, tr } from "../i18n";
+import { fill, useT, tr } from "../i18n";
 import { TemplatePicker } from "./TemplatePicker";
+import { useAuth } from "../lib/supabase/AuthProvider";
+import { saveTemplate, useSharedTemplates } from "../lib/supabase/templateLibrary";
+import {
+  builderParts,
+  builderSessionFromTemplate,
+  modeOfType,
+  templateFromSession,
+  withBuilderParts,
+} from "../lib/coachTemplates/portal";
+import {
+  groupParts,
+  hasTimer,
+  newPart,
+  ungroupParts,
+  type TemplateBlock,
+} from "../lib/coachTemplates/model";
+import { AddPartRow, PartCard } from "./templates/TemplateEditor";
+import { missingTargets, resolveTemplate } from "../lib/coachTemplates/resolve";
+import { templateTr } from "../lib/coachTemplates/tr";
+import type { CoachTemplate } from "../lib/coachTemplates/model";
+
+/** Builds the picked template's session for a day; null when it cannot be
+ *  built (the coach cancelled a value an older template asked for). */
+export type TemplateSessionMaker = (dayOfWeek: number) => BuilderSession | null;
+
+/** A template from before the shared library may hold a target that is a
+ *  share of a PB. A plan in the builder has no athlete, so the coach types
+ *  the number for this plan. Null when they cancel. */
+function askMissingTargets(tpl: CoachTemplate): Record<string, number> | null {
+  const overrides: Record<string, number> = {};
+  for (const m of missingTargets(resolveTemplate(tpl, {}))) {
+    const raw = prompt(
+      fill(
+        m.unit === "s"
+          ? tr("“{name}” has a {discipline} target relative to a PB. Seconds for this plan:")
+          : tr("“{name}” has a {discipline} target relative to a PB. Metres for this plan:"),
+        { name: tpl.name, discipline: m.discipline },
+      ),
+    );
+    if (raw === null) return null;
+    const v = Number(raw.replace(",", "."));
+    if (!(v > 0)) return null;
+    overrides[m.blockId] = v;
+  }
+  return overrides;
+}
 
 const SESSION_MODES: PlanMode[] = ["depth", "pool", "dry", "general"];
 
@@ -64,13 +110,57 @@ export function SessionList({
    *  For weekday-grouped lists the parent maps the local index back into the
    *  full week array. Omit to hide the session reorder controls. */
   onMove?: (index: number, dir: -1 | 1) => void;
-  /** When given (and templates exist), a "+ from template" picker appears. */
-  onInsertTemplate?: (tpl: SessionTemplate) => void;
+  /** When given (and templates exist), a "+ from template" picker appears.
+   *  It lists the shared library (the same one as the phone app) for a
+   *  signed-in coach, plus any browser-only templates not moved there yet. */
+  onInsertTemplate?: (make: TemplateSessionMaker) => void;
   /** When set, the "+ session" button is replaced by this dim note. */
   disabledText?: string;
 }) {
   const t = useT();
-  const templates = useSessionTemplates();
+  const local = useSessionTemplates();
+  const shared = useSharedTemplates();
+  const { session: auth, isCoach, profile } = useAuth();
+  const online = !!auth && isCoach;
+  const items = [
+    ...(online
+      ? shared.map(({ template: x }) => ({
+          id: `s:${x.id}`,
+          name: x.name,
+          mode: modeOfType(x.type),
+          sub: x.sessionType,
+          count: x.blocks.length,
+          useCount: x.useCount,
+        }))
+      : []),
+    ...local.map((x) => ({
+      id: `l:${x.id}`,
+      name: x.name,
+      mode: x.mode,
+      sub: x.sessionType,
+      count: x.exercises.length,
+      useCount: x.useCount,
+    })),
+  ];
+  const pick = (id: string) => {
+    if (!onInsertTemplate) return;
+    const key = id.slice(2);
+    if (id.startsWith("l:")) {
+      const tpl = local.find((x) => x.id === key);
+      if (tpl) onInsertTemplate((day) => materializeSessionTemplate(tpl, day));
+      return;
+    }
+    const tpl = shared.find((x) => x.template.id === key)?.template;
+    if (!tpl) return;
+    const overrides = askMissingTargets(tpl);
+    if (!overrides) return;
+    onInsertTemplate((day) =>
+      builderSessionFromTemplate(tpl, resolveTemplate(tpl, {}, overrides), day, {
+        author: profile?.display_name ?? "",
+        t: templateTr(),
+      }),
+    );
+  };
   return (
     <div className="min-w-0 flex-1 space-y-2">
       {sessions.map((s, i) =>
@@ -129,18 +219,8 @@ export function SessionList({
             <TemplatePicker
               triggerLabel={t("+ from template")}
               title={t("Session templates")}
-              items={templates.map((x) => ({
-                id: x.id,
-                name: x.name,
-                mode: x.mode,
-                sub: x.sessionType,
-                count: x.exercises.length,
-                useCount: x.useCount,
-              }))}
-              onPick={(id) => {
-                const tpl = templates.find((x) => x.id === id);
-                if (tpl) onInsertTemplate(tpl);
-              }}
+              items={items}
+              onPick={pick}
             />
           )}
         </span>
@@ -210,6 +290,21 @@ export function SessionEditor({
   extra?: ReactNode;
 }) {
   const t = useT();
+  const { session: auth, isCoach, profile } = useAuth();
+  const online = !!auth && isCoach;
+  // A dry table and a fitness programme on the session itself, as in a
+  // template and in the app's plan editor. A signed-in coach adds them (the
+  // app runs them, so a plan file for a stranger has no use for them); one
+  // that is already there always shows.
+  const { parts, canHaveProgram } = builderParts(session);
+  const groups = groupParts(parts);
+  const setParts = (next: TemplateBlock[]) =>
+    onChange(
+      withBuilderParts(session, next, {
+        author: profile?.display_name ?? "",
+        t: templateTr(),
+      }),
+    );
   const [dropping, setDropping] = useState(false);
   const [doseOpen, setDoseOpen] = useState<string | null>(null);
   const addExercise = () =>
@@ -405,13 +500,36 @@ export function SessionEditor({
             ) : null}
           </div>
         ))}
-        <button
-          onClick={addExercise}
-          className="text-xs text-accent hover:underline"
-        >
-          {t("+ exercise")}
-        </button>
       </div>
+      )}
+
+      {/* Add buttons as one row (1A), then the session's dry table and
+          fitness programme, one card each (2A). A signed-in coach adds a
+          timer, while the session has none of that kind yet. */}
+      {!locked && (
+        <div className="space-y-2">
+          <AddPartRow
+            kinds={[
+              "text",
+              ...(online && !hasTimer(parts, "dry") ? (["dry"] as const) : []),
+              ...(online && canHaveProgram && !hasTimer(parts, "program")
+                ? (["program"] as const)
+                : []),
+            ]}
+            onAdd={(k) => (k === "text" ? addExercise() : setParts([...parts, newPart(k)]))}
+          />
+          {groups.map((g, i) => (
+            <PartCard
+              key={g.id}
+              group={g}
+              issues={[]}
+              onChange={(blocks) =>
+                setParts(ungroupParts(groups.map((y, j) => (j === i ? { ...y, blocks } : y))))
+              }
+              onRemove={() => setParts(ungroupParts(groups.filter((_, j) => j !== i)))}
+            />
+          ))}
+        </div>
       )}
 
       {/* Free-text notes (mode #1), use either or both */}
@@ -487,7 +605,17 @@ export function SessionEditor({
         <button
           onClick={() => {
             const name = prompt(tr("Template name"), session.label.trim());
-            if (name !== null) saveSessionTemplate(name, session);
+            if (name === null) return;
+            // Signed in: straight into the library shared with the phone.
+            // Signed out there is no cloud, so it waits in this browser and
+            // moves over at the next sign-in.
+            if (!online) saveSessionTemplate(name, session);
+            else
+              saveTemplate(templateFromSession(name, session), null).catch((e: unknown) =>
+                alert(
+                  `${tr("Could not save the template.")} ${e instanceof Error ? e.message : ""}`,
+                ),
+              );
           }}
           className="ml-auto text-xs text-textDim hover:text-accent"
           title={t(

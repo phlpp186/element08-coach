@@ -11,7 +11,6 @@ import {
 } from "../lib/e08plan";
 import {
   applyWeekTemplate,
-  materializeSessionTemplate,
   saveWeekTemplate,
   useWeekTemplates,
 } from "../lib/library";
@@ -155,8 +154,9 @@ export function WeekCard({
                 onChange={updateSession}
                 onRemove={removeSession}
                 onMove={(index, dir) => moveSession(day, index, dir)}
-                onInsertTemplate={(tpl) => {
-                  const s = materializeSessionTemplate(tpl, day);
+                onInsertTemplate={(make) => {
+                  const s = make(day);
+                  if (!s) return;
                   onChange({ sessions: [...week.sessions, s] });
                   setEditing(s.id);
                 }}

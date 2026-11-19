@@ -7,6 +7,7 @@ import { CoachOverview } from './views/CoachOverview';
 import { ActivityView } from './views/ActivityView';
 import { PlanBuilderView } from './views/PlanBuilderView';
 import { PlansView } from './views/PlansView';
+import { TemplateEditorView } from './views/TemplateEditorView';
 import { ExercisesView } from './views/ExercisesView';
 import { BillingView } from './views/BillingView';
 import { SessionFileView } from './views/SessionFileView';
@@ -20,6 +21,7 @@ import { AppFooter } from './components/AppFooter';
 import { useT } from './i18n';
 import { useAuth } from './lib/supabase/AuthProvider';
 import { useLibrarySync } from './lib/supabase/planLibrary';
+import { useTemplateMigration } from './lib/supabase/templateLibrary';
 import { useInviteLinking } from './lib/supabase/useInviteLinking';
 import { LanguageSwitcher } from './i18n/LanguageSwitcher';
 
@@ -36,6 +38,7 @@ export function App() {
   const route = useRoute();
   const { session, isCoach } = useAuth();
   useLibrarySync(!!session && isCoach);
+  useTemplateMigration(!!session && isCoach);
   useInviteLinking(!!session && isCoach);
   // The block editor belongs to the Library.
   const top = route.segments[0] === 'block' ? 'plan' : (route.segments[0] ?? 'athletes');
@@ -116,6 +119,12 @@ function Outlet() {
     // /plan/new?athlete=ID → fresh plan (optionally for an athlete)
     // /plan/:planId        → edit a saved plan
     if (!second) return <PlansView />;
+    // /plan/template/new, /plan/template/:id → the session template editor
+    if (second === 'template') {
+      const id = route.segments[2];
+      const templateId = !id || id === 'new' ? null : decodeURIComponent(id);
+      return <TemplateEditorView key={templateId ?? 'new'} templateId={templateId} />;
+    }
     const planId = second === 'new' ? null : second;
     const presetAthleteId = route.query.get('athlete');
     return (

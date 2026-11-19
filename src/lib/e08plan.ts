@@ -50,6 +50,8 @@ export type MesoType = 'base' | 'build' | 'specific' | 'taper' | 'competition' |
 // ── Wire types (subset we emit) ──────────────────────────────────────────────
 
 export interface PlannedExercise {
+  /** See BuilderExercise.run. */
+  run?: 'dry' | 'program';
   id: string;
   description: string;
 }
@@ -183,6 +185,10 @@ export interface BuilderExercise {
   /** Optional structured dose. On export it renders INTO the description text,
    *  so the .e08plan wire format (and the app that validates it) is unchanged. */
   dose?: DosePart[];
+  /** This line is the readable copy of the session's dry table or fitness
+   *  programme. The app draws that as a timer block with a start button in
+   *  the line's place, so the mark travels with the line. */
+  run?: 'dry' | 'program';
 }
 
 export interface BuilderSession {
@@ -197,6 +203,22 @@ export interface BuilderSession {
   sessionType: string;
   /** Coach's target perceived effort for this session, 1-10. 0/undefined = none. */
   coachTarget?: number;
+  /** What a shared template brought that the builder does not edit: the link
+   *  to the template, its dry table (coachRun.program, started in the app's
+   *  breath-hold timer) and its fitness programme (workout, run by the app's
+   *  fitness timer). Written into the session as it is. */
+  app?: {
+    templateRef?: { id: string; name: string };
+    coachRun?: { program?: unknown; route?: string };
+    workout?: { id: string; [k: string]: unknown };
+  };
+}
+
+/** The app finds a session's workout by this id (its PLAN_WORKOUT_PREFIX plus
+ *  the session id), so a copied session's workout must follow its new id. */
+export function sessionExtras(s: Pick<BuilderSession, 'id' | 'app'>): BuilderSession['app'] {
+  if (!s.app) return undefined;
+  return s.app.workout ? { ...s.app, workout: { ...s.app.workout, id: `plan:${s.id}` } } : s.app;
 }
 
 export interface BuilderWeek {
@@ -378,13 +400,18 @@ function toPlanned(s: BuilderSession, dayOfWeek: number, label: string): Planned
     exercises: s.exercises
       .filter((e) => e.description.trim() || doseText(e.dose))
       // tr(): unit words render in the coach's authoring language.
-      .map((e) => ({ id: e.id, description: exerciseText(e, tr) })),
+      .map((e) => ({
+        id: e.id,
+        description: exerciseText(e, tr),
+        ...(e.run ? { run: e.run } : {}),
+      })),
     ...(s.mode ? { mode: s.mode } : {}),
     ...(s.sessionType.trim() ? { sessionType: s.sessionType.trim() } : {}),
     ...(s.coachTarget && s.coachTarget >= 1 && s.coachTarget <= 10
       ? { coachTarget: Math.round(s.coachTarget) }
       : {}),
     sessionNotes: s.body.trim(),
+    ...sessionExtras(s),
   };
 }
 
