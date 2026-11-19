@@ -357,6 +357,13 @@ describe('a template in the plan builder', () => {
       '3 × [Plank 45s, rest 15s · Hollow hold 30s, rest 30s]',
     ]);
     expect(s.coachTarget).toBe(6);
+    // The table's and the programme's lines are marked, so the app draws a
+    // timer block in their place; the mark reaches the saved plan.
+    expect(s.exercises.map((e) => e.run)).toEqual([undefined, undefined, 'dry', 'program']);
+    const marks = buildPlanFile(plan(s)).content.phases[0].weeks[0].plannedSessions[0].exercises.map(
+      (e) => e.run,
+    );
+    expect(marks).toEqual([undefined, undefined, 'dry', 'program']);
     const wire = buildPlanFile(plan(s)).content.phases[0].weeks[0].plannedSessions[0] as unknown as Record<string, unknown>;
     expect(wire.templateRef).toEqual({ id: t.id, name: t.name });
     expect((wire.coachRun as { program: { type: string } }).program.type).toBe('training_program');

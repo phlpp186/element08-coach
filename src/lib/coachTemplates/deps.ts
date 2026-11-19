@@ -75,7 +75,13 @@ export interface PlannedSession {
   id: string;
   dayOfWeek: number;
   label: string;
-  exercises: { id: string; description: string; completedAt?: string | null }[];
+  exercises: {
+    id: string;
+    description: string;
+    completedAt?: string | null;
+    /** The readable copy of the session's dry table or fitness programme. */
+    run?: 'dry' | 'program';
+  }[];
   mode?: 'depth' | 'pool' | 'dry' | 'general';
   sessionType?: string;
   coachTarget?: number | null;

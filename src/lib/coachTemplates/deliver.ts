@@ -357,14 +357,18 @@ export function buildPlannedSessions(
   opts: { imperial: boolean; author: string; t: Tr },
 ): DeliveredSession[] {
   const { imperial, author, t } = opts;
-  const lines = template.blocks.flatMap((b) =>
-    blockLines(
+  const lines = template.blocks.flatMap((b) => {
+    const k = b.exercise.kind;
+    // A table's or programme's line says so (PlannedExercise.run), so the
+    // athlete's views can draw the timer in its place.
+    const run = k === 'dry' || k === 'program' ? { run: k } : {};
+    return blockLines(
       b,
       resolved.find((r) => r.blockId === b.id),
       imperial,
       t,
-    ),
-  );
+    ).map((description) => ({ description, ...run }));
+  });
   const notes = sessionNotesFor(template);
   const program = programFileFor(template, resolved, author);
   const fitnessRoute = FITNESS_WORKOUTS.find((w) =>
@@ -376,7 +380,7 @@ export function buildPlannedSessions(
       id,
       dayOfWeek: weekdayMon0(date),
       label: template.name.trim(),
-      exercises: lines.map((description, i) => ({ id: `${id}-${i + 1}`, description })),
+      exercises: lines.map((line, i) => ({ id: `${id}-${i + 1}`, ...line })),
       mode: MODE_BY_TYPE[template.type],
       templateRef: { id: template.id, name: template.name.trim() },
     };

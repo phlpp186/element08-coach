@@ -108,6 +108,9 @@ export function sessionParts(session: PlannedSession): SessionParts {
 }
 
 const lineOf = (b: TemplateBlock, t: Tr) => blockLine(b, undefined, false, t);
+/** The mark a part's line carries (PlannedExercise.run). */
+const runOf = (b: TemplateBlock): { run?: 'dry' | 'program' } =>
+  b.exercise.kind === 'dry' || b.exercise.kind === 'program' ? { run: b.exercise.kind } : {};
 
 /**
  * The session with its table and programme replaced by `next`, as the timers
@@ -159,12 +162,14 @@ export function withSessionParts(
     const line = lineOf(b, t);
     const was = prev.get(b.id);
     if (!was) {
-      exercises.push({ id: newId('ex'), description: line });
+      exercises.push({ id: newId('ex'), description: line, ...runOf(b) });
       continue;
     }
     const old = lineOf(was, t);
     if (old === line) continue;
-    exercises = exercises.map((e) => (e.description === old ? { ...e, description: line } : e));
+    exercises = exercises.map((e) =>
+      e.description === old ? { ...e, description: line, ...runOf(b) } : e,
+    );
   }
 
   const content = programContent(session);

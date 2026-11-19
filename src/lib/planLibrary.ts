@@ -124,7 +124,7 @@ interface WireSession {
   id?: string;
   dayOfWeek?: number;
   label?: string;
-  exercises?: { id?: string; description?: string }[];
+  exercises?: { id?: string; description?: string; run?: unknown }[];
   mode?: string;
   sessionType?: string;
   coachTarget?: number;
@@ -159,6 +159,7 @@ function toSession(s: WireSession, planMode: PlanMode): BuilderSession {
     exercises: (s.exercises ?? []).map((e) => ({
       id: e.id || uid('ex'),
       description: e.description ?? '',
+      ...(e.run === 'dry' || e.run === 'program' ? { run: e.run } : {}),
     })),
     mode: MODES.includes(s.mode as PlanMode) ? (s.mode as PlanMode) : planMode,
     sessionType: s.sessionType ?? '',

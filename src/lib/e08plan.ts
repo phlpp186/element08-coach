@@ -50,6 +50,8 @@ export type MesoType = 'base' | 'build' | 'specific' | 'taper' | 'competition' |
 // ── Wire types (subset we emit) ──────────────────────────────────────────────
 
 export interface PlannedExercise {
+  /** See BuilderExercise.run. */
+  run?: 'dry' | 'program';
   id: string;
   description: string;
 }
@@ -183,6 +185,10 @@ export interface BuilderExercise {
   /** Optional structured dose. On export it renders INTO the description text,
    *  so the .e08plan wire format (and the app that validates it) is unchanged. */
   dose?: DosePart[];
+  /** This line is the readable copy of the session's dry table or fitness
+   *  programme. The app draws that as a timer block with a start button in
+   *  the line's place, so the mark travels with the line. */
+  run?: 'dry' | 'program';
 }
 
 export interface BuilderSession {
@@ -394,7 +400,11 @@ function toPlanned(s: BuilderSession, dayOfWeek: number, label: string): Planned
     exercises: s.exercises
       .filter((e) => e.description.trim() || doseText(e.dose))
       // tr(): unit words render in the coach's authoring language.
-      .map((e) => ({ id: e.id, description: exerciseText(e, tr) })),
+      .map((e) => ({
+        id: e.id,
+        description: exerciseText(e, tr),
+        ...(e.run ? { run: e.run } : {}),
+      })),
     ...(s.mode ? { mode: s.mode } : {}),
     ...(s.sessionType.trim() ? { sessionType: s.sessionType.trim() } : {}),
     ...(s.coachTarget && s.coachTarget >= 1 && s.coachTarget <= 10

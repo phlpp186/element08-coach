@@ -118,7 +118,11 @@ export function builderSessionFromTemplate(
     dayOfWeek: s.dayOfWeek,
     label: s.label,
     body: s.sessionNotes ?? '',
-    exercises: s.exercises.map((e) => ({ id: uid('ex'), description: e.description })),
+    exercises: s.exercises.map((e) => ({
+      id: uid('ex'),
+      description: e.description,
+      ...(e.run ? { run: e.run } : {}),
+    })),
     mode: s.mode ?? modeOfType(template.type),
     sessionType: s.sessionType ?? '',
     ...(typeof s.coachTarget === 'number' ? { coachTarget: s.coachTarget } : {}),
@@ -136,7 +140,11 @@ function asPlanned(s: BuilderSession): PlannedSession {
     id: s.id,
     dayOfWeek: s.dayOfWeek,
     label: s.label,
-    exercises: s.exercises.map((e) => ({ id: e.id, description: e.description })),
+    exercises: s.exercises.map((e) => ({
+      id: e.id,
+      description: e.description,
+      ...(e.run ? { run: e.run } : {}),
+    })),
     mode: s.mode,
     ...(s.app?.templateRef ? { templateRef: s.app.templateRef } : {}),
     ...(s.app?.coachRun ? { coachRun: s.app.coachRun } : {}),
@@ -168,7 +176,10 @@ export function withBuilderParts(
   return {
     exercises: out.exercises.map((e) => {
       const was = byId.get(e.id);
-      return was ? { ...was, description: e.description } : { id: uid('ex'), description: e.description };
+      const run = e.run ? { run: e.run } : {};
+      return was
+        ? { ...was, description: e.description, ...run }
+        : { id: uid('ex'), description: e.description, ...run };
     }),
     app: Object.keys(app).length ? app : undefined,
   };
