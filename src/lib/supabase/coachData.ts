@@ -5,6 +5,7 @@
  * this in lockstep with the app's dataAccess.ts (same discipline as the existing
  * .e08plan schema-mirroring). Query logic lives here; views consume via hooks.
  */
+import { fetchAll } from './paged';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './client';
 import { syncCoacheePro } from './coacheePro';
@@ -336,13 +337,15 @@ export async function listCoachAssignments(): Promise<CoachAssignment[]> {
   const ids = rows.map((r) => r.id);
   const counts = new Map<string, number>();
   if (ids.length) {
-    const comps = unwrap(
-      await supabase
+    const comps = (await fetchAll((from, to) =>
+      supabase
         .from('completions')
         .select('assignment_id')
         .in('assignment_id', ids)
-        .not('completed_at', 'is', null),
-    ) as unknown as { assignment_id: string }[];
+        .not('completed_at', 'is', null)
+        .order('id')
+        .range(from, to),
+    )) as unknown as { assignment_id: string }[];
     comps.forEach((c) => counts.set(c.assignment_id, (counts.get(c.assignment_id) ?? 0) + 1));
   }
 
@@ -391,13 +394,30 @@ export async function listCompletionSummaries(
 ): Promise<Omit<CompletionRow, 'session' | 'remarks'>[]> {
   if (!assignmentIds.length) return [];
   const cols = 'id, assignment_id, exercise_id, completed_at, rating, updated_at';
-  const q = (select: string) => supabase.from('completions').select(select).in('assignment_id', assignmentIds);
+  // Every athlete's rows in one list: more than one page as soon as a coach
+  // has a few busy athletes, so it is read page by page (paged.ts).
+  const q = (select: string) =>
+    fetchAll<unknown>((from, to) =>
+      supabase
+        .from('completions')
+        .select(select)
+        .in('assignment_id', assignmentIds)
+        .order('id')
+        .range(from, to),
+    );
   // Naming a column the database does not have yet fails the query, so each
   // optional group is dropped in turn: 0026 (not done), then 0018 (ratings).
-  let res = await q(`${cols}, mental, hypoxia, not_done_at`);
-  if (res.error && /not_done_at/i.test(res.error.message)) res = await q(`${cols}, mental, hypoxia`);
-  if (res.error && /mental|hypoxia/i.test(res.error.message)) res = await q(cols);
-  return unwrap(res) as never;
+  try {
+    return (await q(`${cols}, mental, hypoxia, not_done_at`)) as never;
+  } catch (e) {
+    if (!/not_done_at|mental|hypoxia/i.test((e as Error).message)) throw e;
+  }
+  try {
+    return (await q(`${cols}, mental, hypoxia`)) as never;
+  } catch (e) {
+    if (!/mental|hypoxia/i.test((e as Error).message)) throw e;
+  }
+  return (await q(cols)) as never;
 }
 
 /** Several athletes' profiles in one query (the Activity page's PB check). */
