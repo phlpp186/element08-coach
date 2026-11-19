@@ -1,5 +1,5 @@
 /** Dev-only harness: the session template editor over the mockup's template
- *  (stretch, a dry table, core) plus one part from an older phone template,
+ *  (stretch, a two-set dry table, a two-set programme) plus one part from an older phone template,
  *  without a Supabase login. ?preview=templateeditor. Not routed. */
 import { useState } from "react";
 import { TemplateEditor } from "../components/templates/TemplateEditor";
@@ -34,15 +34,36 @@ const seed: CoachTemplate = {
       },
     },
     {
+      id: "b2",
+      name: "",
+      reps: 2,
+      exercise: {
+        kind: "dry",
+        rows: [
+          { type: "Rest", seconds: 180 },
+          { type: "Hold", seconds: 240 },
+        ],
+        holdTarget: null,
+        lungVol: null,
+      },
+    },
+    {
       id: "c",
       name: "",
       reps: 3,
       exercise: {
         kind: "program",
-        items: [
-          { name: "Plank", workSec: 45, restSec: 15 },
-          { name: "Hollow hold", workSec: 30, restSec: 30 },
-        ],
+        items: [{ name: "Push-up", workSec: 30, restSec: 60, reps: 10 }],
+        restAfterSec: 120,
+      },
+    },
+    {
+      id: "c2",
+      name: "",
+      reps: 3,
+      exercise: {
+        kind: "program",
+        items: [{ name: "Plank", workSec: 60, restSec: 60 }],
       },
     },
     {

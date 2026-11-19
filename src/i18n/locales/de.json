@@ -885,7 +885,6 @@
   "Injury": "Verletzung",
   "+ Dry table": "+ Trockentabelle",
   "+ Exercise": "+ Übung",
-  "+ Fitness programme": "+ Fitnessprogramm",
   "+ Row": "+ Zeile",
   "A table needs at least one row with a time.": "Eine Tabelle braucht mindestens eine Zeile mit einer Zeit.",
   "A template holds up to 20 parts.": "Eine Vorlage fasst bis zu 20 Teile.",
@@ -932,8 +931,6 @@
   "none": "keine",
   "open, ended by the athlete": "offen, vom Athleten beendet",
   "relative to PB": "relativ zum PB",
-  "runs in the fitness timer": "läuft im Fitness-Timer",
-  "runs in the timer": "läuft im Timer",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "{n} Vorlage(n) aus diesem Browser werden noch hierher verschoben. Sie bleiben im Browser, bis der Umzug bestätigt ist.",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "„{name}“ hat ein {discipline}-Ziel relativ zu einem PB. Meter für diesen Plan:",
   "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "„{name}“ hat ein {discipline}-Ziel relativ zu einem PB. Sekunden für diesen Plan:",
@@ -943,5 +940,12 @@
   "Move session down": "Einheit nach unten",
   "Every exercise needs a name and a time or reps.": "Jede Übung braucht einen Namen und eine Zeit oder Wiederholungen.",
   "Click to switch between time and reps": "Klicken, um zwischen Zeit und Wiederholungen zu wechseln",
-  "Rest after this part": "Pause nach diesem Teil"
+  "Clock = the athlete gets a start button and a timer.": "Uhr = der Athlet bekommt einen Startknopf und einen Timer.",
+  "one timer · about {min} min": "ein Timer · ca. {min} min",
+  "one timer · {time}": "ein Timer · {time}",
+  "Set {n}": "Satz {n}",
+  "Remove set": "Satz entfernen",
+  "+ Set": "+ Satz",
+  "then rest": "dann Pause",
+  "+ Fitness": "+ Fitness"
 }

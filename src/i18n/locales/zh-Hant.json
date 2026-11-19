@@ -885,7 +885,6 @@
   "Injury": "受傷",
   "+ Dry table": "+ 乾式表格",
   "+ Exercise": "+ 練習",
-  "+ Fitness programme": "+ 體能計畫",
   "+ Row": "+ 一行",
   "A table needs at least one row with a time.": "表格至少需要一行帶時間的內容。",
   "A template holds up to 20 parts.": "一個範本最多 20 個部分。",
@@ -932,8 +931,6 @@
   "none": "無",
   "open, ended by the athlete": "開放式，由運動員結束",
   "relative to PB": "相對 PB",
-  "runs in the fitness timer": "在體能計時器中執行",
-  "runs in the timer": "在計時器中執行",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "儲存在此瀏覽器中的 {n} 個範本正在移到這裡。在確認完成之前，它們會保留在瀏覽器中。",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "「{name}」有一個相對 PB 的 {discipline} 目標。本計畫的公尺數：",
   "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "「{name}」有一個相對 PB 的 {discipline} 目標。本計畫的秒數：",
@@ -943,5 +940,12 @@
   "Move session down": "下移訓練",
   "Every exercise needs a name and a time or reps.": "每個動作都需要名稱，以及時間或次數。",
   "Click to switch between time and reps": "點擊在時間和次數之間切換",
-  "Rest after this part": "此部分之後的休息"
+  "Clock = the athlete gets a start button and a timer.": "時鐘 = 運動員會看到開始按鈕和計時器。",
+  "one timer · about {min} min": "一個計時器 · 約 {min} 分鐘",
+  "one timer · {time}": "一個計時器 · {time}",
+  "Set {n}": "第 {n} 組",
+  "Remove set": "移除此組",
+  "+ Set": "+ 一組",
+  "then rest": "然後休息",
+  "+ Fitness": "+ 體能"
 }

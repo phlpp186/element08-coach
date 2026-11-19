@@ -885,7 +885,6 @@
   "Injury": "Lesión",
   "+ Dry table": "+ Tabla en seco",
   "+ Exercise": "+ Ejercicio",
-  "+ Fitness programme": "+ Programa de fitness",
   "+ Row": "+ Fila",
   "A table needs at least one row with a time.": "Una tabla necesita al menos una fila con tiempo.",
   "A template holds up to 20 parts.": "Una plantilla admite hasta 20 partes.",
@@ -932,8 +931,6 @@
   "none": "ninguno",
   "open, ended by the athlete": "abierta, la termina el atleta",
   "relative to PB": "relativo a la MP",
-  "runs in the fitness timer": "se ejecuta en el temporizador de fitness",
-  "runs in the timer": "se ejecuta en el temporizador",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "{n} plantilla(s) guardadas en este navegador aún se están moviendo aquí. Siguen en el navegador hasta que se confirme el traslado.",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "«{name}» tiene un objetivo de {discipline} relativo a una MP. Metros para este plan:",
   "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "«{name}» tiene un objetivo de {discipline} relativo a una MP. Segundos para este plan:",
@@ -943,5 +940,12 @@
   "Move session down": "Bajar sesión",
   "Every exercise needs a name and a time or reps.": "Cada ejercicio necesita un nombre y un tiempo o repeticiones.",
   "Click to switch between time and reps": "Haz clic para cambiar entre tiempo y repeticiones",
-  "Rest after this part": "Descanso después de esta parte"
+  "Clock = the athlete gets a start button and a timer.": "Reloj = el atleta recibe un botón de inicio y un temporizador.",
+  "one timer · about {min} min": "un temporizador · unos {min} min",
+  "one timer · {time}": "un temporizador · {time}",
+  "Set {n}": "Serie {n}",
+  "Remove set": "Quitar serie",
+  "+ Set": "+ Serie",
+  "then rest": "luego descanso",
+  "+ Fitness": "+ Fitness"
 }

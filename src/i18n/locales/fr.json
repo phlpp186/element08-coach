@@ -885,7 +885,6 @@
   "Injury": "Blessure",
   "+ Dry table": "+ Table à sec",
   "+ Exercise": "+ Exercice",
-  "+ Fitness programme": "+ Programme fitness",
   "+ Row": "+ Ligne",
   "A table needs at least one row with a time.": "Une table a besoin d'au moins une ligne avec un temps.",
   "A template holds up to 20 parts.": "Un modèle contient jusqu'à 20 parties.",
@@ -932,8 +931,6 @@
   "none": "aucun",
   "open, ended by the athlete": "ouverte, terminée par l'athlète",
   "relative to PB": "relatif au record",
-  "runs in the fitness timer": "se lance dans le minuteur fitness",
-  "runs in the timer": "se lance dans le minuteur",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "{n} modèle(s) enregistrés dans ce navigateur sont encore en cours de déplacement ici. Ils restent dans le navigateur jusqu'à confirmation.",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "« {name} » a un objectif {discipline} relatif à un record. Mètres pour ce plan :",
   "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "« {name} » a un objectif {discipline} relatif à un record. Secondes pour ce plan :",
@@ -943,5 +940,12 @@
   "Move session down": "Descendre la séance",
   "Every exercise needs a name and a time or reps.": "Chaque exercice a besoin d'un nom et d'un temps ou de répétitions.",
   "Click to switch between time and reps": "Cliquez pour passer du temps aux répétitions",
-  "Rest after this part": "Repos après cette partie"
+  "Clock = the athlete gets a start button and a timer.": "Horloge = l’athlète reçoit un bouton de départ et un minuteur.",
+  "one timer · about {min} min": "un minuteur · environ {min} min",
+  "one timer · {time}": "un minuteur · {time}",
+  "Set {n}": "Série {n}",
+  "Remove set": "Retirer la série",
+  "+ Set": "+ Série",
+  "then rest": "puis repos",
+  "+ Fitness": "+ Fitness"
 }

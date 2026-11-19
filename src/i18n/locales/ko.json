@@ -885,7 +885,6 @@
   "Injury": "부상",
   "+ Dry table": "+ 드라이 테이블",
   "+ Exercise": "+ 운동",
-  "+ Fitness programme": "+ 피트니스 프로그램",
   "+ Row": "+ 줄",
   "A table needs at least one row with a time.": "테이블에는 시간이 있는 줄이 하나 이상 필요합니다.",
   "A template holds up to 20 parts.": "템플릿에는 파트를 20개까지 넣을 수 있습니다.",
@@ -932,8 +931,6 @@
   "none": "없음",
   "open, ended by the athlete": "열림, 선수가 종료",
   "relative to PB": "PB 기준",
-  "runs in the fitness timer": "피트니스 타이머에서 실행",
-  "runs in the timer": "타이머에서 실행",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "이 브라우저에 저장된 템플릿 {n}개를 여기로 옮기는 중입니다. 이동이 확인될 때까지 브라우저에 남아 있습니다.",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "“{name}”에는 PB 기준 {discipline} 목표가 있습니다. 이 플랜의 미터 값:",
   "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "“{name}”에는 PB 기준 {discipline} 목표가 있습니다. 이 플랜의 초 값:",
@@ -943,5 +940,12 @@
   "Move session down": "세션 아래로 이동",
   "Every exercise needs a name and a time or reps.": "모든 운동에 이름과 시간 또는 횟수가 필요합니다.",
   "Click to switch between time and reps": "클릭하여 시간과 횟수 전환",
-  "Rest after this part": "이 파트 후 휴식"
+  "Clock = the athlete gets a start button and a timer.": "시계 = 선수에게 시작 버튼과 타이머가 표시됩니다.",
+  "one timer · about {min} min": "타이머 하나 · 약 {min}분",
+  "one timer · {time}": "타이머 하나 · {time}",
+  "Set {n}": "세트 {n}",
+  "Remove set": "세트 삭제",
+  "+ Set": "+ 세트",
+  "then rest": "이후 휴식",
+  "+ Fitness": "+ 피트니스"
 }

@@ -885,7 +885,6 @@
   "Injury": "けが",
   "+ Dry table": "+ ドライテーブル",
   "+ Exercise": "+ エクササイズ",
-  "+ Fitness programme": "+ フィットネスプログラム",
   "+ Row": "+ 行",
   "A table needs at least one row with a time.": "テーブルには時間のある行が1つ以上必要です。",
   "A template holds up to 20 parts.": "テンプレートは最大20パートです。",
@@ -932,8 +931,6 @@
   "none": "なし",
   "open, ended by the athlete": "オープン（選手が終了）",
   "relative to PB": "PB基準",
-  "runs in the fitness timer": "フィットネスタイマーで実行",
-  "runs in the timer": "タイマーで実行",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "このブラウザに保存された {n} 件のテンプレートをここへ移動中です。移動が確認されるまでブラウザに残ります。",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "「{name}」にはPB基準の {discipline} 目標があります。このプランでのメートル数：",
   "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "「{name}」にはPB基準の {discipline} 目標があります。このプランでの秒数：",
@@ -943,5 +940,12 @@
   "Move session down": "セッションを下へ",
   "Every exercise needs a name and a time or reps.": "各種目に名前と、時間または回数が必要です。",
   "Click to switch between time and reps": "クリックで時間と回数を切り替え",
-  "Rest after this part": "このパートの後の休憩"
+  "Clock = the athlete gets a start button and a timer.": "時計マーク＝選手に開始ボタンとタイマーが表示されます。",
+  "one timer · about {min} min": "タイマー1つ · 約{min}分",
+  "one timer · {time}": "タイマー1つ · {time}",
+  "Set {n}": "セット {n}",
+  "Remove set": "セットを削除",
+  "+ Set": "+ セット",
+  "then rest": "その後の休憩",
+  "+ Fitness": "+ フィットネス"
 }

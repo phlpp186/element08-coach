@@ -19,6 +19,11 @@ import {
   MAX_ITEMS,
   MAX_REPS,
   PART_KINDS,
+  groupParts,
+  hasTimer,
+  timerSeconds,
+  ungroupParts,
+  type PartGroup,
   TEMPLATE_TYPES,
   isLegacyExercise,
   newPart,
@@ -52,7 +57,7 @@ const PART_LABEL: Record<PartKind, string> = {
 const ADD_LABEL: Record<PartKind, string> = {
   text: '+ Exercise',
   dry: '+ Dry table',
-  program: '+ Fitness programme',
+  program: '+ Fitness',
 };
 const PART_TONE: Record<PartKind, string> = {
   text: 'text-textDim',
@@ -169,14 +174,17 @@ function Rounds({ value, onChange }: { value: number; onChange: (n: number) => v
   );
 }
 
-/** One part's editor. Also used on a session in the plan builder. */
-export function Part({
+/** One block's editor: a whole card for a text or older part, or (`bare`)
+ *  only the rounds and rows of one set inside a timer card. */
+function Part({
   block,
   issues,
   onChange,
   onRemove,
   onUp,
   onDown,
+  bare = false,
+  restAfter = false,
 }: {
   block: TemplateBlock;
   issues: TemplateIssueCode[];
@@ -184,6 +192,9 @@ export function Part({
   onRemove: () => void;
   onUp?: () => void;
   onDown?: () => void;
+  bare?: boolean;
+  /** A programme set that another set follows: offer the rest between them. */
+  restAfter?: boolean;
 }) {
   const t = useT();
   const ex = block.exercise;
@@ -191,12 +202,6 @@ export function Part({
   const legacy = isLegacyExercise(ex);
   const kind = ex.kind === 'dry' || ex.kind === 'program' ? ex.kind : 'text';
   const title = legacy ? block.name.trim() || t('Older part') : t(PART_LABEL[kind]);
-  const runs =
-    ex.kind === 'dry'
-      ? t('runs in the timer')
-      : ex.kind === 'program'
-        ? t('runs in the fitness timer')
-        : '';
   const iconBtn = 'px-1 text-textDim hover:text-text disabled:opacity-25';
   const x = (onClick: () => void, label: string) => (
     <button onClick={onClick} className="px-1 text-textDim hover:text-red" aria-label={label}>
@@ -206,15 +211,19 @@ export function Part({
 
   return (
     <div
-      className={`rounded-xl border bg-panel p-3 ${issues.length ? 'border-red' : 'border-border'}`}
+      className={
+        bare
+          ? ''
+          : `rounded-xl border bg-panel p-3 ${issues.length ? 'border-red' : 'border-border'}`
+      }
     >
-      <div className="mb-2 flex items-center gap-2">
+      <div className={bare ? 'hidden' : 'mb-2 flex items-center gap-2'}>
         <span
           className={`text-[11px] font-extrabold uppercase tracking-wider ${legacy ? 'text-textDim' : PART_TONE[kind]}`}
         >
           {title}
         </span>
-        <span className="ml-auto text-[11px] text-textDim">{runs}</span>
+        <span className="ml-auto" />
         <button onClick={onUp} disabled={!onUp} className={iconBtn} aria-label={t('Move up')}>
           ↑
         </button>
@@ -361,20 +370,20 @@ export function Part({
               {t('+ Row')}
             </button>
           )}
-          {/* The break before whatever part comes next: the rests above only
-              run between exercises and between rounds. */}
-          <label className="flex items-center gap-2 pt-1 text-xs text-textDim">
-            <span>{t('Rest after this part')}</span>
-            <TimeField
-              value={ex.restAfterSec ?? 0}
-              onChange={(sec) => {
-                const { restAfterSec: _old, ...rest } = ex;
-                void _old;
-                setEx(sec > 0 ? { ...rest, restAfterSec: sec } : rest);
-              }}
-              label={t('Rest after this part')}
-            />
-          </label>
+          {restAfter && (
+            <label className="flex items-center gap-2 pt-1 text-xs text-textDim">
+              <span>{t('then rest')}</span>
+              <TimeField
+                value={ex.restAfterSec ?? 0}
+                onChange={(sec) => {
+                  const { restAfterSec: _old, ...rest } = ex;
+                  void _old;
+                  setEx(sec > 0 ? { ...rest, restAfterSec: sec } : rest);
+                }}
+                label={t('then rest')}
+              />
+            </label>
+          )}
         </div>
       )}
 
@@ -390,6 +399,153 @@ export function Part({
         </>
       )}
 
+      {issues.map((c) => (
+        <p key={c} className="mt-1.5 text-xs text-red">
+          {t(ISSUE[c])}
+        </p>
+      ))}
+    </div>
+  );
+}
+
+const CLOCK = (
+  <svg className="h-3 w-3 flex-none" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
+    <circle cx="6" cy="6" r="4.8" />
+    <path d="M6 3.4V6l1.8 1.2" />
+  </svg>
+);
+
+/** The add buttons, option 1A of the app repo's
+ *  docs/mockups/session-parts-options.html (Philipp, 2026-11-19): equal pills
+ *  in one row, a clock on the two that give the athlete a timer, and one line
+ *  saying what the clock means. A timer that exists already is left out: its
+ *  card has "+ Set". */
+export function AddPartRow({
+  kinds,
+  onAdd,
+  textLabel = '+ Exercise',
+}: {
+  kinds: PartKind[];
+  onAdd: (k: PartKind) => void;
+  textLabel?: string;
+}) {
+  const t = useT();
+  return (
+    <div className="space-y-1.5">
+      <div className="flex flex-wrap gap-2">
+        {kinds.map((k) => (
+          <button
+            key={k}
+            onClick={() => onAdd(k)}
+            className={`inline-flex items-center gap-1.5 rounded-full border border-dashed px-3 py-1.5 text-[13px] font-semibold ${ADD_TONE[k]}`}
+          >
+            {k !== 'text' && CLOCK}
+            {t(k === 'text' ? textLabel : ADD_LABEL[k])}
+          </button>
+        ))}
+      </div>
+      {kinds.some((k) => k !== 'text') && (
+        <p className="text-xs text-textDim">
+          {t('Clock = the athlete gets a start button and a timer.')}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * One card of the editor, option 2A of the app repo's
+ * docs/mockups/session-parts-2a-vs-2b.html (Philipp, 2026-11-19): all dry
+ * tables of a session run as one timer, and so do all fitness programmes, so
+ * each is ONE card holding its blocks as sets (model.ts groupParts). Also
+ * used on a session in the plan builder.
+ */
+export function PartCard({
+  group,
+  issues,
+  onChange,
+  onRemove,
+  onUp,
+  onDown,
+}: {
+  group: PartGroup;
+  issues: TemplateIssueCode[];
+  /** The card's blocks after an edit; a timer card may gain or lose sets. */
+  onChange: (blocks: TemplateBlock[]) => void;
+  onRemove: () => void;
+  onUp?: () => void;
+  onDown?: () => void;
+}) {
+  const t = useT();
+  const { kind, blocks } = group;
+  if (kind !== 'dry' && kind !== 'program') {
+    return (
+      <Part
+        block={blocks[0]}
+        issues={issues}
+        onChange={(b) => onChange([b])}
+        onRemove={onRemove}
+        onUp={onUp}
+        onDown={onDown}
+      />
+    );
+  }
+  const total = timerSeconds(blocks);
+  const iconBtn = 'px-1 text-textDim hover:text-text disabled:opacity-25';
+  const tone = kind === 'dry' ? 'border-recover/60' : 'border-amber/60';
+  return (
+    <div className={`rounded-xl border bg-panel p-3 ${issues.length ? 'border-red' : tone}`}>
+      <div className="mb-1 flex items-center gap-2">
+        <span className={`text-[11px] font-extrabold uppercase tracking-wider ${PART_TONE[kind]}`}>
+          {t(PART_LABEL[kind])}
+        </span>
+        <span className="ml-auto text-[11px] text-textDim">
+          {total.approx
+            ? fill(t('one timer · about {min} min'), { min: Math.max(1, Math.round(total.sec / 60)) })
+            : fill(t('one timer · {time}'), { time: clock(total.sec) })}
+        </span>
+        <button onClick={onUp} disabled={!onUp} className={iconBtn} aria-label={t('Move up')}>
+          ↑
+        </button>
+        <button onClick={onDown} disabled={!onDown} className={iconBtn} aria-label={t('Move down')}>
+          ↓
+        </button>
+        <button onClick={onRemove} className="px-1 text-textDim hover:text-red" aria-label={t('Remove part')}>
+          ✕
+        </button>
+      </div>
+      {blocks.map((b, i) => (
+        <div key={b.id} className="pt-2">
+          <div className="mb-1 flex items-center">
+            <span className="text-[11px] font-extrabold text-textDim">
+              {fill(t('Set {n}'), { n: i + 1 })}
+            </span>
+            {blocks.length > 1 && (
+              <button
+                onClick={() => onChange(blocks.filter((_, j) => j !== i))}
+                className="ml-auto px-1 text-textDim hover:text-red"
+                aria-label={t('Remove set')}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          <Part
+            bare
+            restAfter={kind === 'program' && i < blocks.length - 1}
+            block={b}
+            issues={[]}
+            onChange={(nb) => onChange(blocks.map((y, j) => (j === i ? nb : y)))}
+            onRemove={() => onChange(blocks.filter((_, j) => j !== i))}
+          />
+        </div>
+      ))}
+      <button
+        onClick={() => onChange([...blocks, newPart(kind)])}
+        className={`mt-3 rounded-full border border-dashed px-3 py-1 text-xs font-semibold ${ADD_TONE[kind]}`}
+      >
+        {t('+ Set')}
+      </button>
       {issues.map((c) => (
         <p key={c} className="mt-1.5 text-xs text-red">
           {t(ISSUE[c])}
@@ -434,10 +590,13 @@ export function TemplateEditor({
     }
     if (tpl.blocks.length < MAX_BLOCKS) setBlocks([...tpl.blocks, newPart(kind)]);
   };
+  const groups = groupParts(tpl.blocks);
+  const setGroup = (i: number, blocks: TemplateBlock[]) =>
+    setBlocks(ungroupParts(groups.map((g, j) => (j === i ? { ...g, blocks } : g))));
   const move = (i: number, dir: -1 | 1) => {
-    const next = [...tpl.blocks];
+    const next = [...groups];
     [next[i], next[i + dir]] = [next[i + dir], next[i]];
-    setBlocks(next);
+    setBlocks(ungroupParts(next));
   };
 
   const save = async () => {
@@ -529,31 +688,28 @@ export function TemplateEditor({
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2">
-        {tpl.blocks.map((b, i) => (
-          <Part
-            key={b.id}
-            block={b}
-            issues={showIssues ? issues.filter((y) => y.blockId === b.id).map((y) => y.code) : []}
-            onChange={(nb) => setBlocks(tpl.blocks.map((y, j) => (j === i ? nb : y)))}
-            onRemove={() => setBlocks(tpl.blocks.filter((_, j) => j !== i))}
+      <div className="grid grid-cols-1 items-start gap-2.5 md:grid-cols-2">
+        {groups.map((g, i) => (
+          <PartCard
+            key={g.id}
+            group={g}
+            issues={
+              showIssues
+                ? issues.filter((y) => g.blocks.some((b) => b.id === y.blockId)).map((y) => y.code)
+                : []
+            }
+            onChange={(blocks) => setGroup(i, blocks)}
+            onRemove={() => setGroup(i, [])}
             onUp={i > 0 ? () => move(i, -1) : undefined}
-            onDown={i < tpl.blocks.length - 1 ? () => move(i, 1) : undefined}
+            onDown={i < groups.length - 1 ? () => move(i, 1) : undefined}
           />
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {PART_KINDS.map((k) => (
-          <button
-            key={k}
-            onClick={() => addPart(k)}
-            className={`rounded-full border border-dashed px-3 py-1.5 text-[13px] font-semibold ${ADD_TONE[k]}`}
-          >
-            {t(ADD_LABEL[k])}
-          </button>
-        ))}
-      </div>
+      <AddPartRow
+        kinds={PART_KINDS.filter((k) => k === 'text' || !hasTimer(tpl.blocks, k))}
+        onAdd={addPart}
+      />
 
       {showIssues &&
         general.map((i) => (

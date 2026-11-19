@@ -885,7 +885,6 @@
   "Injury": "บาดเจ็บ",
   "+ Dry table": "+ ตารางฝึกบนบก",
   "+ Exercise": "+ แบบฝึก",
-  "+ Fitness programme": "+ โปรแกรมฟิตเนส",
   "+ Row": "+ แถว",
   "A table needs at least one row with a time.": "ตารางต้องมีอย่างน้อยหนึ่งแถวที่มีเวลา",
   "A template holds up to 20 parts.": "เทมเพลตมีได้สูงสุด 20 ส่วน",
@@ -932,8 +931,6 @@
   "none": "ไม่มี",
   "open, ended by the athlete": "เปิด นักกีฬาเป็นผู้จบ",
   "relative to PB": "เทียบกับ PB",
-  "runs in the fitness timer": "รันในตัวจับเวลาฟิตเนส",
-  "runs in the timer": "รันในตัวจับเวลา",
   "{n} template(s) saved in this browser are still being moved here. They stay in the browser until the move is confirmed.": "เทมเพลต {n} รายการที่บันทึกในเบราว์เซอร์นี้กำลังถูกย้ายมาที่นี่ จะยังอยู่ในเบราว์เซอร์จนกว่าจะยืนยันการย้าย",
   "“{name}” has a {discipline} target relative to a PB. Metres for this plan:": "“{name}” มีเป้าหมาย {discipline} ที่เทียบกับ PB ระบุเมตรสำหรับแผนนี้:",
   "“{name}” has a {discipline} target relative to a PB. Seconds for this plan:": "“{name}” มีเป้าหมาย {discipline} ที่เทียบกับ PB ระบุวินาทีสำหรับแผนนี้:",
@@ -943,5 +940,12 @@
   "Move session down": "เลื่อนเซสชันลง",
   "Every exercise needs a name and a time or reps.": "ทุกท่าต้องมีชื่อ และเวลาหรือจำนวนครั้ง",
   "Click to switch between time and reps": "คลิกเพื่อสลับระหว่างเวลาและจำนวนครั้ง",
-  "Rest after this part": "พักหลังส่วนนี้"
+  "Clock = the athlete gets a start button and a timer.": "นาฬิกา = นักกีฬาจะได้ปุ่มเริ่มและตัวจับเวลา",
+  "one timer · about {min} min": "ตัวจับเวลาเดียว · ประมาณ {min} นาที",
+  "one timer · {time}": "ตัวจับเวลาเดียว · {time}",
+  "Set {n}": "เซ็ต {n}",
+  "Remove set": "ลบเซ็ต",
+  "+ Set": "+ เซ็ต",
+  "then rest": "จากนั้นพัก",
+  "+ Fitness": "+ ฟิตเนส"
 }

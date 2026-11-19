@@ -597,3 +597,86 @@ export function sortTemplates(list: CoachTemplate[]): CoachTemplate[] {
     (a, b) => b.useCount - a.useCount || b.updatedAt.localeCompare(a.updatedAt),
   );
 }
+
+// ─── Parts as the editors show them ─────────────────────────────────────────
+
+/**
+ * The parts as cards (Philipp picked this layout, 2026-11-19, mockup
+ * docs/mockups/session-parts-2a-vs-2b.html, option 2A). All dry tables of a
+ * session run as ONE timer, one after the other, and so do all fitness
+ * programmes, wherever they sit in `blocks`. So the editors show ONE dry
+ * table card and ONE programme card, each holding its blocks as sets, and
+ * every other block as its own card. A timer card sits where its first block
+ * is. Nothing about the stored format changes.
+ */
+export interface PartGroup {
+  kind: 'text' | 'dry' | 'program' | 'legacy';
+  /** 'dry' and 'program' for the two timer cards, else the block's id. */
+  id: string;
+  blocks: TemplateBlock[];
+}
+
+export function groupParts(blocks: TemplateBlock[]): PartGroup[] {
+  const out: PartGroup[] = [];
+  const timers: Partial<Record<'dry' | 'program', PartGroup>> = {};
+  for (const b of blocks) {
+    const k = b.exercise.kind;
+    if (k === 'dry' || k === 'program') {
+      const have = timers[k];
+      if (have) have.blocks.push(b);
+      else {
+        const g: PartGroup = { kind: k, id: k, blocks: [b] };
+        timers[k] = g;
+        out.push(g);
+      }
+    } else {
+      out.push({ kind: k === 'text' ? 'text' : 'legacy', id: b.id, blocks: [b] });
+    }
+  }
+  return out;
+}
+
+/** The blocks of the cards, in card order: a timer card's sets end up next
+ *  to each other. A timer card with no sets left is gone. */
+export function ungroupParts(groups: PartGroup[]): TemplateBlock[] {
+  return groups.flatMap((g) => g.blocks);
+}
+
+/** True when the parts hold a dry table (or a programme) already: the editors
+ *  then offer "+ Set" inside its card instead of a second card. */
+export function hasTimer(blocks: TemplateBlock[], kind: 'dry' | 'program'): boolean {
+  return blocks.some((b) => b.exercise.kind === kind);
+}
+
+/** Seconds a set of repetitions is counted as when estimating a programme
+ *  (the fitness player's own figure, lib/fitness/model estimateSec). */
+const REPS_SET_SEC = 40;
+
+/** How long a timer card runs, for its header. A dry table is exact unless a
+ *  row is open-ended or progressive; a programme with exercises for reps is
+ *  an estimate. */
+export function timerSeconds(blocks: TemplateBlock[]): { sec: number; approx: boolean } {
+  let sec = 0;
+  let approx = false;
+  blocks.forEach((b, bi) => {
+    const ex = b.exercise;
+    const rounds = Math.max(1, b.reps);
+    if (ex.kind === 'dry') {
+      for (const r of ex.rows) {
+        if (r.endMode === 'signal' || r.endMode === 'signalPlus' || r.stepSec) approx = true;
+        sec += rounds * Math.max(0, r.seconds);
+      }
+    } else if (ex.kind === 'program') {
+      const round = ex.items.reduce((n, it, i) => {
+        if (it.reps != null) approx = true;
+        const work = it.reps != null ? REPS_SET_SEC : it.workSec;
+        // The last exercise's rest runs between rounds, not after the last.
+        return n + work + (i < ex.items.length - 1 ? it.restSec : 0);
+      }, 0);
+      const last = ex.items[ex.items.length - 1];
+      sec += rounds * round + (rounds - 1) * (last?.restSec ?? 0);
+      if (bi < blocks.length - 1) sec += ex.restAfterSec ?? 0;
+    }
+  });
+  return { sec, approx };
+}

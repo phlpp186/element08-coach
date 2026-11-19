@@ -26,8 +26,14 @@ import {
   templateFromSession,
   withBuilderParts,
 } from "../lib/coachTemplates/portal";
-import { newPart, type TemplateBlock } from "../lib/coachTemplates/model";
-import { Part } from "./templates/TemplateEditor";
+import {
+  groupParts,
+  hasTimer,
+  newPart,
+  ungroupParts,
+  type TemplateBlock,
+} from "../lib/coachTemplates/model";
+import { AddPartRow, PartCard } from "./templates/TemplateEditor";
 import { missingTargets, resolveTemplate } from "../lib/coachTemplates/resolve";
 import { templateTr } from "../lib/coachTemplates/tr";
 import type { CoachTemplate } from "../lib/coachTemplates/model";
@@ -291,6 +297,7 @@ export function SessionEditor({
   // app runs them, so a plan file for a stranger has no use for them); one
   // that is already there always shows.
   const { parts, canHaveProgram } = builderParts(session);
+  const groups = groupParts(parts);
   const setParts = (next: TemplateBlock[]) =>
     onChange(
       withBuilderParts(session, next, {
@@ -493,44 +500,35 @@ export function SessionEditor({
             ) : null}
           </div>
         ))}
-        <button
-          onClick={addExercise}
-          className="text-xs text-accent hover:underline"
-        >
-          {t("+ exercise")}
-        </button>
       </div>
       )}
 
-      {!locked && (online || parts.length > 0) && (
+      {/* Add buttons as one row (1A), then the session's dry table and
+          fitness programme, one card each (2A). A signed-in coach adds a
+          timer, while the session has none of that kind yet. */}
+      {!locked && (
         <div className="space-y-2">
-          {parts.map((b, i) => (
-            <Part
-              key={b.id}
-              block={b}
+          <AddPartRow
+            kinds={[
+              "text",
+              ...(online && !hasTimer(parts, "dry") ? (["dry"] as const) : []),
+              ...(online && canHaveProgram && !hasTimer(parts, "program")
+                ? (["program"] as const)
+                : []),
+            ]}
+            onAdd={(k) => (k === "text" ? addExercise() : setParts([...parts, newPart(k)]))}
+          />
+          {groups.map((g, i) => (
+            <PartCard
+              key={g.id}
+              group={g}
               issues={[]}
-              onChange={(nb) => setParts(parts.map((y, j) => (j === i ? nb : y)))}
-              onRemove={() => setParts(parts.filter((_, j) => j !== i))}
+              onChange={(blocks) =>
+                setParts(ungroupParts(groups.map((y, j) => (j === i ? { ...y, blocks } : y))))
+              }
+              onRemove={() => setParts(ungroupParts(groups.filter((_, j) => j !== i)))}
             />
           ))}
-          {online && (
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setParts([...parts, newPart("dry")])}
-                className="rounded-full border border-dashed border-recover px-3 py-1 text-xs font-semibold text-recover"
-              >
-                {t("+ Dry table")}
-              </button>
-              {canHaveProgram && (
-                <button
-                  onClick={() => setParts([...parts, newPart("program")])}
-                  className="rounded-full border border-dashed border-amber px-3 py-1 text-xs font-semibold text-amber"
-                >
-                  {t("+ Fitness programme")}
-                </button>
-              )}
-            </div>
-          )}
         </div>
       )}
 
