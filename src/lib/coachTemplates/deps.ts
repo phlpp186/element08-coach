@@ -8,10 +8,13 @@
  * parts of the app's models (element08-app/src/lib/models/types.ts) these
  * files touch: keep the values equal to the app's.
  */
-// (sessionParts.ts is the sixth shared file.)
+// (sessionParts.ts, week.ts and weekDrafts.ts are shared too.)
 export type { AthletePB } from '../supabase/athleteProfileCloud';
 
 export type LungVolume = 'FL' | 'FRC' | 'RV';
+/** The first day of the week: 0 Sunday, 1 Monday. */
+export type WeekStart = 0 | 1;
+export type MesoType = 'base' | 'build' | 'specific' | 'taper' | 'competition' | 'transition';
 export type Discipline = 'CWT' | 'CWTB' | 'CNF' | 'FIM' | 'VWT' | 'NLT' | 'MIX';
 export type SessionTag = 'co2_table' | 'o2_table' | 'comfy' | 'pb_attempt' | 'recovery';
 export type TrainingMode = 'static' | 'breathwork' | 'device';
@@ -108,7 +111,7 @@ export interface Plan {
   kind: 'season' | 'training';
   competitionDate: string | null;
   startDate: string | null;
-  phases: { id: string; name: string; type: string; weeks: MicroCycle[] }[];
+  phases: { id: string; name: string; type: MesoType; weeks: MicroCycle[] }[];
   createdAt: string;
   active: boolean;
   schemaVersion?: number;

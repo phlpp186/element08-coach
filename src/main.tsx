@@ -61,6 +61,14 @@ if (previewName === "cycle") {
       );
     },
   );
+} else if (previewName === "weekplanner") {
+  void import("./dev/WeekPlannerPreview").then(({ WeekPlannerPreview }) => {
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <WeekPlannerPreview />
+      </StrictMode>,
+    );
+  });
 } else if (previewName === "measure") {
   void import("./dev/MeasurePreview").then(({ MeasurePreview }) => {
     createRoot(document.getElementById("root")!).render(

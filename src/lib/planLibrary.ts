@@ -120,7 +120,7 @@ export function tombstone(definition: unknown, at: string): Obj {
 
 // ── App Plan → builder model ─────────────────────────────────────────────────
 
-interface WireSession {
+export interface WireSession {
   id?: string;
   dayOfWeek?: number;
   label?: string;
@@ -150,7 +150,9 @@ interface WirePhase {
 const MODES: PlanMode[] = ['depth', 'pool', 'dry', 'general'];
 const MESO: MesoType[] = ['base', 'build', 'specific', 'taper', 'competition', 'transition'];
 
-function toSession(s: WireSession, planMode: PlanMode): BuilderSession {
+/** A session as the app stores it, as the builder's session. Also the week
+ *  builder's way into the session editor. */
+export function toSession(s: WireSession, planMode: PlanMode): BuilderSession {
   return {
     id: s.id || uid('sess'),
     dayOfWeek: typeof s.dayOfWeek === 'number' ? Math.min(6, Math.max(0, s.dayOfWeek)) : 0,

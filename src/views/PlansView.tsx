@@ -19,6 +19,7 @@ import { getCloudPlanLink } from '../lib/supabase/cloudPlanLinks';
 import { useCoachAssignments } from '../lib/supabase/useCoachAssignments';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import { deleteFromLibrary, saveToLibrary, useLibrary } from '../lib/supabase/planLibrary';
+import { parseTemplateRows } from '../lib/supabase/templateLibrary';
 import { matchesLibrary, planNow, weekStrip, type AssignFilter, type KindFilter } from '../lib/libraryInsights';
 import { WeekStrip } from '../components/library/WeekStrip';
 import { PlanDetail } from '../components/library/PlanDetail';
@@ -195,7 +196,7 @@ export function PlansView() {
 
       <div className="flex gap-2">
         {tabBtn('plans', `${t('Plans')} · ${plans.length}`)}
-        {online && tabBtn('templates', `${t('Templates')} · ${lib.templates.length}`)}
+        {online && tabBtn('templates', `${t('Templates')} · ${parseTemplateRows(lib.templates).length}`)}
       </div>
 
       {tab === 'templates' ? (

@@ -392,7 +392,7 @@ export function exerciseText(e: BuilderExercise, t: (s: string) => string = (s) 
 }
 
 /** One BuilderSession → one wire PlannedSession at the given dayOfWeek + label. */
-function toPlanned(s: BuilderSession, dayOfWeek: number, label: string): PlannedSession {
+export function toPlanned(s: BuilderSession, dayOfWeek: number, label: string): PlannedSession {
   return {
     id: s.id,
     dayOfWeek,

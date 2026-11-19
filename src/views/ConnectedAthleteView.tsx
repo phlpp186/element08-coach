@@ -28,6 +28,7 @@ import {
 } from '../lib/supabase/athleteProfileCloud';
 import { CoachNotesEditor } from '../components/CoachNotesEditor';
 import { CycleCard } from '../components/CycleCard';
+import { WeekPlanner } from '../components/week/WeekPlanner';
 import { useAthleteCycle } from '../lib/supabase/useAthleteCycle';
 import { IntakeEditor } from '../components/IntakeEditor';
 import { linkAthlete, updateAthlete, updateCoachNote, useAthletes, useCoachNote, useLinkedAthlete } from '../lib/store';
@@ -215,6 +216,8 @@ export function ConnectedAthleteView({ studentId }: { studentId: string }) {
           {cycle.shared && (
             <CycleCard name={name} days={cycle.days} sessions={cycle.sessions} today={cycle.today} />
           )}
+
+          <WeekPlanner studentId={studentId} name={name} pbs={pbs} />
 
           <section className="space-y-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
