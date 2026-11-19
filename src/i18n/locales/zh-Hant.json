@@ -1009,5 +1009,11 @@
   "changed": "已修改",
   "reported": "已回報",
   "sent": "已傳送",
-  "{n} new": "{n} 個新增"
+  "{n} new": "{n} 個新增",
+  "Name the copy": "為副本命名",
+  "A copy needs a name of its own, so you can tell the two plans apart.": "副本需要有自己的名稱，以便區分這兩個計畫。",
+  "Save copy": "儲存副本",
+  "Name this version": "為此版本命名",
+  "Your athletes keep “{name}” as it is. This version is saved as a plan of its own, so it needs a different name.": "你的運動員將保留原樣的「{name}」。此版本會另存為一個獨立的計畫，因此需要不同的名稱。",
+  "Another plan has this name already. Change it to continue.": "已有其他計畫使用此名稱。請修改後繼續。"
 }

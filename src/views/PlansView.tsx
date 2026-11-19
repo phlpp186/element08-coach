@@ -23,6 +23,7 @@ import { parseTemplateRows } from '../lib/supabase/templateLibrary';
 import { matchesLibrary, planNow, weekStrip, type AssignFilter, type KindFilter } from '../lib/libraryInsights';
 import { WeekStrip } from '../components/library/WeekStrip';
 import { PlanDetail } from '../components/library/PlanDetail';
+import { NameDialog } from '../components/NameDialog';
 import { isAppPlan, stampOf, type LibraryDevice } from '../lib/planLibrary';
 import { navigate, useRoute } from '../hooks/useHashRoute';
 import { TemplatesLibrary } from '../components/templates/TemplatesLibrary';
@@ -79,6 +80,7 @@ export function PlansView() {
   const [assign, setAssign] = useState<AssignFilter>('all');
   const [search, setSearch] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
+  const [copyOf, setCopyOf] = useState<string | null>(null);
   const online = !!session && isCoach;
   const today = todayIso();
 
@@ -119,15 +121,17 @@ export function PlansView() {
     if (openId === id) setOpenId(null);
   };
 
-  /** A copy with fresh ids, opened in the panel and sent to the library. */
-  const duplicate = (id: string) => {
+  /** A copy with fresh ids under the name the coach gave it, opened in the
+   *  panel and sent to the library. */
+  const duplicate = (id: string, name: string) => {
     const sp = plans.find((p) => p.id === id);
     if (!sp) return;
-    const name = fill(t('{name} (copy)'), { name: sp.plan.name?.trim() || t('Untitled plan') });
     const rec = upsertPlan({ id: newPlanId(), athleteId: null, plan: copyPlan(sp.plan, name), updatedAt: '' });
+    setCopyOf(null);
     setOpenId(rec.id);
     if (online) void saveToLibrary(rec.id, rec.plan);
   };
+  const copySource = copyOf ? plans.find((p) => p.id === copyOf) ?? null : null;
 
   const rows = rowsFor.map((r) => {
     const assigned = r.cloudId ? (namesByCloudPlanId.get(r.cloudId) ?? []) : [];
@@ -344,7 +348,7 @@ export function PlansView() {
               blockId={open.appPlan && open.cloudId ? open.cloudId : null}
               online={online}
               onClose={() => setOpenId(null)}
-              onDuplicate={() => duplicate(open.sp.id)}
+              onDuplicate={() => setCopyOf(open.sp.id)}
               onDownload={() => downloadPlanFile(open.sp.plan)}
               onDelete={() => remove(open.sp.id, open.assigned.length)}
               ensurePublished={async () => {
@@ -357,6 +361,17 @@ export function PlansView() {
             />
           )}
         </div>
+      )}
+      {copySource && (
+        <NameDialog
+          title={t('Name the copy')}
+          hint={t('A copy needs a name of its own, so you can tell the two plans apart.')}
+          initial={copySource.plan.name?.trim() || t('Untitled plan')}
+          taken={plans.map((p) => p.plan.name ?? '')}
+          confirmLabel={t('Save copy')}
+          onConfirm={(name) => duplicate(copySource.id, name)}
+          onCancel={() => setCopyOf(null)}
+        />
       )}
       <p className="text-sm text-textDim">
         {t('Plans made here or in the app show up in both. Assigned plans show who has them.')}

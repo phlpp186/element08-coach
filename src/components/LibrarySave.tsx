@@ -4,6 +4,8 @@
  *
  * - The plan is assigned: which athletes get this version? Unticked ones are
  *   moved onto a frozen copy of the version they have ("… (previous version)").
+ *   "Save to library only" asks for a new name first: the athletes keep the
+ *   plan under its old name, the new version is saved under the new one.
  * - The plan changed on another device since this browser last saw it: use
  *   that version, keep mine, or save mine as a copy.
  */
@@ -18,8 +20,11 @@ import {
   resolveConflict,
   saveToLibrary,
   type ConflictChoice,
+  useLibrary,
   type LibraryRow,
 } from '../lib/supabase/planLibrary';
+import { getSavedPlans, upsertPlan } from '../lib/store';
+import { NameDialog } from './NameDialog';
 import type { CoachAssignment } from '../lib/supabase/coachData';
 import { editedAgo } from '../views/PlansView';
 import { fill, useT } from '../i18n';
@@ -68,6 +73,9 @@ export function useLibrarySave() {
     null,
   );
   const [busy, setBusy] = useState(false);
+  // "Save to library only" was picked: the new version needs its own name.
+  const [naming, setNaming] = useState(false);
+  const lib = useLibrary();
   // What was last sent, so a repeated Save without changes asks nothing.
   const sentRef = useRef<string | null>(null);
 
@@ -106,29 +114,46 @@ export function useLibrarySave() {
     });
   }
 
-  async function answerUpdate(everyone: boolean) {
+  /** `libraryOnlyName`: "Save to library only". Every athlete stays on the
+   *  version they have, which keeps the plan's old name, and this version is
+   *  saved under the new one. */
+  async function answerUpdate(libraryOnlyName?: string) {
     if (!ask) return;
     setBusy(true);
     let outcome: PublishOutcome = 'offline';
     try {
-      // "Library only" leaves every athlete on the version they have.
-      const unchanged = ask.athletes.filter((a) => !everyone || !ticked[a.id]).map((a) => a.id);
+      const only = libraryOnlyName !== undefined;
+      const unchanged = ask.athletes.filter((a) => only || !ticked[a.id]).map((a) => a.id);
+      let plan = ask.plan;
+      if (only) {
+        plan = { ...ask.plan, name: libraryOnlyName };
+        // The builder shows the stored plan again once it is saved, so the
+        // new name has to be in the store before the save goes out.
+        const rec = getSavedPlans().find((p) => p.id === ask.id);
+        if (rec) upsertPlan({ ...rec, plan, updatedAt: '' });
+      }
       if (unchanged.length) {
         await keepPreviousFor(
           ask.cloudId,
           unchanged,
-          fill(t('{name} (previous version)'), { name: ask.plan.name.trim() }),
+          only ? oldName(ask) : fill(t('{name} (previous version)'), { name: ask.plan.name.trim() }),
         );
         refresh();
       }
-      outcome = await send(ask.id, ask.plan);
+      outcome = await send(ask.id, plan);
     } catch {
       setStatus('offline');
     } finally {
       setBusy(false);
+      setNaming(false);
       ask.done(outcome);
       setAsk(null);
     }
+  }
+
+  /** The name the plan has in the library now, before this save. */
+  function oldName(a: { cloudId: string; plan: BuilderPlan }): string {
+    return lib.rows[a.cloudId]?.title?.trim() || a.plan.name.trim();
   }
 
   async function answerConflict(choice: ConflictChoice) {
@@ -153,7 +178,22 @@ export function useLibrarySave() {
 
   const dialogs = (
     <>
-      {ask && (
+      {ask && naming && (
+        <NameDialog
+          title={t('Name this version')}
+          hint={fill(
+            t('Your athletes keep “{name}” as it is. This version is saved as a plan of its own, so it needs a different name.'),
+            { name: oldName(ask) },
+          )}
+          initial={ask.plan.name.trim()}
+          taken={[oldName(ask), ...getSavedPlans().filter((p) => p.id !== ask.id).map((p) => p.plan.name ?? '')]}
+          confirmLabel={t('Save to library only')}
+          busy={busy}
+          onConfirm={(name) => void answerUpdate(name)}
+          onCancel={() => setNaming(false)}
+        />
+      )}
+      {ask && !naming && (
         // No dismiss: the save has to say who gets it.
         <Modal onClose={() => {}}>
           <h3 className="font-heading text-lg">
@@ -184,7 +224,7 @@ export function useLibrarySave() {
           <div className="flex flex-wrap gap-2 pt-1">
             <button
               disabled={busy}
-              onClick={() => answerUpdate(true)}
+              onClick={() => answerUpdate()}
               className="rounded-lg bg-accent px-4 py-2 font-heading text-ink disabled:opacity-50"
             >
               {n === 1
@@ -193,7 +233,7 @@ export function useLibrarySave() {
             </button>
             <button
               disabled={busy}
-              onClick={() => answerUpdate(false)}
+              onClick={() => setNaming(true)}
               className="rounded-lg border border-border px-4 py-2 text-sm disabled:opacity-50"
             >
               {t('Save to library only')}

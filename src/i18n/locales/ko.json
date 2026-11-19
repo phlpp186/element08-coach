@@ -1009,5 +1009,11 @@
   "changed": "변경됨",
   "reported": "보고됨",
   "sent": "보냄",
-  "{n} new": "새 항목 {n}개"
+  "{n} new": "새 항목 {n}개",
+  "Name the copy": "사본 이름 지정",
+  "A copy needs a name of its own, so you can tell the two plans apart.": "두 플랜을 구분할 수 있도록 사본에는 고유한 이름이 필요합니다.",
+  "Save copy": "사본 저장",
+  "Name this version": "이 버전 이름 지정",
+  "Your athletes keep “{name}” as it is. This version is saved as a plan of its own, so it needs a different name.": "선수들의 “{name}”은(는) 그대로 유지됩니다. 이 버전은 별도의 플랜으로 저장되므로 다른 이름이 필요합니다.",
+  "Another plan has this name already. Change it to continue.": "같은 이름의 플랜이 이미 있습니다. 계속하려면 이름을 변경하세요."
 }

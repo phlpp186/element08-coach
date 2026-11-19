@@ -1009,5 +1009,11 @@
   "changed": "geändert",
   "reported": "gemeldet",
   "sent": "gesendet",
-  "{n} new": "{n} neu"
+  "{n} new": "{n} neu",
+  "Name the copy": "Kopie benennen",
+  "A copy needs a name of its own, so you can tell the two plans apart.": "Eine Kopie braucht einen eigenen Namen, damit du die beiden Pläne unterscheiden kannst.",
+  "Save copy": "Kopie speichern",
+  "Name this version": "Diese Version benennen",
+  "Your athletes keep “{name}” as it is. This version is saved as a plan of its own, so it needs a different name.": "Deine Athlet:innen behalten „{name}“ unverändert. Diese Version wird als eigener Plan gespeichert und braucht deshalb einen anderen Namen.",
+  "Another plan has this name already. Change it to continue.": "Ein anderer Plan heißt bereits so. Ändere den Namen, um fortzufahren."
 }

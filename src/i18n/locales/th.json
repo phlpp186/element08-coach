@@ -1009,5 +1009,11 @@
   "changed": "เปลี่ยนแล้ว",
   "reported": "รายงานแล้ว",
   "sent": "ส่งแล้ว",
-  "{n} new": "ใหม่ {n}"
+  "{n} new": "ใหม่ {n}",
+  "Name the copy": "ตั้งชื่อสำเนา",
+  "A copy needs a name of its own, so you can tell the two plans apart.": "สำเนาต้องมีชื่อของตัวเอง เพื่อให้แยกแผนทั้งสองออกจากกันได้",
+  "Save copy": "บันทึกสำเนา",
+  "Name this version": "ตั้งชื่อเวอร์ชันนี้",
+  "Your athletes keep “{name}” as it is. This version is saved as a plan of its own, so it needs a different name.": "นักกีฬาของคุณยังคงใช้ “{name}” ตามเดิม เวอร์ชันนี้จะถูกบันทึกเป็นแผนแยกต่างหาก จึงต้องใช้ชื่ออื่น",
+  "Another plan has this name already. Change it to continue.": "มีแผนอื่นใช้ชื่อนี้อยู่แล้ว เปลี่ยนชื่อเพื่อดำเนินการต่อ"
 }

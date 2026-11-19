@@ -1009,5 +1009,11 @@
   "changed": "変更",
   "reported": "報告済み",
   "sent": "送信済み",
-  "{n} new": "新規{n}件"
+  "{n} new": "新規{n}件",
+  "Name the copy": "コピーに名前を付ける",
+  "A copy needs a name of its own, so you can tell the two plans apart.": "2つのプランを区別できるよう、コピーには別の名前が必要です。",
+  "Save copy": "コピーを保存",
+  "Name this version": "このバージョンに名前を付ける",
+  "Your athletes keep “{name}” as it is. This version is saved as a plan of its own, so it needs a different name.": "アスリートの「{name}」はそのまま残ります。このバージョンは別のプランとして保存されるため、別の名前が必要です。",
+  "Another plan has this name already. Change it to continue.": "同じ名前のプランがすでにあります。続けるには名前を変更してください。"
 }

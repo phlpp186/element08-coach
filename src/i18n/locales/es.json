@@ -1009,5 +1009,11 @@
   "changed": "cambiada",
   "reported": "reportada",
   "sent": "enviada",
-  "{n} new": "{n} nuevas"
+  "{n} new": "{n} nuevas",
+  "Name the copy": "Nombra la copia",
+  "A copy needs a name of its own, so you can tell the two plans apart.": "Una copia necesita su propio nombre para que puedas distinguir los dos planes.",
+  "Save copy": "Guardar copia",
+  "Name this version": "Nombra esta versión",
+  "Your athletes keep “{name}” as it is. This version is saved as a plan of its own, so it needs a different name.": "Tus atletas conservan «{name}» tal como está. Esta versión se guarda como un plan propio, así que necesita otro nombre.",
+  "Another plan has this name already. Change it to continue.": "Otro plan ya tiene este nombre. Cámbialo para continuar."
 }

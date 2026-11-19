@@ -5,7 +5,7 @@
  * actions: edit, assign, duplicate, download, delete. A sticky column beside
  * the list on wide screens, a bottom sheet on narrow ones.
  */
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { SavedPlan } from '../../lib/types';
 import type { CoachAssignment } from '../../lib/supabase/coachData';
 import { calendarFormat, formatIso, MESO_LABEL, planStats, type MesoType } from '../../lib/e08plan';
@@ -64,6 +64,7 @@ export function PlanDetail({
   const phases: { type: MesoType; weeks: number }[] =
     plan.kind === 'season' ? plan.phases.map((ph) => ({ type: ph.type, weeks: ph.weeks.length })) : [];
   const label = 'text-xs font-bold text-textDim';
+  const [assignMsg, setAssignMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
   const nowText =
     now.state === 'upcoming'
@@ -172,7 +173,7 @@ export function PlanDetail({
               copy); assigning it here would hand one athlete's block to
               another, and the builder's publish refuses app plans anyway. */}
           {online && !conflict && !blockId && (
-            <AssignToConnectedButton ready={stats.sessions > 0} ensurePublished={ensurePublished} menuBelow />
+            <AssignToConnectedButton ready={stats.sessions > 0} ensurePublished={ensurePublished} menuBelow onMessage={setAssignMsg} />
           )}
           {!blockId && (
             <>
@@ -187,6 +188,11 @@ export function PlanDetail({
           <button onClick={onDelete} className="ml-auto text-sm text-red hover:underline">
             {t('Delete')}
           </button>
+          {assignMsg && (
+            <p className={`w-full text-xs ${assignMsg.ok ? 'text-recover' : 'text-red'}`} role="status">
+              {assignMsg.text}
+            </p>
+          )}
         </div>
       </aside>
     </>

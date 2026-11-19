@@ -69,6 +69,14 @@ if (previewName === "cycle") {
       </StrictMode>,
     );
   });
+} else if (previewName === "assignmenu") {
+  void import("./dev/AssignMenuPreview").then(({ AssignMenuPreview }) => {
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <AssignMenuPreview />
+      </StrictMode>,
+    );
+  });
 } else if (previewName === "measure") {
   void import("./dev/MeasurePreview").then(({ MeasurePreview }) => {
     createRoot(document.getElementById("root")!).render(
