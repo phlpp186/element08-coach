@@ -29,7 +29,7 @@
     "summary.holdsPct": "holds {{pct}}% STA",
     "summary.holdsMinus": "holds STA − {{value}}",
     "summary.text": "free text",
-    "summary.program": "programme, {{n}} exercises",
+    "summary.program": "program, {{n}} exercises",
     "library.blocks_one": "{{count}} part",
     "library.blocks_other": "{{count}} parts",
     "editor.parts.dry": "Dry table",

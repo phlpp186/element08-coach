@@ -204,6 +204,9 @@ export function withSessionParts(
   // A plan's own workout (not a programme) is never touched.
   if (before.canHaveProgram) {
     const workout = workoutFor(pseudo, `${PLAN_WORKOUT_PREFIX}${session.id}`);
+    // An unnamed session's program has no name either (the player then
+    // says "Fitness program"), not the stand-in the table file needs.
+    if (workout && !session.label.trim()) delete workout.name;
     if (workout) out.workout = workout;
     else delete out.workout;
   }

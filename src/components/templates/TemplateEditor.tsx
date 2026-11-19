@@ -52,7 +52,7 @@ export const TYPE_LABEL: Record<TemplateType, string> = {
 const PART_LABEL: Record<PartKind, string> = {
   text: 'Exercises',
   dry: 'Dry table',
-  program: 'Fitness programme',
+  program: 'Fitness program',
 };
 const ADD_LABEL: Record<PartKind, string> = {
   text: '+ Exercise',

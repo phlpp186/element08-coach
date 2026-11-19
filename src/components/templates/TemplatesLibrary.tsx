@@ -45,7 +45,7 @@ export function TemplatesLibrary({ editedAgo }: { editedAgo: (iso: string) => st
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3">
         <p className="min-w-0 flex-1 text-sm text-textDim">
-          {t('Reusable sessions: exercises, a dry table, a fitness programme. Send one to an athlete or add it to a plan with + from template. The same list is in the app under Coaching › Templates.')}
+          {t('Reusable sessions: exercises, a dry table, a fitness program. Send one to an athlete or add it to a plan with + from template. The same list is in the app under Coaching › Templates.')}
         </p>
         <button
           onClick={() => navigate('/plan/template/new')}
