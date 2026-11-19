@@ -36,7 +36,12 @@ function keys(): Set<string> {
     const text = readFileSync(f, 'utf8');
     for (const m of text.matchAll(CALL)) {
       const raw = m[1] ?? m[2];
-      out.add(raw.replace(/\\(["'\\])/g, '$1'));
+      const key = raw.replace(/\\(["'\\])/g, '$1');
+      // "deliver.inboxTitle": a key of the app's own strings, written through
+      // templateTr (coachTemplates/strings.json), never English text for this
+      // translator. sharedTemplates.test.ts covers those.
+      if (/^[a-z]+(\.[A-Za-z_]+)+$/.test(key)) continue;
+      out.add(key);
     }
   }
   return out;
