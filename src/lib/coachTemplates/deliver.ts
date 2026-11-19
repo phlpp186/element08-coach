@@ -204,7 +204,14 @@ export function blockLine(
             : work;
         })
         .join(' · ');
-      body = b.reps > 1 ? t('deliver.reps', { n: b.reps, what: `[${items}]` }) : items;
+      const rounds = b.reps > 1 ? t('deliver.reps', { n: b.reps, what: `[${items}]` }) : items;
+      body =
+        (ex.restAfterSec ?? 0) > 0
+          ? t('deliver.joinRest', {
+              what: rounds,
+              rest: t('deliver.restFixed', { time: formatValue(ex.restAfterSec!, 's', false) }),
+            })
+          : rounds;
       break;
     }
     case 'fitness': {
@@ -288,6 +295,8 @@ export function workoutFor(template: CoachTemplate, id: string): Workout | null 
   for (const b of template.blocks) {
     if (b.exercise.kind !== 'program' || b.exercise.items.length === 0) continue;
     const items = b.exercise.items;
+    const after = b.exercise.restAfterSec ?? 0;
+    const restAfter = after > 0 ? { restAfterSec: after } : {};
     const ref = (name: string) => {
       const clean = name.trim().slice(0, 60);
       return { id: `custom:${clean.toLowerCase()}`, name: clean };
@@ -314,6 +323,7 @@ export function workoutFor(template: CoachTemplate, id: string): Workout | null 
         kind: 'sets',
         items: Array.from({ length: b.reps }, () => round.map((x) => ({ ...x }))).flat(),
         rounds: b.reps,
+        ...restAfter,
       });
       continue;
     }
@@ -326,6 +336,7 @@ export function workoutFor(template: CoachTemplate, id: string): Workout | null 
       restSec: items[0].restSec,
       rounds: b.reps,
       roundRestSec: last.restSec,
+      ...restAfter,
     });
   }
   if (!blocks.length) return null;

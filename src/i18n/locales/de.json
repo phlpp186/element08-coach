@@ -942,5 +942,6 @@
   "Move session up": "Einheit nach oben",
   "Move session down": "Einheit nach unten",
   "Every exercise needs a name and a time or reps.": "Jede Übung braucht einen Namen und eine Zeit oder Wiederholungen.",
-  "Click to switch between time and reps": "Klicken, um zwischen Zeit und Wiederholungen zu wechseln"
+  "Click to switch between time and reps": "Klicken, um zwischen Zeit und Wiederholungen zu wechseln",
+  "Rest after this part": "Pause nach diesem Teil"
 }

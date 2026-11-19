@@ -942,5 +942,6 @@
   "Move session up": "セッションを上へ",
   "Move session down": "セッションを下へ",
   "Every exercise needs a name and a time or reps.": "各種目に名前と、時間または回数が必要です。",
-  "Click to switch between time and reps": "クリックで時間と回数を切り替え"
+  "Click to switch between time and reps": "クリックで時間と回数を切り替え",
+  "Rest after this part": "このパートの後の休憩"
 }

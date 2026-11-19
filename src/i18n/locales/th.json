@@ -942,5 +942,6 @@
   "Move session up": "เลื่อนเซสชันขึ้น",
   "Move session down": "เลื่อนเซสชันลง",
   "Every exercise needs a name and a time or reps.": "ทุกท่าต้องมีชื่อ และเวลาหรือจำนวนครั้ง",
-  "Click to switch between time and reps": "คลิกเพื่อสลับระหว่างเวลาและจำนวนครั้ง"
+  "Click to switch between time and reps": "คลิกเพื่อสลับระหว่างเวลาและจำนวนครั้ง",
+  "Rest after this part": "พักหลังส่วนนี้"
 }

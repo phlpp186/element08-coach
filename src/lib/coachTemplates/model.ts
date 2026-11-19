@@ -17,7 +17,8 @@
  *              Session's own TrainingBlocks, the block's `reps` its rounds.
  *     program  a fitness programme the fitness timer runs: `items` (a name,
  *              then EITHER work seconds OR `reps`, and rest seconds), the
- *              block's `reps` its rounds.
+ *              block's `reps` its rounds, and optionally `restAfterSec`, the
+ *              rest before the next part.
  *   Kinds only older templates hold. They are read, sent and inserted as
  *   before, shown read-only in the editor, and never created again:
  *     depth, pool  a target that may be relative to the athlete's PB
@@ -119,7 +120,12 @@ export type TemplateExercise =
       holdTarget: TemplateTarget | null;
       lungVol: LungVolume | null;
     }
-  | { kind: 'program'; items: ProgramItem[] }
+  | {
+      kind: 'program';
+      items: ProgramItem[];
+      /** Rest after the last round, before whatever part comes next. */
+      restAfterSec?: number;
+    }
   | { kind: 'fitness'; workout: FitnessWorkoutId | null; text: string }
   | { kind: 'text'; text: string };
 
@@ -485,7 +491,12 @@ function parseExercise(v: unknown): TemplateExercise | null {
             : {}),
         });
       }
-      return { kind: 'program', items: items.slice(0, MAX_ITEMS) };
+      const after = Math.max(0, Math.min(MAX_ITEM_SEC, Math.round(num(o.restAfterSec, 0))));
+      return {
+        kind: 'program',
+        items: items.slice(0, MAX_ITEMS),
+        ...(after > 0 ? { restAfterSec: after } : {}),
+      };
     }
     case 'text':
       return { kind: 'text', text: str(o.text, MAX_PART_TEXT) };

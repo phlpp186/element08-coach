@@ -361,6 +361,20 @@ export function Part({
               {t('+ Row')}
             </button>
           )}
+          {/* The break before whatever part comes next: the rests above only
+              run between exercises and between rounds. */}
+          <label className="flex items-center gap-2 pt-1 text-xs text-textDim">
+            <span>{t('Rest after this part')}</span>
+            <TimeField
+              value={ex.restAfterSec ?? 0}
+              onChange={(sec) => {
+                const { restAfterSec: _old, ...rest } = ex;
+                void _old;
+                setEx(sec > 0 ? { ...rest, restAfterSec: sec } : rest);
+              }}
+              label={t('Rest after this part')}
+            />
+          </label>
         </div>
       )}
 

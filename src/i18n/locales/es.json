@@ -942,5 +942,6 @@
   "Move session up": "Subir sesión",
   "Move session down": "Bajar sesión",
   "Every exercise needs a name and a time or reps.": "Cada ejercicio necesita un nombre y un tiempo o repeticiones.",
-  "Click to switch between time and reps": "Haz clic para cambiar entre tiempo y repeticiones"
+  "Click to switch between time and reps": "Haz clic para cambiar entre tiempo y repeticiones",
+  "Rest after this part": "Descanso después de esta parte"
 }

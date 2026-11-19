@@ -482,6 +482,39 @@ describe('a dry table and a fitness programme on a builder session', () => {
     expect(wire.workout).toBeUndefined();
   });
 
+  it('a rest after a programme part reaches the app and reads back', () => {
+    const pushups = {
+      ...newPart('program'),
+      reps: 3,
+      exercise: {
+        kind: 'program' as const,
+        items: [{ name: 'Push-up', workSec: 30, restSec: 60, reps: 10 }],
+        restAfterSec: 120,
+      },
+    };
+    const planks = {
+      ...newPart('program'),
+      reps: 3,
+      exercise: { kind: 'program' as const, items: [{ name: 'Plank', workSec: 60, restSec: 60 }] },
+    };
+    const s = { ...bare(), ...withBuilderParts(bare(), [pushups, planks], OPTS) };
+    expect(s.exercises.map((e) => e.description).slice(1)).toEqual([
+      '3 × [10 × Push-up, rest 1:00], rest 2:00',
+      '3 × [Plank 1:00, rest 1:00]',
+    ]);
+    const wire = wireOf(builderToDefinition(plan(s), 1, null, NOW));
+    const blocks = (wire.workout as { blocks: { kind: string; restAfterSec?: number }[] }).blocks;
+    expect(blocks.map((b) => [b.kind, b.restAfterSec])).toEqual([
+      ['sets', 120],
+      ['circuit', undefined],
+    ]);
+    // The unused work time of a reps exercise is not kept by the workout.
+    expect(builderParts(s).parts[0].exercise).toEqual({
+      ...pushups.exercise,
+      items: [{ name: 'Push-up', workSec: 0, restSec: 60, reps: 10 }],
+    });
+  });
+
   it('a plan’s own workout on the old row survives a web save untouched', () => {
     const s = bare();
     const old = builderToDefinition(plan(s), 1, null, NOW);

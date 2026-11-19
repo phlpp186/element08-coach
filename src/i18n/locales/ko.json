@@ -942,5 +942,6 @@
   "Move session up": "세션 위로 이동",
   "Move session down": "세션 아래로 이동",
   "Every exercise needs a name and a time or reps.": "모든 운동에 이름과 시간 또는 횟수가 필요합니다.",
-  "Click to switch between time and reps": "클릭하여 시간과 횟수 전환"
+  "Click to switch between time and reps": "클릭하여 시간과 횟수 전환",
+  "Rest after this part": "이 파트 후 휴식"
 }

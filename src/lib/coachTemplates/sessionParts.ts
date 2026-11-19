@@ -81,6 +81,7 @@ export function sessionParts(session: PlannedSession): SessionParts {
               restSec: it.restSec,
               ...(it.measure === 'reps' ? { reps: it.reps ?? 0 } : {}),
             })),
+            ...((b.restAfterSec ?? 0) > 0 ? { restAfterSec: b.restAfterSec } : {}),
           },
         });
         return;
@@ -98,6 +99,7 @@ export function sessionParts(session: PlannedSession): SessionParts {
             // The rest after a round's last exercise is the round rest.
             restSec: mi === b.moves.length - 1 ? b.roundRestSec : (m.restSec ?? b.restSec),
           })),
+          ...((b.restAfterSec ?? 0) > 0 ? { restAfterSec: b.restAfterSec } : {}),
         },
       });
     });

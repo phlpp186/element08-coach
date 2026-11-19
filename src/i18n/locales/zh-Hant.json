@@ -942,5 +942,6 @@
   "Move session up": "上移訓練",
   "Move session down": "下移訓練",
   "Every exercise needs a name and a time or reps.": "每個動作都需要名稱，以及時間或次數。",
-  "Click to switch between time and reps": "點擊在時間和次數之間切換"
+  "Click to switch between time and reps": "點擊在時間和次數之間切換",
+  "Rest after this part": "此部分之後的休息"
 }

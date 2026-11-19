@@ -51,6 +51,7 @@ export interface Workout {
         restSec: number;
         rounds: number;
         roundRestSec: number;
+        restAfterSec?: number;
       }
     | {
         /** Exercises for repetitions: every round listed in turn. */
@@ -65,6 +66,7 @@ export interface Workout {
           restSec: number;
         }[];
         rounds?: number;
+        restAfterSec?: number;
       }
   )[];
 }
