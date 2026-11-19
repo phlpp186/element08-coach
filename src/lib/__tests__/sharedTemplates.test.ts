@@ -4,6 +4,8 @@
  * to text templates and are never lost by a failed upload, and a template
  * dropped into the plan builder keeps its table and workout.
  */
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { mem, cloud } = vi.hoisted(() => {
@@ -69,13 +71,16 @@ import { definitionToBuilder, builderToDefinition, isAppPlan } from '../planLibr
 import { isInboxFor } from '../coachTemplates/deliver';
 import {
   blankTemplate,
+  newPart,
   templateDefinition,
   templateFromDefinition,
   validateTemplate,
   type CoachTemplate,
 } from '../coachTemplates/model';
 import {
+  builderParts,
   builderSessionFromTemplate,
+  withBuilderParts,
   migratedId,
   templateFromLocal,
   templateFromSession,
@@ -195,6 +200,24 @@ describe('the shared format in the portal', () => {
     expect(row.template).toEqual(PHONE_V1.template);
     const resolved = resolveTemplate(row.template, { CWT: 40 });
     expect(resolved[0].value).toBe(32);
+  });
+
+  it('has every string the shared files write with, in every language', () => {
+    const dir = join(__dirname, '../coachTemplates');
+    const used = new Set<string>();
+    for (const f of readdirSync(dir).filter((n) => n.endsWith('.ts'))) {
+      const text = readFileSync(join(dir, f), 'utf8');
+      for (const m of text.matchAll(/\bt\(\s*'([a-zA-Z]+\.[a-zA-Z.]+)'/g)) used.add(m[1]);
+    }
+    expect(used.size).toBeGreaterThan(15);
+    const all = JSON.parse(readFileSync(join(dir, 'strings.json'), 'utf8')) as Record<
+      string,
+      Record<string, string>
+    >;
+    for (const [lang, dict] of Object.entries(all)) {
+      const missing = [...used].filter((k) => !(k in dict) && !(`${k}_other` in dict));
+      expect([lang, missing]).toEqual([lang, []]);
+    }
   });
 
   it('writes a session in the app\'s own words, in the coach\'s language', () => {
@@ -401,6 +424,73 @@ describe('a template in the plan builder', () => {
     expect(builderSessionFromTemplate(t, resolveTemplate(t, {}), 0, OPTS)).toBeNull();
     const s = builderSessionFromTemplate(t, resolveTemplate(t, {}, { b1: 30 }), 0, OPTS)!;
     expect(s.exercises[0].description).toBe('Main: 3 × CWT 30 m, rest 3 × dive time');
+  });
+});
+
+describe('a dry table and a fitness programme on a builder session', () => {
+  const bare = (): BuilderSession => ({
+    id: 'sess-1',
+    dayOfWeek: 1,
+    label: 'Tuesday dry',
+    body: '',
+    exercises: [{ id: 'e1', description: 'Stretch', dose: [{ unit: 'time', value: '5 min' }] }],
+    mode: 'dry',
+    sessionType: 'CO₂ table',
+  });
+  const plan = (session: BuilderSession) =>
+    normalizePlan({
+      name: 'P',
+      mode: 'dry',
+      kind: 'training',
+      startDate: '2026-11-23',
+      structure: 'weeks',
+      weeks: [{ focus: '', intensity: 2, notes: '', sessions: [session] }],
+    });
+  const wireOf = (def: Record<string, unknown>) =>
+    (def.phases as { weeks: { plannedSessions: Record<string, unknown>[] }[] }[])[0].weeks[0]
+      .plannedSessions[0];
+
+  it('a plain session has none; adding both gives lines and what the app runs', () => {
+    expect(builderParts(bare())).toEqual({ parts: [], canHaveProgram: true });
+    const s = { ...bare(), ...withBuilderParts(bare(), [newPart('dry'), newPart('program')], OPTS) };
+    // The free-text line keeps its dose; each part adds a line.
+    expect(s.exercises[0]).toEqual(bare().exercises[0]);
+    expect(s.exercises.map((e) => e.description).slice(1)).toEqual([
+      '3 × [Rest 1:30 · Hold 2:00]',
+      '3 × [ 45s, rest 15s]',
+    ]);
+    const { parts } = builderParts(s);
+    expect(parts.map((p) => p.exercise.kind)).toEqual(['dry', 'program']);
+    const wire = wireOf(builderToDefinition(plan(s), 1, null, NOW));
+    expect((wire.coachRun as { program: { type: string } }).program.type).toBe('training_program');
+    expect((wire.workout as { id: string; programme: boolean }).id).toBe('plan:sess-1');
+    expect(wire.sessionType).toBe('CO₂ table');
+  });
+
+  it('an edit follows through, and removing a part removes it from the saved plan', () => {
+    let s: BuilderSession = { ...bare(), ...withBuilderParts(bare(), [newPart('dry')], OPTS) };
+    const first = builderToDefinition(plan(s), 1, null, NOW);
+    const [p] = builderParts(s).parts;
+    s = { ...s, ...withBuilderParts(s, [{ ...p, reps: 6 }], OPTS) };
+    expect(s.exercises[1].description).toBe('6 × [Rest 1:30 · Hold 2:00]');
+    s = { ...s, ...withBuilderParts(s, [], OPTS) };
+    expect(s.app).toBeUndefined();
+    expect(s.exercises).toHaveLength(1);
+    // Saved over the row that still had the table: it must not come back.
+    const wire = wireOf(builderToDefinition(plan(s), 1, first, NOW));
+    expect(wire.coachRun).toBeUndefined();
+    expect(wire.workout).toBeUndefined();
+  });
+
+  it('a plan’s own workout on the old row survives a web save untouched', () => {
+    const s = bare();
+    const old = builderToDefinition(plan(s), 1, null, NOW);
+    const own = { id: 'plan:sess-1', blocks: [{ kind: 'sets', items: [] }] };
+    wireOf(old).workout = own;
+    wireOf(old).floating = true;
+    const wire = wireOf(builderToDefinition(plan(s), 1, old, NOW));
+    expect(wire.workout).toEqual(own);
+    expect(wire.floating).toBe(true);
   });
 });
 

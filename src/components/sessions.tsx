@@ -19,7 +19,15 @@ import { fill, useT, tr } from "../i18n";
 import { TemplatePicker } from "./TemplatePicker";
 import { useAuth } from "../lib/supabase/AuthProvider";
 import { saveTemplate, useSharedTemplates } from "../lib/supabase/templateLibrary";
-import { builderSessionFromTemplate, modeOfType, templateFromSession } from "../lib/coachTemplates/portal";
+import {
+  builderParts,
+  builderSessionFromTemplate,
+  modeOfType,
+  templateFromSession,
+  withBuilderParts,
+} from "../lib/coachTemplates/portal";
+import { newPart, type TemplateBlock } from "../lib/coachTemplates/model";
+import { Part } from "./templates/TemplateEditor";
 import { missingTargets, resolveTemplate } from "../lib/coachTemplates/resolve";
 import { templateTr } from "../lib/coachTemplates/tr";
 import type { CoachTemplate } from "../lib/coachTemplates/model";
@@ -276,8 +284,20 @@ export function SessionEditor({
   extra?: ReactNode;
 }) {
   const t = useT();
-  const { session: auth, isCoach } = useAuth();
+  const { session: auth, isCoach, profile } = useAuth();
   const online = !!auth && isCoach;
+  // A dry table and a fitness programme on the session itself, as in a
+  // template and in the app's plan editor. A signed-in coach adds them (the
+  // app runs them, so a plan file for a stranger has no use for them); one
+  // that is already there always shows.
+  const { parts, canHaveProgram } = builderParts(session);
+  const setParts = (next: TemplateBlock[]) =>
+    onChange(
+      withBuilderParts(session, next, {
+        author: profile?.display_name ?? "",
+        t: templateTr(),
+      }),
+    );
   const [dropping, setDropping] = useState(false);
   const [doseOpen, setDoseOpen] = useState<string | null>(null);
   const addExercise = () =>
@@ -480,6 +500,38 @@ export function SessionEditor({
           {t("+ exercise")}
         </button>
       </div>
+      )}
+
+      {!locked && (online || parts.length > 0) && (
+        <div className="space-y-2">
+          {parts.map((b, i) => (
+            <Part
+              key={b.id}
+              block={b}
+              issues={[]}
+              onChange={(nb) => setParts(parts.map((y, j) => (j === i ? nb : y)))}
+              onRemove={() => setParts(parts.filter((_, j) => j !== i))}
+            />
+          ))}
+          {online && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setParts([...parts, newPart("dry")])}
+                className="rounded-full border border-dashed border-recover px-3 py-1 text-xs font-semibold text-recover"
+              >
+                {t("+ Dry table")}
+              </button>
+              {canHaveProgram && (
+                <button
+                  onClick={() => setParts([...parts, newPart("program")])}
+                  className="rounded-full border border-dashed border-amber px-3 py-1 text-xs font-semibold text-amber"
+                >
+                  {t("+ Fitness programme")}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Free-text notes (mode #1), use either or both */}

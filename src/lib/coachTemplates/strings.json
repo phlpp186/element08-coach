@@ -32,6 +32,7 @@
     "summary.program": "programme, {{n}} exercises",
     "library.blocks_one": "{{count}} part",
     "library.blocks_other": "{{count}} parts",
+    "editor.parts.dry": "Dry table",
     "trainingPlans:courses.circuit.title": "Circuit",
     "trainingPlans:courses.hiit.title": "HIIT Workout",
     "trainingPlans:courses.apneaHiit.title": "Apnea HIIT"
@@ -69,6 +70,7 @@
     "summary.program": "Programm, {{n}} Übungen",
     "library.blocks_one": "{{count}} Teil",
     "library.blocks_other": "{{count}} Teile",
+    "editor.parts.dry": "Trockentabelle",
     "trainingPlans:courses.circuit.title": "Zirkel",
     "trainingPlans:courses.hiit.title": "HIIT-Workout",
     "trainingPlans:courses.apneaHiit.title": "Apnea HIIT"
@@ -106,6 +108,7 @@
     "summary.program": "programa, {{n}} ejercicios",
     "library.blocks_one": "{{count}} parte",
     "library.blocks_other": "{{count}} partes",
+    "editor.parts.dry": "Tabla en seco",
     "trainingPlans:courses.circuit.title": "Circuito",
     "trainingPlans:courses.hiit.title": "Entrenamiento HIIT",
     "trainingPlans:courses.apneaHiit.title": "Apnea HIIT"
@@ -143,6 +146,7 @@
     "summary.program": "programme, {{n}} exercices",
     "library.blocks_one": "{{count}} partie",
     "library.blocks_other": "{{count}} parties",
+    "editor.parts.dry": "Table à sec",
     "trainingPlans:courses.circuit.title": "Circuit",
     "trainingPlans:courses.hiit.title": "Séance HIIT",
     "trainingPlans:courses.apneaHiit.title": "Apnea HIIT"
@@ -180,6 +184,7 @@
     "summary.program": "プログラム、{{n}} 種目",
     "library.blocks_one": "{{count}} パート",
     "library.blocks_other": "{{count}} パート",
+    "editor.parts.dry": "ドライテーブル",
     "trainingPlans:courses.circuit.title": "サーキット",
     "trainingPlans:courses.hiit.title": "HIIT ワークアウト",
     "trainingPlans:courses.apneaHiit.title": "Apnea HIIT"
@@ -217,6 +222,7 @@
     "summary.program": "프로그램, 운동 {{n}}개",
     "library.blocks_one": "{{count}}개 파트",
     "library.blocks_other": "{{count}}개 파트",
+    "editor.parts.dry": "드라이 테이블",
     "trainingPlans:courses.circuit.title": "서킷",
     "trainingPlans:courses.hiit.title": "HIIT 운동",
     "trainingPlans:courses.apneaHiit.title": "Apnea HIIT"
@@ -254,6 +260,7 @@
     "summary.program": "โปรแกรม {{n}} ท่า",
     "library.blocks_one": "{{count}} ส่วน",
     "library.blocks_other": "{{count}} ส่วน",
+    "editor.parts.dry": "ตารางฝึกบนบก",
     "trainingPlans:courses.circuit.title": "เซอร์กิต",
     "trainingPlans:courses.hiit.title": "เวิร์กเอาต์ HIIT",
     "trainingPlans:courses.apneaHiit.title": "Apnea HIIT"
@@ -291,6 +298,7 @@
     "summary.program": "计划，{{n}} 个动作",
     "library.blocks_one": "{{count}} 个部分",
     "library.blocks_other": "{{count}} 个部分",
+    "editor.parts.dry": "干式表格",
     "trainingPlans:courses.circuit.title": "循环训练",
     "trainingPlans:courses.hiit.title": "HIIT 训练",
     "trainingPlans:courses.apneaHiit.title": "Apnea HIIT"
@@ -328,6 +336,7 @@
     "summary.program": "計畫，{{n}} 個動作",
     "library.blocks_one": "{{count}} 個部分",
     "library.blocks_other": "{{count}} 個部分",
+    "editor.parts.dry": "乾式表格",
     "trainingPlans:courses.circuit.title": "循環訓練",
     "trainingPlans:courses.hiit.title": "HIIT 訓練",
     "trainingPlans:courses.apneaHiit.title": "Apnea HIIT"

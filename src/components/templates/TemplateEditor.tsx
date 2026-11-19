@@ -169,7 +169,8 @@ function Rounds({ value, onChange }: { value: number; onChange: (n: number) => v
   );
 }
 
-function Part({
+/** One part's editor. Also used on a session in the plan builder. */
+export function Part({
   block,
   issues,
   onChange,

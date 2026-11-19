@@ -21,6 +21,9 @@ import {
   type TemplateType,
 } from './model';
 import { sessionFromTemplate } from './planInsert';
+import type { PlannedSession } from './deps';
+import { sessionParts, withSessionParts, type SessionParts } from './sessionParts';
+import type { TemplateBlock } from './model';
 import type { ResolvedTarget } from './resolve';
 
 const TYPES: TemplateType[] = ['dry', 'pool', 'depth', 'fitness', 'general'];
@@ -120,5 +123,53 @@ export function builderSessionFromTemplate(
     sessionType: s.sessionType ?? '',
     ...(typeof s.coachTarget === 'number' ? { coachTarget: s.coachTarget } : {}),
     ...(Object.keys(app).length ? { app } : {}),
+  };
+}
+
+// ── A dry table and a fitness programme on a builder session ────────────────
+
+/** The builder session as the session the shared code reads: its own lines
+ *  (doses stay on the builder's side) and what a template or an earlier edit
+ *  put in `app`. */
+function asPlanned(s: BuilderSession): PlannedSession {
+  return {
+    id: s.id,
+    dayOfWeek: s.dayOfWeek,
+    label: s.label,
+    exercises: s.exercises.map((e) => ({ id: e.id, description: e.description })),
+    mode: s.mode,
+    ...(s.app?.templateRef ? { templateRef: s.app.templateRef } : {}),
+    ...(s.app?.coachRun ? { coachRun: s.app.coachRun } : {}),
+    ...(s.app?.workout ? { workout: s.app.workout as unknown as PlannedSession['workout'] } : {}),
+  };
+}
+
+/** The session's dry table and fitness programme as the parts the template
+ *  editor edits (the app's plan editor reads them the same way). */
+export function builderParts(session: BuilderSession): SessionParts {
+  return sessionParts(asPlanned(session));
+}
+
+/** The session with those parts replaced by `next`: what the app's timers
+ *  run goes into `app`, and each part's readable line in the exercises
+ *  follows (a line the coach reworded stays; doses stay on their lines). */
+export function withBuilderParts(
+  session: BuilderSession,
+  next: TemplateBlock[],
+  opts: { author: string; t: Tr },
+): Pick<BuilderSession, 'exercises' | 'app'> {
+  const out = withSessionParts(asPlanned(session), next, opts);
+  const byId = new Map(session.exercises.map((e) => [e.id, e]));
+  const app: SessionExtras = {
+    ...(session.app?.templateRef ? { templateRef: session.app.templateRef } : {}),
+    ...(out.coachRun ? { coachRun: out.coachRun } : {}),
+    ...(out.workout ? { workout: { ...out.workout } } : {}),
+  };
+  return {
+    exercises: out.exercises.map((e) => {
+      const was = byId.get(e.id);
+      return was ? { ...was, description: e.description } : { id: uid('ex'), description: e.description };
+    }),
+    app: Object.keys(app).length ? app : undefined,
   };
 }

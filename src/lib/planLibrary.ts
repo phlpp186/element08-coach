@@ -262,6 +262,8 @@ const BUILDER_SESSION_KEYS = new Set([
   'sessionNotes',
 ]);
 
+const BUILDER_AND_RUN_KEYS = new Set([...BUILDER_SESSION_KEYS, 'templateRef', 'coachRun', 'workout']);
+
 function appOnly(o: unknown, keys: Set<string>): Obj {
   if (!isObj(o)) return {};
   return Object.fromEntries(Object.entries(o).filter(([k]) => !keys.has(k)));
@@ -293,10 +295,19 @@ export function builderToDefinition(
       return {
         ...w,
         targetMix: mix,
-        plannedSessions: w.plannedSessions.map((s) => ({
-          ...appOnly(oldSessions.get(s.id), BUILDER_SESSION_KEYS),
-          ...s,
-        })),
+        plannedSessions: w.plannedSessions.map((s) => {
+          const old = oldSessions.get(s.id);
+          // A table or a coach's programme on the old row is something the
+          // builder shows and edits (toSession puts it in `app`), so what the
+          // builder now says wins: removed there means removed here. Anything
+          // else the app set stays.
+          const owned =
+            old && (isObj(old.templateRef) || isObj(old.coachRun) || isCoachProgramme(old));
+          return {
+            ...appOnly(old, owned ? BUILDER_AND_RUN_KEYS : BUILDER_SESSION_KEYS),
+            ...s,
+          };
+        }),
       };
     }),
   }));

@@ -15,7 +15,11 @@ const LOCALES = join(SRC, 'i18n/locales');
 function files(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
     const p = join(dir, name);
-    if (statSync(p).isDirectory()) return name === '__tests__' || name === 'dev' ? [] : files(p);
+    // coachTemplates: the files shared with the app write with the app's own
+    // strings (tr.ts, strings.json), not with this translator; sharedTemplates
+    // .test.ts checks that every key they use is in strings.json.
+    if (statSync(p).isDirectory())
+      return ['__tests__', 'dev', 'coachTemplates'].includes(name) ? [] : files(p);
     return /\.tsx?$/.test(name) ? [p] : [];
   });
 }

@@ -8,6 +8,7 @@
  * parts of the app's models (element08-app/src/lib/models/types.ts) these
  * files touch: keep the values equal to the app's.
  */
+// (sessionParts.ts is the sixth shared file.)
 export type { AthletePB } from '../supabase/athleteProfileCloud';
 
 export type LungVolume = 'FL' | 'FRC' | 'RV';
@@ -126,6 +127,35 @@ export interface ProgramFile {
     trainingMode?: TrainingMode;
     sessionTag?: SessionTag | null;
   };
+}
+
+const BLOCK_TYPES: BlockType[] = ['Rest', 'Hold', 'Recover', 'Attempt', 'Swim'];
+
+/** A table read back from a session, or a throw when it is not one. The
+ *  portal's stand-in for the app's validator (planSharing/programFile.ts):
+ *  the same refusals for what the shared files rely on (a training file with
+ *  at least one sequence, every sequence with rows of a known type), the
+ *  rows otherwise kept as they are, since the portal only hands them back. */
+export function validateProgramFile(parsed: unknown): ProgramFile {
+  const f = parsed as Partial<ProgramFile> | null;
+  if (!f || f.format !== PLAN_FILE_FORMAT || f.type !== 'training_program') {
+    throw new Error('Not a training file.');
+  }
+  const c = f.content;
+  if (!c || typeof c.name !== 'string' || !c.name.trim()) throw new Error('No name.');
+  if (!Array.isArray(c.groups) || c.groups.length === 0) throw new Error('No sequences.');
+  const groups: TrainingGroup[] = c.groups.map((g) => {
+    if (!g || !Array.isArray(g.blocks) || g.blocks.length === 0) throw new Error('Empty sequence.');
+    return {
+      ...g,
+      cycles: Math.max(1, Math.min(99, Math.round(Number(g.cycles) || 1))),
+      blocks: g.blocks.map((b) => {
+        if (!b || !BLOCK_TYPES.includes(b.type)) throw new Error('Unknown row type.');
+        return { ...b, seconds: Math.max(0, Math.min(3600, Math.round(Number(b.seconds) || 0))) };
+      }),
+    };
+  });
+  return { ...(f as ProgramFile), content: { ...c, groups } };
 }
 
 const CUE_RULES = [{ time: 30, kind: 'every', dir: 'start' }];

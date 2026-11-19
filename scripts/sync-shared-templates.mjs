@@ -23,7 +23,8 @@ if (!existsSync(listFile)) {
 const LANGS = ['en', 'de', 'es', 'fr', 'ja', 'ko', 'th', 'zh-Hans', 'zh-Hant'];
 // What deliver.ts and summary.ts write with: the text of a sent session.
 const SUBTREES = ['deliver', 'summary'];
-const EXTRA = ['library.blocks_one', 'library.blocks_other'];
+// editor.parts.dry: the name sessionParts.ts gives a table on an unnamed session.
+const EXTRA = ['library.blocks_one', 'library.blocks_other', 'editor.parts.dry'];
 const WORKOUT_TITLES = ['courses.circuit.title', 'courses.hiit.title', 'courses.apneaHiit.title'];
 
 const at = (o, path) => path.split('.').reduce((x, k) => (x == null ? undefined : x[k]), o);
