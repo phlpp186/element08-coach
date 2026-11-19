@@ -346,6 +346,9 @@ export function workoutFor(template: CoachTemplate, id: string): Workout | null 
 export interface DeliveredSession {
   date: string;
   session: PlannedSession;
+  /** The coach changed a session already sent: it takes the place of the one
+   *  with the same id (which may sit on another day or week). */
+  replace?: boolean;
 }
 
 /** One PlannedSession per date for one athlete, every target resolved. The
@@ -452,11 +455,36 @@ function sameSession(a: PlannedSession, b: PlannedSession): boolean {
   );
 }
 
+/** Take a session out of the plan, wherever it sits. True when it was there. */
+function dropSession(plan: Plan, sessionId: string): boolean {
+  let found = false;
+  for (const ph of plan.phases ?? []) {
+    for (const w of ph.weeks ?? []) {
+      const before = (w.plannedSessions ?? []).length;
+      w.plannedSessions = (w.plannedSessions ?? []).filter((s) => s.id !== sessionId);
+      if (w.plannedSessions.length !== before) {
+        found = true;
+        w.targetSessions = w.plannedSessions.length;
+      }
+    }
+  }
+  return found;
+}
+
+/** The inbox plan without one session (the coach took it back before the
+ *  athlete reported on it). The plan itself is unchanged when it is not there. */
+export function removeFromInbox(plan: Plan, sessionId: string): { plan: Plan; removed: boolean } {
+  const next: Plan = JSON.parse(JSON.stringify(plan));
+  const removed = dropSession(next, sessionId);
+  return { plan: removed ? next : plan, removed };
+}
+
 /**
- * Append delivered sessions to an inbox plan. Never edits or removes what is
- * already there: existing sessions keep their ids, so the athlete's
- * completions (keyed by session id) stay attached. A session identical to one
- * already on that day (a retried send) is skipped.
+ * Append delivered sessions to an inbox plan. What is already there stays as
+ * it is and keeps its id, so the athlete's completions (keyed by session id)
+ * stay attached; only an item marked `replace` takes the place of the session
+ * with its id. A session identical to one already on that day (a retried
+ * send) is skipped.
  */
 export function mergeIntoInbox(
   plan: Plan,
@@ -467,7 +495,8 @@ export function mergeIntoInbox(
     next.phases = [{ id: 'inbox', name: next.name, type: 'base', weeks: [] }];
   }
   let added = 0;
-  for (const { date, session } of items) {
+  for (const { date, session, replace } of items) {
+    if (replace) dropSession(next, session.id);
     const weekStart = mondayOf(date);
     let week: MicroCycle | undefined;
     for (const ph of next.phases) {
