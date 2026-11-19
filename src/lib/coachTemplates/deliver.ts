@@ -439,6 +439,9 @@ function emptyWeek(weekStart: string): MicroCycle {
 }
 
 function sameSession(a: PlannedSession, b: PlannedSession): boolean {
+  // A session a coach wrote in the week builder has a stable id of its own
+  // and no template to compare by.
+  if (a.id === b.id) return true;
   return (
     !!a.templateRef &&
     a.templateRef.id === b.templateRef?.id &&
