@@ -3,16 +3,18 @@
  * over the library shared with the phone app. Saving writes the template's
  * row and returns to the Library's Templates tab.
  */
-import { useMemo } from 'react';
-import { navigate } from '../hooks/useHashRoute';
+import { useEffect, useMemo } from 'react';
+import { navigate, useRoute } from '../hooks/useHashRoute';
 import { useT } from '../i18n';
-import { blankTemplate } from '../lib/coachTemplates/model';
+import { blankTemplate, newPart, MAX_PART_TEXT } from '../lib/coachTemplates/model';
+import { clearTemplateLines, stashedTemplateLines } from '../lib/templateDraft';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import { useLibrary } from '../lib/supabase/planLibrary';
 import { saveTemplate, useSharedTemplates } from '../lib/supabase/templateLibrary';
 import { TemplateEditor } from '../components/templates/TemplateEditor';
 
-const BACK = '/plan?tab=templates';
+/** Where Save and Cancel lead: the page the coach came from. */
+const BACK = { library: '/plan?tab=templates', exercises: '/exercises?view=templates' };
 
 export function TemplateEditorView({ templateId }: { templateId: string | null }) {
   const t = useT();
@@ -20,8 +22,20 @@ export function TemplateEditorView({ templateId }: { templateId: string | null }
   const lib = useLibrary();
   const shared = useSharedTemplates();
   const found = templateId ? shared.find((s) => s.template.id === templateId) : undefined;
-  // One blank template for the life of the view, not one per render.
-  const blank = useMemo(() => blankTemplate('general'), []);
+  const back = useRoute().query.get('from') === 'exercises' ? BACK.exercises : BACK.library;
+  // One blank template for the life of the view, not one per render. It
+  // starts with the exercises picked on the Exercises page, if any wait.
+  const blank = useMemo(() => {
+    const tpl = blankTemplate('general');
+    const lines = templateId ? null : stashedTemplateLines();
+    if (!lines) return tpl;
+    const part = newPart('text');
+    return {
+      ...tpl,
+      blocks: [{ ...part, exercise: { kind: 'text' as const, text: lines.join('\n').slice(0, MAX_PART_TEXT) } }],
+    };
+  }, [templateId]);
+  useEffect(() => clearTemplateLines, []);
 
   const note = (text: string) => (
     <main className="mx-auto max-w-5xl px-5 py-6">
@@ -38,10 +52,10 @@ export function TemplateEditorView({ templateId }: { templateId: string | null }
       <TemplateEditor
         key={found?.cloudId ?? 'new'}
         initial={found?.template ?? blank}
-        onCancel={() => navigate(BACK)}
+        onCancel={() => navigate(back)}
         onSave={async (tpl) => {
           await saveTemplate(tpl, found?.cloudId ?? null);
-          navigate(BACK);
+          navigate(back);
         }}
       />
     </main>

@@ -37,6 +37,7 @@ export function WeekCard({
   partialBeforeDow,
   weekStart,
   compact,
+  bare,
 }: {
   week: BuilderWeek;
   /** Heading, e.g. "WEEK 1". */
@@ -52,6 +53,9 @@ export function WeekCard({
   weekStart?: string;
   /** Slightly lighter chrome for nesting inside a phase card. */
   compact?: boolean;
+  /** The week template builder edits a template with this card: no "save as
+   *  template" and no "week from template" there. */
+  bare?: boolean;
 }) {
   const t = useT();
   const weekTemplates = useWeekTemplates();
@@ -174,6 +178,7 @@ export function WeekCard({
         onChange={(e) => onChange({ notes: e.target.value })}
       />
 
+      {!bare && (
       <div className="flex flex-wrap items-center gap-3">
         <button
           onClick={() => {
@@ -208,6 +213,7 @@ export function WeekCard({
           }}
         />
       </div>
+      )}
     </div>
   );
 }

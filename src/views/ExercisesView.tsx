@@ -1,13 +1,17 @@
 /**
- * ExercisesView — the coach's library workbench. A category rail (with counts)
+ * ExercisesView — the coach's library workbench. On top, the two build
+ * buttons (session template, week template). A category rail (with counts)
  * structures the space; the main column opens with four health tiles (size,
  * pinned, stale, look-alikes), then a sortable, incrementally-rendered list
- * with usage bars and bulk actions; clicking a row opens its detail panel.
- * Blocks (a composer), Templates and the category editor are rail views of
- * their own. Exercises are dropped into plan sessions from the builder.
+ * with usage bars; clicking a row opens its detail panel. Ticked exercises
+ * collect in a tray at the bottom of the list and are sent from there into a
+ * plan session, a new session template, to an athlete or into a block.
+ * Blocks (a composer), Templates, Week templates and the category editor are
+ * rail views of their own.
  */
 import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
+  addBlock,
   addCategory,
   addCategoryToExercises,
   addExercise,
@@ -47,6 +51,15 @@ import { DoseChips } from "../components/dose";
 import { ExerciseDetail } from "../components/exercises/ExerciseDetail";
 import { BlockComposer } from "../components/exercises/BlockComposer";
 import { TemplatesPanel } from "../components/exercises/TemplatesPanel";
+import { TemplatesLibrary, SendDialog } from "../components/templates/TemplatesLibrary";
+import { AddToPlanDialog } from "../components/AddToPlanDialog";
+import { blankTemplate, newPart, MAX_PART_TEXT } from "../lib/coachTemplates/model";
+import { useSharedTemplates } from "../lib/supabase/templateLibrary";
+import { useAuth } from "../lib/supabase/AuthProvider";
+import { stashTemplateLines } from "../lib/templateDraft";
+import { exerciseText } from "../lib/e08plan";
+import { navigate, useRoute } from "../hooks/useHashRoute";
+import { editedAgo } from "./PlansView";
 
 const CREATE_BAR =
   "flex flex-wrap gap-2 rounded-xl border border-accent/25 bg-accent/5 p-3";
@@ -59,6 +72,7 @@ type RailView =
   | { kind: "archived" }
   | { kind: "blocks" }
   | { kind: "templates" }
+  | { kind: "weeks" }
   | { kind: "categories" };
 
 type SortId = "recent" | "used" | "name" | "newest";
@@ -79,7 +93,14 @@ export function ExercisesView() {
   const weekTemplates = useWeekTemplates();
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const [view, setView] = useState<RailView>({ kind: "all" });
+  const { session, isCoach } = useAuth();
+  const online = !!session && isCoach;
+  const sharedTemplates = useSharedTemplates();
+  // /exercises?view=templates and ?view=weeks: the way back from the editors.
+  const startView = useRoute().query.get("view");
+  const [view, setView] = useState<RailView>(
+    startView === "templates" ? { kind: "templates" } : startView === "weeks" ? { kind: "weeks" } : { kind: "all" },
+  );
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortId>("recent");
   const [sel, setSel] = useState<Set<string>>(new Set());
@@ -94,9 +115,15 @@ export function ExercisesView() {
   // Selection and render window reset when the coach moves views/filters.
   const viewKey = view.kind + ("name" in view ? view.name : "");
   useEffect(() => {
-    setSel(new Set());
     setLimit(CHUNK);
   }, [viewKey, search, sort, quick]);
+  // The picks stay while the coach searches and moves between categories:
+  // a session is often put together from several of them. Only the archive
+  // is a different set of exercises.
+  const inArchive = view.kind === "archived";
+  useEffect(() => {
+    setSel(new Set());
+  }, [inArchive]);
   useEffect(() => {
     setQuick(null);
     setDetailId(null);
@@ -130,7 +157,7 @@ export function ExercisesView() {
 
   // The rows for the current exercises view (before the render window).
   const shown = useMemo(() => {
-    if (view.kind === "blocks" || view.kind === "categories" || view.kind === "templates") return [];
+    if (view.kind === "blocks" || view.kind === "categories" || view.kind === "templates" || view.kind === "weeks") return [];
     let base: LibraryExercise[];
     if (view.kind === "archived") base = exercises.filter((e) => e.archived);
     else if (view.kind === "cat")
@@ -228,7 +255,7 @@ export function ExercisesView() {
           <h2 className="text-xl">{t("Exercises")}</h2>
           <p className="text-textDim text-sm">
             {t(
-              "Your reusable exercise library. Assign them into plan sessions from the builder.",
+              "Your reusable exercise library. Tick exercises to send them into a plan, a template or to an athlete.",
             )}
           </p>
         </div>
@@ -260,6 +287,27 @@ export function ExercisesView() {
             )}
           />
         </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <button
+          onClick={() => navigate("/plan/template/new?from=exercises")}
+          className="rounded-xl border-b-4 border-black/25 bg-accent px-4 py-3 text-left text-ink transition hover:brightness-105 active:translate-y-px"
+        >
+          <span className="block font-heading text-base">+ {t("Build template")}</span>
+          <span className="block text-xs font-semibold opacity-85">
+            {t("One session: exercises, dry table, fitness program")}
+          </span>
+        </button>
+        <button
+          onClick={() => navigate("/exercises/week-template/new")}
+          className="rounded-xl border-b-4 border-black/25 bg-highlight px-4 py-3 text-left text-[#06222d] transition hover:brightness-105 active:translate-y-px"
+        >
+          <span className="block font-heading text-base">+ {t("Build week template")}</span>
+          <span className="block text-xs font-semibold opacity-85">
+            {t("Seven days of sessions, reusable in any plan")}
+          </span>
+        </button>
       </div>
 
       <div className="grid gap-5 md:grid-cols-[200px_minmax(0,1fr)] md:items-start">
@@ -304,11 +352,20 @@ export function ExercisesView() {
           {railRow(
             <>
               <span className="text-accent">▤</span>
-              {t("Builder templates")}
+              {t("Templates")}
             </>,
-            sessionTemplates.length + weekTemplates.length,
+            (online ? sharedTemplates.length : 0) + sessionTemplates.length,
             view.kind === "templates",
             () => setView({ kind: "templates" }),
+          )}
+          {railRow(
+            <>
+              <span className="text-accent">▥</span>
+              {t("Week templates")}
+            </>,
+            weekTemplates.length,
+            view.kind === "weeks",
+            () => setView({ kind: "weeks" }),
           )}
 
           {railRow(
@@ -337,7 +394,18 @@ export function ExercisesView() {
             onTemplates={() => setView({ kind: "templates" })}
           />
         ) : view.kind === "templates" ? (
-          <TemplatesPanel />
+          <div className="min-w-0 space-y-5">
+            {online ? (
+              <TemplatesLibrary editedAgo={(iso) => editedAgo(iso, t)} from="exercises" />
+            ) : (
+              <p className="rounded-xl border border-dashed border-border p-6 text-sm text-textDim">
+                {t("Sign in as a coach to use templates.")}
+              </p>
+            )}
+            <TemplatesPanel only="sessions" />
+          </div>
+        ) : view.kind === "weeks" ? (
+          <TemplatesPanel only="weeks" />
         ) : view.kind === "categories" ? (
           <CategoriesPanel categories={categories} counts={catCounts} />
         ) : (
@@ -425,13 +493,16 @@ export function ExercisesView() {
                     <input
                       type="checkbox"
                       className="accent-accent"
-                      checked={shown.length > 0 && sel.size >= shown.length}
+                      checked={shown.length > 0 && shown.every((x) => sel.has(x.id))}
                       onChange={(e) =>
-                        setSel(
-                          e.target.checked
-                            ? new Set(shown.map((x) => x.id))
-                            : new Set(),
-                        )
+                        setSel((cur) => {
+                          const next = new Set(cur);
+                          for (const x of shown) {
+                            if (e.target.checked) next.add(x.id);
+                            else next.delete(x.id);
+                          }
+                          return next;
+                        })
                       }
                     />
                   </label>
@@ -453,17 +524,6 @@ export function ExercisesView() {
                     <option value="newest">{t("Newest")}</option>
                   </select>
                 </div>
-
-                {/* Bulk bar */}
-                {sel.size > 0 && (
-                  <BulkBar
-                    sel={sel}
-                    archivedView={view.kind === "archived"}
-                    categories={categories}
-                    blocks={blocks}
-                    onClear={() => setSel(new Set())}
-                  />
-                )}
 
                 {/* Look-alikes */}
                 {view.kind === "all" &&
@@ -541,6 +601,27 @@ export function ExercisesView() {
                       </>
                     )}
                   </div>
+                )}
+
+                {/* Tray: the picked exercises, in the order they were ticked */}
+                {sel.size > 0 && (
+                  <Tray
+                    picked={[...sel]
+                      .map((id) => exercises.find((e) => e.id === id))
+                      .filter((e): e is LibraryExercise => !!e)}
+                    archivedView={view.kind === "archived"}
+                    online={online}
+                    categories={categories}
+                    blocks={blocks}
+                    onRemove={(id) =>
+                      setSel((cur) => {
+                        const next = new Set(cur);
+                        next.delete(id);
+                        return next;
+                      })
+                    }
+                    onClear={() => setSel(new Set())}
+                  />
                 )}
               </>
             )}
@@ -632,93 +713,212 @@ function AddBar({
   );
 }
 
-// ── Bulk bar ─────────────────────────────────────────────────────────────────
+// ── Tray ─────────────────────────────────────────────────────────────────────
 
-function BulkBar({
-  sel,
+/** How many picked exercises the tray names before it says "+ n more". */
+const TRAY_CHIPS = 8;
+
+type SendTo = "plan" | "athlete" | null;
+
+/**
+ * The picked exercises, pinned to the bottom of the list: what is picked (in
+ * the order it was ticked, which is the order it arrives in), where to send
+ * it (a plan session, a new session template, an athlete, a block), and the
+ * housekeeping actions (category, archive, delete).
+ */
+function Tray({
+  picked,
   archivedView,
+  online,
   categories,
   blocks,
+  onRemove,
   onClear,
 }: {
-  sel: Set<string>;
+  picked: LibraryExercise[];
   archivedView: boolean;
+  /** Signed in as a coach: templates and athletes are reachable. */
+  online: boolean;
   categories: string[];
   blocks: ExerciseBlock[];
+  onRemove: (id: string) => void;
   onClear: () => void;
 }) {
   const t = useT();
-  const [menu, setMenu] = useState<"cat" | "block" | null>(null);
-  const ids = [...sel];
+  const [menu, setMenu] = useState<"cat" | "send" | null>(null);
+  const [sendTo, setSendTo] = useState<SendTo>(null);
+  const ids = picked.map((e) => e.id);
+  const items = picked.map((e) => ({ description: e.description, dose: e.defaultDose }));
+  /** One line per exercise, its default dose written into the line. */
+  const lines = picked.map((e) => exerciseText({ id: e.id, description: e.description, dose: e.defaultDose }, t));
+  // The one-off session an athlete gets: kept for the life of the dialog.
+  const oneOff = useMemo(() => {
+    const part = newPart("text");
+    return {
+      ...blankTemplate("general"),
+      blocks: [{ ...part, exercise: { kind: "text" as const, text: lines.join("\n").slice(0, MAX_PART_TEXT) } }],
+    };
+  }, [sendTo]);
 
   const act = (fn: () => void) => {
     fn();
     setMenu(null);
     onClear();
   };
+  const toBlock = (blockId: string) => act(() => addExercisesToBlockBulk(blockId, ids));
+  const newBlock = () => {
+    const name = prompt(t("Block name"));
+    if (name?.trim()) toBlock(addBlock(name.trim()));
+  };
+
+  const dest = (title: string, sub: string, onClick: () => void, disabled = false) => (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="block w-full rounded-lg px-2.5 py-1.5 text-left hover:bg-accent/15 disabled:opacity-50 disabled:hover:bg-transparent"
+    >
+      <span className="block text-sm font-bold text-text">{title}</span>
+      <span className="block text-xs text-textDim">{sub}</span>
+    </button>
+  );
 
   return (
-    <div className="relative flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm">
-      <span className="font-heading text-accent">
-        {sel.size} {t("selected")}
-      </span>
-      {!archivedView && (
-        <>
-          <BulkAction onClick={() => setMenu(menu === "cat" ? null : "cat")}>
-            {t("Add category")} ▾
-          </BulkAction>
-          {blocks.length > 0 && (
-            <BulkAction onClick={() => setMenu(menu === "block" ? null : "block")}>
-              {t("Add to block")} ▾
-            </BulkAction>
-          )}
-          <BulkAction onClick={() => act(() => setArchived(ids, true))}>
-            {t("Archive")}
-          </BulkAction>
-        </>
-      )}
-      {archivedView && (
-        <BulkAction onClick={() => act(() => setArchived(ids, false))}>
-          {t("Restore")}
-        </BulkAction>
-      )}
-      <BulkAction
-        danger
-        onClick={() =>
-          confirm(`${t("Delete")} ${sel.size}?`) && act(() => removeExercises(ids))
-        }
-      >
-        {t("Delete")}
-      </BulkAction>
-      <button onClick={onClear} className="ml-auto text-xs text-textDim hover:text-text">
-        {t("Clear")}
-      </button>
+    <div className="sticky bottom-3 z-20 rounded-xl border border-accent bg-abyss px-3 py-2.5 shadow-lg">
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+        <span className="font-heading text-accent">
+          {picked.length} {t("picked")}
+        </span>
+        {picked.slice(0, TRAY_CHIPS).map((e, i) => (
+          <span
+            key={e.id}
+            className="inline-flex max-w-[13rem] items-center gap-1 rounded-full border border-border bg-panel py-0.5 pl-2 pr-1 text-xs"
+          >
+            <span className="text-textDim tabular-nums">{i + 1}</span>
+            <span className="truncate text-text">{e.description}</span>
+            <button
+              onClick={() => onRemove(e.id)}
+              className="px-1 text-textDim hover:text-text"
+              aria-label={`${t("Remove")} ${e.description}`}
+            >
+              ✕
+            </button>
+          </span>
+        ))}
+        {picked.length > TRAY_CHIPS && (
+          <span className="text-xs text-textDim">
+            + {picked.length - TRAY_CHIPS} {t("more…")}
+          </span>
+        )}
+      </div>
 
-      {menu && (
-        <div className="board absolute left-2 top-full z-30 mt-1 max-h-64 min-w-44 overflow-auto p-1">
-          {(menu === "cat" ? categories : blocks.map((b) => b.name)).map(
-            (name, i) => (
+      <div className="relative mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+        {!archivedView && (
+          <>
+            <BulkAction onClick={() => setMenu(menu === "cat" ? null : "cat")}>
+              {t("Add category")} ▾
+            </BulkAction>
+            <BulkAction onClick={() => act(() => setArchived(ids, true))}>
+              {t("Archive")}
+            </BulkAction>
+          </>
+        )}
+        {archivedView && (
+          <BulkAction onClick={() => act(() => setArchived(ids, false))}>
+            {t("Restore")}
+          </BulkAction>
+        )}
+        <BulkAction
+          danger
+          onClick={() =>
+            confirm(`${t("Delete")} ${picked.length}?`) && act(() => removeExercises(ids))
+          }
+        >
+          {t("Delete")}
+        </BulkAction>
+        <span className="flex-1" />
+        <button onClick={onClear} className="pill px-3 py-1 text-xs">
+          {t("Clear")}
+        </button>
+        {!archivedView && (
+          <button
+            onClick={() => setMenu(menu === "send" ? null : "send")}
+            aria-haspopup="menu"
+            aria-expanded={menu === "send"}
+            className="pill pill-on btn-raised px-4 py-1.5 text-sm"
+          >
+            {t("Send to…")} ▾
+          </button>
+        )}
+
+        {menu === "cat" && (
+          <div className="board absolute bottom-full left-0 z-30 mb-2 max-h-64 min-w-44 overflow-auto p-1">
+            {categories.map((name) => (
               <button
                 key={name}
-                onClick={() =>
-                  act(() =>
-                    menu === "cat"
-                      ? addCategoryToExercises(ids, name)
-                      : addExercisesToBlockBulk(blocks[i].id, ids),
-                  )
-                }
+                onClick={() => act(() => addCategoryToExercises(ids, name))}
                 className="flex w-full items-center gap-2 rounded px-2.5 py-1.5 text-left text-sm text-textDim hover:bg-accent/10 hover:text-text"
               >
-                {menu === "cat" ? (
-                  <CatDot name={name} size={8} />
-                ) : (
-                  <span className="text-accent">▦</span>
-                )}
+                <CatDot name={name} size={8} />
                 {name}
               </button>
-            ),
-          )}
-        </div>
+            ))}
+          </div>
+        )}
+
+        {menu === "send" && (
+          <div role="menu" className="board absolute bottom-full right-0 z-30 mb-2 max-h-[60vh] w-72 space-y-0.5 overflow-auto p-1.5">
+            {dest(t("A session in a plan"), t("Choose the plan, then the day or session"), () => {
+              setMenu(null);
+              setSendTo("plan");
+            })}
+            {dest(
+              t("A new session template"),
+              online ? t("Opens the template editor with these exercises") : t("Sign in as a coach to use templates."),
+              () => {
+                stashTemplateLines(lines);
+                navigate("/plan/template/new?from=exercises");
+              },
+              !online,
+            )}
+            {dest(
+              t("An athlete, as one session"),
+              online ? t("Goes straight to their app") : t("Sign in as a coach to send to athletes."),
+              () => {
+                setMenu(null);
+                setSendTo("athlete");
+              },
+              !online,
+            )}
+            <p className="px-2.5 pt-1.5 text-[11px] font-bold uppercase tracking-wide text-textDim">{t("A block")}</p>
+            {blocks.map((b) => (
+              <button
+                key={b.id}
+                onClick={() => toBlock(b.id)}
+                className="flex w-full items-center gap-2 rounded px-2.5 py-1 text-left text-sm text-textDim hover:bg-accent/10 hover:text-text"
+              >
+                <span className="text-accent">▦</span>
+                <span className="truncate">{b.name}</span>
+              </button>
+            ))}
+            <button
+              onClick={newBlock}
+              className="block w-full rounded px-2.5 py-1 text-left text-sm text-accent hover:bg-accent/10"
+            >
+              + {t("New block")}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {sendTo === "plan" && (
+        <AddToPlanDialog
+          payload={{ kind: "exercises", items }}
+          onClose={() => setSendTo(null)}
+          onAdded={() => undefined}
+        />
+      )}
+      {sendTo === "athlete" && (
+        <SendDialog item={{ template: oneOff, cloudId: null }} oneOff onClose={() => setSendTo(null)} />
       )}
     </div>
   );

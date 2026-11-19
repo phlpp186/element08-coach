@@ -25,9 +25,21 @@ import {
 import { useRoster } from '../../lib/supabase/useRoster';
 import { todayIso } from '../../lib/e08plan';
 import { TYPE_LABEL } from './TemplateEditor';
+import { AddToPlanDialog } from '../AddToPlanDialog';
+import { builderSessionFromTemplate } from '../../lib/coachTemplates/portal';
 
-export function TemplatesLibrary({ editedAgo }: { editedAgo: (iso: string) => string }) {
+export function TemplatesLibrary({
+  editedAgo,
+  from,
+}: {
+  editedAgo: (iso: string) => string;
+  /** Shown on the Exercises page: the editor returns there. */
+  from?: 'exercises';
+}) {
   const t = useT();
+  const { profile } = useAuth();
+  const [adding, setAdding] = useState<CoachTemplate | null>(null);
+  const editorPath = (id: string) => `/plan/template/${id}${from ? `?from=${from}` : ''}`;
   const shared = useSharedTemplates();
   const local = useSessionTemplates();
   const [sending, setSending] = useState<SharedTemplate | null>(null);
@@ -48,7 +60,7 @@ export function TemplatesLibrary({ editedAgo }: { editedAgo: (iso: string) => st
           {t('Reusable sessions: exercises, a dry table, a fitness program. Send one to an athlete or add it to a plan with + from template. The same list is in the app under Coaching › Templates.')}
         </p>
         <button
-          onClick={() => navigate('/plan/template/new')}
+          onClick={() => navigate(editorPath('new'))}
           className="pill pill-on btn-raised px-3 py-1.5 text-sm"
         >
           + {t('New template')}
@@ -75,7 +87,7 @@ export function TemplatesLibrary({ editedAgo }: { editedAgo: (iso: string) => st
               className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border/60 px-4 py-3 text-sm last:border-b-0"
             >
               <button
-                onClick={() => navigate(`/plan/template/${encodeURIComponent(tpl.id)}`)}
+                onClick={() => navigate(editorPath(encodeURIComponent(tpl.id)))}
                 className="min-w-0 flex-1 text-left"
               >
                 <span className="font-heading">{tpl.name}</span>
@@ -90,11 +102,14 @@ export function TemplatesLibrary({ editedAgo }: { editedAgo: (iso: string) => st
               </span>
               <span className="text-textDim">{editedAgo(updatedAt)}</span>
               <span className="flex gap-3 text-xs font-semibold uppercase tracking-wide">
+                <button onClick={() => setAdding(tpl)} className="text-accent">
+                  {t('Add to plan')}
+                </button>
                 <button onClick={() => setSending({ cloudId, template: tpl, updatedAt })} className="text-accent">
                   {t('Send to athlete')}
                 </button>
                 <button
-                  onClick={() => navigate(`/plan/template/${encodeURIComponent(tpl.id)}`)}
+                  onClick={() => navigate(editorPath(encodeURIComponent(tpl.id)))}
                   className="text-textDim hover:text-text"
                 >
                   {t('Edit')}
@@ -126,16 +141,67 @@ export function TemplatesLibrary({ editedAgo }: { editedAgo: (iso: string) => st
         </div>
       )}
       {sending && <SendDialog item={sending} onClose={() => setSending(null)} />}
+      {adding &&
+        (usesPB(adding) ? (
+          // A plan has no athlete, so a target relative to a PB has no number
+          // here; the builder asks for it when the template is inserted there.
+          <NoteDialog
+            text={t('This older template has targets relative to a PB. Add it inside the plan builder with + from template, which asks for the numbers.')}
+            onClose={() => setAdding(null)}
+          />
+        ) : (
+          <AddToPlanDialog
+            payload={{
+              kind: 'session',
+              name: adding.name,
+              make: (day) =>
+                builderSessionFromTemplate(adding, resolveTemplate(adding, {}), day, {
+                  author: profile?.display_name ?? '',
+                  t: tr,
+                }),
+            }}
+            onClose={() => setAdding(null)}
+          />
+        ))}
     </div>
   );
 }
 
-/** Send one session from a template to one athlete on a date. */
-function SendDialog({ item, onClose }: { item: SharedTemplate; onClose: () => void }) {
+function NoteDialog({ text, onClose }: { text: string; onClose: () => void }) {
+  const t = useT();
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3" onClick={onClose}>
+      <div role="dialog" aria-modal="true" className="board w-full max-w-md space-y-3 p-5" onClick={(e) => e.stopPropagation()}>
+        <p className="text-sm text-text">{text}</p>
+        <div className="flex justify-end">
+          <button onClick={onClose} className="pill pill-on btn-raised px-4 py-1.5 text-sm">
+            {t('Close')}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Send one session from a template to one athlete on a date. `oneOff`: the
+ *  session is not a template in the library (exercises picked on the
+ *  Exercises page); the coach names it here and nothing is saved there. */
+export function SendDialog({
+  item,
+  oneOff = false,
+  onClose,
+  onSent,
+}: {
+  item: Pick<SharedTemplate, 'template'> & { cloudId: string | null };
+  oneOff?: boolean;
+  onClose: () => void;
+  onSent?: () => void;
+}) {
   const t = useT();
   const { profile } = useAuth();
   const { athletes, loading } = useRoster();
-  const tpl: CoachTemplate = item.template;
+  const [name, setName] = useState(item.template.name);
+  const tpl: CoachTemplate = oneOff ? { ...item.template, name: name.trim() } : item.template;
   const [studentId, setStudentId] = useState('');
   const [date, setDate] = useState(todayIso());
   const [pbs, setPbs] = useState<PBMap>({});
@@ -172,6 +238,7 @@ function SendDialog({ item, onClose }: { item: SharedTemplate; onClose: () => vo
   }
   const missing = studentId ? missingTargets(resolveTemplate(tpl, pbs)) : [];
   const ready =
+    !!tpl.name &&
     !!studentId &&
     /^\d{4}-\d{2}-\d{2}$/.test(date) &&
     missingTargets(resolveTemplate(tpl, pbs, typed)).length === 0;
@@ -189,7 +256,9 @@ function SendDialog({ item, onClose }: { item: SharedTemplate; onClose: () => vo
         dates: [date],
         coachName: profile?.display_name ?? '',
         t: templateTr(),
+        ...(oneOff ? { keepInLibrary: false } : {}),
       });
+      if (added) onSent?.();
       setMsg({
         ok: true,
         text: added
@@ -203,7 +272,7 @@ function SendDialog({ item, onClose }: { item: SharedTemplate; onClose: () => vo
     }
   };
 
-  const title = fill(t('Send “{name}”'), { name: tpl.name });
+  const title = oneOff ? t('Send as one session') : fill(t('Send “{name}”'), { name: tpl.name });
   const label = 'mb-1 block text-[11px] font-semibold uppercase tracking-wider text-textDim';
   return (
     <div
@@ -229,6 +298,19 @@ function SendDialog({ item, onClose }: { item: SharedTemplate; onClose: () => vo
           </p>
         ) : (
           <>
+            {oneOff && (
+              <label className="block">
+                <span className={label}>{t('Session name')}</span>
+                <input
+                  className="field w-full px-3 py-2 text-sm"
+                  value={name}
+                  maxLength={80}
+                  autoFocus
+                  placeholder={t('e.g. Pool CO₂ session')}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </label>
+            )}
             <label className="block">
               <span className={label}>{t('Athlete')}</span>
               <select

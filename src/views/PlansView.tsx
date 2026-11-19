@@ -7,9 +7,8 @@
  * and filters; each row carries the plan's week strip, and a click opens its
  * detail panel (who has it, where it stands, edit/assign/duplicate).
  * New plans and editing one open the builder at /plan/new and /plan/:id.
- * App templates are made in the app; they are listed here read-only. (The
- * builder's own session/week templates are a different thing and live under
- * Exercises as Builder templates.)
+ * The Templates tab is the session template library shared with the app; the
+ * Exercises page shows the same list, and keeps the week templates.
  */
 import { useMemo, useState, type CSSProperties } from 'react';
 import { upsertPlan, useAthletes, useSavedPlans, newPlanId } from '../lib/store';

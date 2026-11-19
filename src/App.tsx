@@ -1,5 +1,6 @@
 import { navigate, useRoute } from './hooks/useHashRoute';
 import { AthletesView } from './views/AthletesView';
+import { WeekTemplateView } from './views/WeekTemplateView';
 import { AthleteDetailView } from './views/AthleteDetailView';
 import { ConnectedAthleteView } from './views/ConnectedAthleteView';
 import { ConnectedPlanView } from './views/ConnectedPlanView';
@@ -95,6 +96,11 @@ function Outlet() {
   }
 
   if (top === 'exercises') {
+    // /exercises/week-template/new, /exercises/week-template/:id → the week template builder
+    if (second === 'week-template') {
+      const templateId = !third || third === 'new' ? null : decodeURIComponent(third);
+      return <WeekTemplateView key={templateId ?? 'new'} templateId={templateId} />;
+    }
     return <ExercisesView />;
   }
 

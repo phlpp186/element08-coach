@@ -14,6 +14,7 @@
 import { useSyncExternalStore } from 'react';
 import {
   normDose,
+  sessionExtras,
   uid,
   type BuilderSession,
   type BuilderWeek,
@@ -93,15 +94,23 @@ export interface WeekTemplate {
   focus: string;
   intensity: number;
   notes: string;
-  sessions: {
-    dayOfWeek: number;
-    label: string;
-    body: string;
-    mode: PlanMode;
-    sessionType: string;
-    exercises: { description: string; dose?: DosePart[] }[];
-  }[];
+  sessions: WeekTemplateSession[];
   useCount?: number;
+}
+
+/** One session of a week template. `coachTarget`, `app` and an exercise's
+ *  `run` mark are what a session template with a dry table or a fitness
+ *  program brings (BuilderSession); without them the week would lose its
+ *  timers. */
+export interface WeekTemplateSession {
+  dayOfWeek: number;
+  label: string;
+  body: string;
+  mode: PlanMode;
+  sessionType: string;
+  exercises: { description: string; dose?: DosePart[]; run?: BuilderSession['exercises'][number]['run'] }[];
+  coachTarget?: number;
+  app?: BuilderSession['app'];
 }
 
 const EX_KEY = 'element08.coach.library';
@@ -179,13 +188,18 @@ function readBlocks(): ExerciseBlock[] {
   }
 }
 
-function tplExercises(input: unknown): { description: string; dose?: DosePart[] }[] {
+function tplExercises(input: unknown): WeekTemplateSession['exercises'] {
   if (!Array.isArray(input)) return [];
   return input
     .filter((x): x is { description: string } => !!x && typeof (x as { description?: unknown }).description === 'string')
     .map((x) => {
       const dose = normDose((x as { dose?: unknown }).dose);
-      return { description: x.description, ...(dose ? { dose } : {}) };
+      const run = (x as { run?: unknown }).run;
+      return {
+        description: x.description,
+        ...(dose ? { dose } : {}),
+        ...(run === 'dry' || run === 'program' ? { run } : {}),
+      };
     });
 }
 
@@ -234,6 +248,8 @@ function readWeekTemplates(): WeekTemplate[] {
               mode: s.mode ?? 'general',
               sessionType: typeof s.sessionType === 'string' ? s.sessionType : '',
               exercises: tplExercises(s.exercises),
+              ...(typeof s.coachTarget === 'number' && s.coachTarget > 0 ? { coachTarget: s.coachTarget } : {}),
+              ...(s.app && typeof s.app === 'object' ? { app: s.app } : {}),
             }))
           : [],
         ...(typeof x.useCount === 'number' && x.useCount > 0 ? { useCount: Math.floor(x.useCount) } : {}),
@@ -657,6 +673,47 @@ export function removeSessionTemplate(id: string): void {
   commitSessionTemplates(sessionTemplates.filter((t) => t.id !== id));
 }
 
+/** A built session as a week template stores it: no ids, they are made
+ *  fresh on every use. */
+function weekTplSession(s: BuilderSession): WeekTemplateSession {
+  return {
+    dayOfWeek: s.dayOfWeek,
+    label: s.label,
+    body: s.body,
+    mode: s.mode,
+    sessionType: s.sessionType,
+    exercises: s.exercises
+      .filter((e) => e.description.trim() || e.dose?.length)
+      .map((e) => {
+        const dose = copyDose(e.dose);
+        return { description: e.description, ...(dose ? { dose } : {}), ...(e.run ? { run: e.run } : {}) };
+      }),
+    ...(s.coachTarget ? { coachTarget: s.coachTarget } : {}),
+    ...(s.app ? { app: s.app } : {}),
+  };
+}
+
+/** A week template's session as a live session with fresh ids. The workout a
+ *  fitness program carries is found by the session id, so it follows it. */
+function liveSession(s: WeekTemplateSession): BuilderSession {
+  const id = uid('sess');
+  const app = sessionExtras({ id, app: s.app });
+  return {
+    id,
+    dayOfWeek: s.dayOfWeek,
+    label: s.label,
+    body: s.body,
+    mode: s.mode,
+    sessionType: s.sessionType,
+    exercises: s.exercises.map((e) => {
+      const dose = copyDose(e.dose);
+      return { id: uid('ex'), description: e.description, ...(dose ? { dose } : {}), ...(e.run ? { run: e.run } : {}) };
+    }),
+    ...(s.coachTarget ? { coachTarget: s.coachTarget } : {}),
+    ...(app ? { app } : {}),
+  };
+}
+
 /** Snapshot a built week (focus/intensity/notes + all sessions) as a template. */
 export function saveWeekTemplate(name: string, from: BuilderWeek): string {
   const id = uid('wtpl');
@@ -668,17 +725,33 @@ export function saveWeekTemplate(name: string, from: BuilderWeek): string {
       focus: from.focus,
       intensity: from.intensity,
       notes: from.notes,
-      sessions: from.sessions.map((s) => ({
-        dayOfWeek: s.dayOfWeek,
-        label: s.label,
-        body: s.body,
-        mode: s.mode,
-        sessionType: s.sessionType,
-        exercises: copyTplExercises(s.exercises),
-      })),
+      sessions: from.sessions.map(weekTplSession),
     },
   ]);
   return id;
+}
+
+/** Replace a week template's name and content (the week template builder). */
+export function updateWeekTemplate(id: string, name: string, from: BuilderWeek): void {
+  commitWeekTemplates(
+    weekTemplates.map((t) =>
+      t.id === id
+        ? {
+            ...t,
+            name: name.trim() || t.name,
+            focus: from.focus,
+            intensity: from.intensity,
+            notes: from.notes,
+            sessions: from.sessions.map(weekTplSession),
+          }
+        : t,
+    ),
+  );
+}
+
+/** A week template as a week to edit or to preview (fresh ids, no use counted). */
+export function weekFromTemplate(tpl: WeekTemplate): BuilderWeek {
+  return { focus: tpl.focus, intensity: tpl.intensity, notes: tpl.notes, sessions: tpl.sessions.map(liveSession) };
 }
 
 export function renameWeekTemplate(id: string, name: string): void {
@@ -720,21 +793,7 @@ export function applyWeekTemplate(tpl: WeekTemplate, week: BuilderWeek): Builder
     focus: week.focus.trim() ? week.focus : tpl.focus,
     intensity: week.sessions.length === 0 ? tpl.intensity : week.intensity,
     notes: week.notes.trim() ? week.notes : tpl.notes,
-    sessions: [
-      ...week.sessions,
-      ...tpl.sessions.map((s) => ({
-        id: uid('sess'),
-        dayOfWeek: s.dayOfWeek,
-        label: s.label,
-        body: s.body,
-        mode: s.mode,
-        sessionType: s.sessionType,
-        exercises: s.exercises.map((e) => {
-          const dose = copyDose(e.dose);
-          return { id: uid('ex'), description: e.description, ...(dose ? { dose } : {}) };
-        }),
-      })),
-    ],
+    sessions: [...week.sessions, ...tpl.sessions.map(liveSession)],
   };
 }
 

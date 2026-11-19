@@ -1,13 +1,18 @@
 /**
- * TemplatesPanel — the Exercises page's Builder templates view: every saved session
- * and week template as a card that opens to show what is inside (exercises
- * with doses, notes; a week as a Mon–Sun strip), with rename and delete.
- * Templates are made in the plan builder ("Save as template" on a session or
- * a week card) or from a block, and used there via "+ from template".
+ * TemplatesPanel — the templates kept in this browser, on the Exercises page:
+ * week templates (`only="weeks"`), and the older browser-only session
+ * templates (`only="sessions"`, which move into the shared library at
+ * sign-in). Each is a card that opens to show what is inside (exercises with
+ * doses, notes; a week as a Mon–Sun strip), with rename and delete. A week
+ * template can also be edited in the week template builder and added to a
+ * plan from here.
  */
 import { useState, type ReactNode } from 'react';
+import { navigate } from '../../hooks/useHashRoute';
+import { AddToPlanDialog } from '../AddToPlanDialog';
 import {
   removeSessionTemplate,
+  applyWeekTemplate,
   removeWeekTemplate,
   renameSessionTemplate,
   renameWeekTemplate,
@@ -126,6 +131,7 @@ function SessionCard({ x, t }: { x: SessionTemplate; t: (s: string) => string })
 
 function WeekCard({ x, t }: { x: WeekTemplate; t: (s: string) => string }) {
   const [open, setOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
   const byDay = WEEKDAYS.map((_, d) => x.sessions.filter((s) => s.dayOfWeek === d));
   const meta = [
     x.focus,
@@ -169,7 +175,21 @@ function WeekCard({ x, t }: { x: WeekTemplate; t: (s: string) => string }) {
           </div>
         )),
       )}
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => navigate(`/exercises/week-template/${encodeURIComponent(x.id)}`)}
+          className="pill px-3 py-1 text-xs"
+        >
+          {t('Edit')}
+        </button>
+        <button
+          onClick={() => setAdding(true)}
+          disabled={x.sessions.length === 0}
+          className="pill pill-on px-3 py-1 text-xs disabled:opacity-50"
+        >
+          {t('Add to plan')}
+        </button>
+        <span className="flex-1" />
         <button
           onClick={() => confirm(`${t('Delete')} "${x.name}"?`) && removeWeekTemplate(x.id)}
           className="text-xs text-red hover:underline"
@@ -177,62 +197,55 @@ function WeekCard({ x, t }: { x: WeekTemplate; t: (s: string) => string }) {
           {t('Delete template')}
         </button>
       </div>
+      {adding && (
+        <AddToPlanDialog
+          payload={{ kind: 'week', name: x.name, apply: (week) => applyWeekTemplate(x, week) }}
+          onClose={() => setAdding(false)}
+        />
+      )}
     </Card>
   );
 }
 
-export function TemplatesPanel() {
+export function TemplatesPanel({ only }: { only: 'sessions' | 'weeks' }) {
   const t = useT();
   const sessionTemplates = useSessionTemplates();
   const weekTemplates = useWeekTemplates();
 
-  const help = (
-    <div className="space-y-1 text-xs text-textDim">
-      <p>
-        {t(
-          'Make templates in the plan builder: "Save as template" on a session, or save a whole week from its card. A block can be saved as a session template too. Use them in the builder via + from template on any day, or + week from template on a week card.',
-        )}
-      </p>
-      <p>
-        {t(
-          'Builder templates help you write plans. They are not the App templates in the Library, which you make in the app and send to athletes.',
-        )}
-      </p>
-    </div>
-  );
-
-  if (sessionTemplates.length === 0 && weekTemplates.length === 0) {
+  if (only === 'weeks') {
     return (
-      <div className="min-w-0 space-y-2 rounded-xl border border-dashed border-border p-6">
-        <p className="text-sm text-text">{t('No builder templates yet.')}</p>
-        {help}
+      <div className="min-w-0 space-y-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="min-w-0 flex-1 text-sm text-textDim">
+            {t('A whole week of sessions, reusable in any plan with weeks. Week templates are saved in this browser.')}
+          </p>
+          <button
+            onClick={() => navigate('/exercises/week-template/new')}
+            className="pill pill-on btn-raised px-3 py-1.5 text-sm"
+          >
+            + {t('Build week template')}
+          </button>
+        </div>
+        {weekTemplates.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-border p-10 text-center text-textDim">
+            {t('No week templates yet.')}
+          </div>
+        ) : (
+          weekTemplates.map((x) => <WeekCard key={x.id} x={x} t={t} />)
+        )}
       </div>
     );
   }
 
+  if (sessionTemplates.length === 0) return null;
   return (
-    <div className="min-w-0 space-y-5">
-      {sessionTemplates.length > 0 && (
-        <section className="space-y-2">
-          <h3 className="text-xs font-heading uppercase tracking-wide text-textDim">
-            {t('Session templates')} · {sessionTemplates.length}
-          </h3>
-          {sessionTemplates.map((x) => (
-            <SessionCard key={x.id} x={x} t={t} />
-          ))}
-        </section>
-      )}
-      {weekTemplates.length > 0 && (
-        <section className="space-y-2">
-          <h3 className="text-xs font-heading uppercase tracking-wide text-textDim">
-            {t('Week templates')} · {weekTemplates.length}
-          </h3>
-          {weekTemplates.map((x) => (
-            <WeekCard key={x.id} x={x} t={t} />
-          ))}
-        </section>
-      )}
-      {help}
-    </div>
+    <section className="min-w-0 space-y-2">
+      <h3 className="text-xs font-heading uppercase tracking-wide text-textDim">
+        {t('Saved in this browser')} · {sessionTemplates.length}
+      </h3>
+      {sessionTemplates.map((x) => (
+        <SessionCard key={x.id} x={x} t={t} />
+      ))}
+    </section>
   );
 }

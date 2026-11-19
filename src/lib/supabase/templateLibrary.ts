@@ -98,6 +98,9 @@ export async function sendTemplate(params: {
   dates: string[];
   coachName: string;
   t: Tr;
+  /** False for a one-off session that is not a template in the library
+   *  (exercises picked on the Exercises page): nothing is saved there. */
+  keepInLibrary?: boolean;
 }): Promise<number> {
   const { template, studentId, dates, coachName, t } = params;
   if (!dates.length) throw new Error('No dates.');
@@ -123,6 +126,7 @@ export async function sendTemplate(params: {
   if (!saved) throw new Error('The athlete’s plan could not be saved.');
   await assignPlan(saved.id, studentId);
 
+  if (params.keepInLibrary === false) return added;
   // The library shows how often a template was sent, on both sides.
   await saveTemplate({ ...template, useCount: template.useCount + 1 }, params.cloudId).catch(
     () => {},
