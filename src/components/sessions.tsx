@@ -37,6 +37,7 @@ import { AddPartRow, PartCard } from "./templates/TemplateEditor";
 import { missingTargets, resolveTemplate } from "../lib/coachTemplates/resolve";
 import { templateTr } from "../lib/coachTemplates/tr";
 import type { CoachTemplate } from "../lib/coachTemplates/model";
+import type { PickableTemplate } from "../lib/templateGroups";
 
 /** Builds the picked template's session for a day; null when it cannot be
  *  built (the coach cancelled a value an older template asked for). */
@@ -65,6 +66,59 @@ function askMissingTargets(tpl: CoachTemplate): Record<string, number> | null {
 }
 
 const SESSION_MODES: PlanMode[] = ["depth", "pool", "dry", "general"];
+
+/** The session templates a coach can pick from: the shared library (the same
+ *  one as the phone app) for a signed-in coach, plus any browser-only ones
+ *  not moved there yet. `make` turns a picked id into the session it builds
+ *  for a day, or null when it cannot (gone, or the coach cancelled a value
+ *  an older template asked for). Used by "+ from template" and the plan
+ *  calendar's library rail. */
+export function useTemplateChoices(): {
+  items: PickableTemplate[];
+  make: (id: string) => TemplateSessionMaker | null;
+} {
+  const local = useSessionTemplates();
+  const shared = useSharedTemplates();
+  const { session: auth, isCoach, profile } = useAuth();
+  const online = !!auth && isCoach;
+  const items: PickableTemplate[] = [
+    ...(online
+      ? shared.map(({ template: x }) => ({
+          id: `s:${x.id}`,
+          name: x.name,
+          mode: modeOfType(x.type),
+          sub: x.sessionType,
+          count: x.blocks.length,
+          useCount: x.useCount,
+        }))
+      : []),
+    ...local.map((x) => ({
+      id: `l:${x.id}`,
+      name: x.name,
+      mode: x.mode,
+      sub: x.sessionType,
+      count: x.exercises.length,
+      useCount: x.useCount,
+    })),
+  ];
+  const make = (id: string): TemplateSessionMaker | null => {
+    const key = id.slice(2);
+    if (id.startsWith("l:")) {
+      const tpl = local.find((x) => x.id === key);
+      return tpl ? (day) => materializeSessionTemplate(tpl, day) : null;
+    }
+    const tpl = shared.find((x) => x.template.id === key)?.template;
+    if (!tpl) return null;
+    const overrides = askMissingTargets(tpl);
+    if (!overrides) return null;
+    return (day) =>
+      builderSessionFromTemplate(tpl, resolveTemplate(tpl, {}, overrides), day, {
+        author: profile?.display_name ?? "",
+        t: templateTr(),
+      });
+  };
+  return { items, make };
+}
 
 /** Small labelled field wrapper (shared across the builder forms). */
 export function Labeled({
@@ -118,48 +172,11 @@ export function SessionList({
   disabledText?: string;
 }) {
   const t = useT();
-  const local = useSessionTemplates();
-  const shared = useSharedTemplates();
-  const { session: auth, isCoach, profile } = useAuth();
-  const online = !!auth && isCoach;
-  const items = [
-    ...(online
-      ? shared.map(({ template: x }) => ({
-          id: `s:${x.id}`,
-          name: x.name,
-          mode: modeOfType(x.type),
-          sub: x.sessionType,
-          count: x.blocks.length,
-          useCount: x.useCount,
-        }))
-      : []),
-    ...local.map((x) => ({
-      id: `l:${x.id}`,
-      name: x.name,
-      mode: x.mode,
-      sub: x.sessionType,
-      count: x.exercises.length,
-      useCount: x.useCount,
-    })),
-  ];
+  const { items, make } = useTemplateChoices();
   const pick = (id: string) => {
     if (!onInsertTemplate) return;
-    const key = id.slice(2);
-    if (id.startsWith("l:")) {
-      const tpl = local.find((x) => x.id === key);
-      if (tpl) onInsertTemplate((day) => materializeSessionTemplate(tpl, day));
-      return;
-    }
-    const tpl = shared.find((x) => x.template.id === key)?.template;
-    if (!tpl) return;
-    const overrides = askMissingTargets(tpl);
-    if (!overrides) return;
-    onInsertTemplate((day) =>
-      builderSessionFromTemplate(tpl, resolveTemplate(tpl, {}, overrides), day, {
-        author: profile?.display_name ?? "",
-        t: templateTr(),
-      }),
-    );
+    const maker = make(id);
+    if (maker) onInsertTemplate(maker);
   };
   return (
     <div className="min-w-0 flex-1 space-y-2">

@@ -7,6 +7,7 @@ import { ConnectedPlanView } from './views/ConnectedPlanView';
 import { CoachOverview } from './views/CoachOverview';
 import { ActivityView } from './views/ActivityView';
 import { PlanBuilderView } from './views/PlanBuilderView';
+import { PlanCalendarView } from './views/PlanCalendarView';
 import { PlansView } from './views/PlansView';
 import { TemplateEditorView } from './views/TemplateEditorView';
 import { ExercisesView } from './views/ExercisesView';
@@ -134,11 +135,21 @@ function Outlet() {
     const planId = second === 'new' ? null : second;
     const presetAthleteId = route.query.get('athlete');
     return (
-      <PlanBuilderView
-        key={planId ?? `new:${presetAthleteId ?? ''}`}
-        planId={planId}
-        presetAthleteId={presetAthleteId}
-      />
+      // The calendar (Philipp, 2026-11-21); ?classic=1 keeps the old builder
+      // reachable from "Plan details" while the calendar is new.
+      route.query.get('classic') === '1' ? (
+        <PlanBuilderView
+          key={`classic:${planId ?? `new:${presetAthleteId ?? ''}`}`}
+          planId={planId}
+          presetAthleteId={presetAthleteId}
+        />
+      ) : (
+        <PlanCalendarView
+          key={planId ?? `new:${presetAthleteId ?? ''}`}
+          planId={planId}
+          presetAthleteId={presetAthleteId}
+        />
+      )
     );
   }
 

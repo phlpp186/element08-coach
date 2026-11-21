@@ -268,6 +268,10 @@ export interface BuilderPlan {
   startDate: string;
   /** ISO date of the target competition (season plans). '' = none. */
   competitionDate: string;
+  /** Every competition in the plan (the calendar's "+ Competition"), by
+   *  date. `competitionDate` is the last one, the only one the plan file and
+   *  the athlete's app carry. Absent on plans from before the calendar. */
+  competitions?: { id: string; date: string; name: string }[];
   /** 'weeks' = Mon–Sun weeks; 'days' = a flat numbered day list (one-off block). */
   structure: PlanStructure;
   weeks: BuilderWeek[];
@@ -507,7 +511,11 @@ export function buildPlanFile(plan: BuilderPlan): PlanFileV1 {
     content: {
       name: plan.name.trim(),
       kind: season ? 'season' : 'training',
-      competitionDate: season && plan.competitionDate ? plan.competitionDate : null,
+      // A training plan with competitions (the calendar) carries its target
+      // too; the app shows it on any plan. An older training plan may hold a
+      // date from when it was a season plan, which stays out.
+      competitionDate:
+        (season || !!plan.competitions?.length) && plan.competitionDate ? plan.competitionDate : null,
       startDate: plan.startDate,
       // The app's Plan.mode only allows depth/pool/general; 'dry' is valid for
       // SESSIONS but not at the plan level (a 'dry' plan mode would silently fall
