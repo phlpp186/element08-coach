@@ -7,7 +7,9 @@
  *
  * Pure: no React, no Supabase, so every rule here has a test.
  */
-import { addDays, exerciseText, type BuilderSession } from './e08plan';
+import { addDays, exerciseText, sessionExtras, type BuilderSession } from './e08plan';
+import type { PlannedSession } from './coachTemplates/deps';
+import { sessionParts } from './coachTemplates/sessionParts';
 
 // ── The plan, as far as the editor reads it ──────────────────────────────────
 
@@ -27,6 +29,9 @@ export interface BlockExercise {
   edit?: string;
   target?: unknown;
   completedAt?: string | null;
+  /** The readable line of the session's dry table or fitness programme: the
+   *  app draws its timer block, with the start button, in this line's place. */
+  run?: 'dry' | 'program';
   [k: string]: unknown;
 }
 
@@ -55,6 +60,9 @@ export interface BlockSession {
   /** The coach's target effort, 1-10. Not `effort`: on her linked plan that is
    *  HER rating from the report. */
   coachTarget?: number | null;
+  /** A coach's dry table (START TABLE in the breath-hold timer). */
+  coachRun?: { program?: unknown; route?: string };
+  templateRef?: { id: string; name: string };
   [k: string]: unknown;
 }
 
@@ -590,23 +598,43 @@ export function blankSession(
  *  (components/sessions SessionEditor): the same layout as in the builder. */
 export function addedAsBuilder(s: BlockSession): BuilderSession {
   const target = validTarget(s.coachTarget);
+  const app = linesLocked(s) ? undefined : appOf(s);
   return {
     id: s.id,
     dayOfWeek: s.dayOfWeek,
     label: s.label ?? '',
     body: typeof s.sessionNotes === 'string' ? s.sessionNotes : '',
-    exercises: s.exercises.map((e) => ({ id: e.id, description: e.description })),
+    exercises: s.exercises.map((e) => ({ id: e.id, description: e.description, ...runMark(e.run) })),
     mode: modeOf(s),
     sessionType: typeof s.sessionType === 'string' ? s.sessionType : '',
     ...(target != null ? { coachTarget: target } : {}),
+    ...(app ? { app } : {}),
   };
 }
 
-/** Lines the app runs as a workout (START WORKOUT, weights from her tests):
- *  their text has to match the workout, so the editor shows them as they are
- *  and only ✕ and "+ exercise" change them (removeLocalLine, addLocalLine),
- *  which keep the two together (Philipp, 2026-11-13). */
-export const linesLocked = (s: BlockSession): boolean => !!s.workout;
+const runMark = (run: unknown): Pick<BlockExercise, 'run'> =>
+  run === 'dry' || run === 'program' ? { run } : {};
+
+/** What the builder's editor keeps in `app`: the session's dry table and
+ *  fitness programme (its "+ Dry table" and "+ Fitness programme" cards) and
+ *  the template it came from. */
+function appOf(s: BlockSession): BuilderSession['app'] {
+  const app: NonNullable<BuilderSession['app']> = {
+    ...(isObj(s.templateRef) ? { templateRef: s.templateRef } : {}),
+    ...(isObj(s.coachRun) ? { coachRun: s.coachRun } : {}),
+    ...(s.workout ? { workout: s.workout } : {}),
+  };
+  return Object.keys(app).length ? app : undefined;
+}
+
+/** Lines the app runs as a block workout (START WORKOUT, weights from her
+ *  tests): their text has to match the workout, so the editor shows them as
+ *  they are and only ✕ and "+ exercise" change them (removeLocalLine,
+ *  addLocalLine), which keep the two together (Philipp, 2026-11-13). A
+ *  coach's own fitness programme is not one: its lines follow its card in
+ *  the editor, as in the plan builder. */
+export const linesLocked = (s: BlockSession): s is BlockSession & { workout: BlockWorkout } =>
+  !!s.workout && !sessionParts(s as unknown as PlannedSession).canHaveProgram;
 
 /** Each test line's fixed start ("Back squat 3RM:"): saving her results ticks
  *  a line by its test's name (the app's tickTestLines), so an edit keeps it. */
@@ -634,17 +662,32 @@ export function applyAddedEdit(plan: BlockPlan, sessionId: string, edit: Builder
 }
 
 function editedSession(s: BlockSession, e: BuilderSession, day: DayChoice): BlockSession {
+  const locked = linesLocked(s);
   const byId = new Map(s.exercises.map((x) => [x.id, x]));
-  const exercises = linesLocked(s)
+  const exercises = locked
     ? s.exercises
     : e.exercises.flatMap((x): BlockExercise[] => {
         const description = exerciseText(x);
         if (!description) return [];
-        return [{ ...(byId.get(x.id) ?? { completedAt: null }), id: x.id, description }];
+        const was = without(byId.get(x.id) ?? { completedAt: null }, 'run');
+        return [{ ...was, id: x.id, description, ...runMark(x.run) }];
       });
+  // The table and the programme are what her timers run, so they are written
+  // as the editor has them (gone when it has none), the workout under this
+  // session's id, where the app looks for it. A block workout is not the
+  // editor's: it stays as it is.
+  const base = locked ? without(s, 'sessionType') : without(s, 'sessionType', 'templateRef', 'coachRun', 'workout');
+  const app = locked ? undefined : sessionExtras({ id: s.id, app: e.app });
   const type = e.sessionType.trim();
   const next = withInfo(
-    { ...without(s, 'sessionType'), label: e.label.trim(), mode: e.mode, exercises, ...(type ? { sessionType: type } : {}) },
+    {
+      ...base,
+      ...(app as Partial<BlockSession> | undefined),
+      label: e.label.trim(),
+      mode: e.mode,
+      exercises,
+      ...(type ? { sessionType: type } : {}),
+    },
     { notes: e.body, target: e.coachTarget ?? null },
   );
   return day === dayOf(s) ? next : placeOn(next, day);
@@ -746,7 +789,7 @@ export function removeLocalLine(plan: BlockPlan, sessionId: string, lineId: stri
           const line = s.exercises.find((e) => e.id === lineId);
           const exercises = s.exercises.filter((e) => e.id !== lineId);
           const ref = line?.ref;
-          if (!ref || !s.workout || exercises.some((e) => e.ref === ref)) return { ...s, exercises };
+          if (!ref || !linesLocked(s) || exercises.some((e) => e.ref === ref)) return { ...s, exercises };
           const blocks = (s.workout.blocks ?? [])
             .map((b) => (isSetsBlock(b) ? { ...b, items: b.items.filter((it) => it.id !== ref) } : b))
             .filter((b) => !isSetsBlock(b) || b.items.length > 0);
@@ -776,7 +819,8 @@ export function addLocalLine(plan: BlockPlan, sessionId: string, item: SetsItem,
             ref: it.id,
             ...(it.pct ? { target: { e1rm: { ex: it.id, pct: it.pct } } } : {}),
           };
-          if (!s.workout) return { ...s, exercises: [...s.exercises, line] };
+          // A coach's programme keeps its own exercises: this is one more line.
+          if (!linesLocked(s)) return { ...s, exercises: [...s.exercises, line] };
           const blocks = [...(s.workout.blocks ?? [])];
           let last = -1;
           for (let i = blocks.length - 1; i >= 0; i--)

@@ -51,6 +51,9 @@ import {
   type BlockSession,
   type SetsItem,
 } from '../appBlock';
+import { newPart } from '../coachTemplates/model';
+import { builderParts, withBuilderParts } from '../coachTemplates/portal';
+import { templateTr } from '../coachTemplates/tr';
 
 // A made-up two-slot block, three weeks: a test week and two training weeks.
 const sess = (week: number, slot: string, label: string, day: number, lines: { ref?: string; text: string; edit?: string }[]) => ({
@@ -605,6 +608,58 @@ describe('editing an added session in the builder layout', () => {
     expect(next.exercises.map((x) => x.description)).toEqual(['Back squat: 3 x 5']);
     expect(next).toMatchObject({ label: 'Strength A, light', floating: true, placed: false });
     expect(dayOf(next)).toBe('any');
+  });
+
+  // Reported 2026-11-21 (by reading the code): "+ Dry table" and "+ Fitness
+  // programme" were offered here, but the save kept neither the table, the
+  // programme nor the line's mark, so her phone had no START button.
+  it('keeps a dry table and a fitness programme the coach adds, and reads them back', () => {
+    const OPTS = { author: 'Coach', t: templateTr('en') };
+    const p = insertSession(planOf(), 1, blankSession('c-1', 'Breath work', ['Stretch'], 2, 'dry'));
+    const b = addedAsBuilder(find(p, 'c-1'));
+    const withParts = { ...b, ...withBuilderParts(b, [newPart('dry'), newPart('program')], OPTS) };
+    const next = applyAddedEdit(p, 'c-1', withParts, 2);
+    const e = find(next, 'c-1');
+    expect((e.coachRun as { program?: { type?: string } } | undefined)?.program?.type).toBe('training_program');
+    expect(e.workout?.id).toBe('plan:c-1');
+    expect(e.exercises.map((x) => [x.description, x.run])).toEqual([
+      ['Stretch', undefined],
+      ['3 × [Rest 1:30 · Hold 2:00]', 'dry'],
+      ['3 × [ 45s, rest 15s]', 'program'],
+    ]);
+    // A coach's programme is not a block workout: the editor stays open for it.
+    expect(linesLocked(e)).toBe(false);
+    // Opened again, the editor finds both parts.
+    const again = addedAsBuilder(e);
+    expect(builderParts(again).parts.map((x) => x.exercise.kind)).toEqual(['dry', 'program']);
+    expect(again.exercises.map((x) => x.run)).toEqual([undefined, 'dry', 'program']);
+    // Both taken out again: nothing of them is left for the phone.
+    const bare = find(applyAddedEdit(next, 'c-1', { ...again, ...withBuilderParts(again, [], OPTS) }, 2), 'c-1');
+    expect('coachRun' in bare || 'workout' in bare).toBe(false);
+    expect(bare.exercises.map((x) => x.description)).toEqual(['Stretch']);
+  });
+
+  it('an exercise from the list next to a programme is one more line, not part of it', () => {
+    const OPTS = { author: 'Coach', t: templateTr('en') };
+    const p = insertSession(planOf(), 1, blankSession('c-1', 'Circuit', [], 2));
+    const b = addedAsBuilder(find(p, 'c-1'));
+    const withProg = applyAddedEdit(p, 'c-1', { ...b, ...withBuilderParts(b, [newPart('program')], OPTS) }, 2);
+    const workout = find(withProg, 'c-1').workout;
+    const added = addLocalLine(withProg, 'c-1', item(), []);
+    expect(find(added, 'c-1').workout).toEqual(workout);
+    expect(find(added, 'c-1').exercises.map((x) => x.ref)).toEqual([undefined, 'curl']);
+    const line = find(added, 'c-1').exercises[1];
+    expect(find(removeLocalLine(added, 'c-1', line.id), 'c-1').workout).toEqual(workout);
+  });
+
+  it('leaves the workout of a block copy alone when the builder sends none', () => {
+    const src = { ...blankSession('sc-w01-d0-str', 'Strength A', ['Back squat: 3 x 5'], 0, 'general'), workout: { id: 'plan:sc-w01-d0-str', blocks: [{ kind: 'sets', items: [{ id: 'squat' }] }] } };
+    const p = insertSession(planOf(), 1, copySession(src, 'c-w', 0));
+    const c = find(p, 'c-w');
+    const b = addedAsBuilder(c);
+    expect(b.app).toBeUndefined();
+    const next = find(applyAddedEdit(p, 'c-w', { ...b, label: 'Strength A, light' }, 0), 'c-w');
+    expect(next.workout).toEqual(c.workout);
   });
 
   it("keeps each test line's name in front, the text after it is the coach's", () => {
