@@ -1165,5 +1165,7 @@
   "The app knows this exercise and plays its video.": "アプリはこの種目を認識し、動画を再生します。",
   "The app knows this exercise. No video for it yet.": "アプリはこの種目を認識しています。動画はまだありません。",
   "Reorder": "並べ替え",
-  "Order changed on {day}": "{day} の順番を変更しました"
+  "Order changed on {day}": "{day} の順番を変更しました",
+  "On {n} days, each its own session. What you change here goes to all of them while this is open.": "{n} 日に配置（それぞれ別のセッション）。ここを開いている間の変更はすべてに反映されます。",
+  "Click more days to put this session on each of them.": "他の曜日をクリックすると、このセッションをそれぞれに追加します。"
 }

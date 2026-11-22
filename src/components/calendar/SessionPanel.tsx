@@ -21,6 +21,7 @@ export function SessionPanel({
   week,
   session,
   today,
+  days,
   onChange,
   onClose,
   onDelete,
@@ -32,9 +33,12 @@ export function SessionPanel({
   week: number;
   session: BuilderSession;
   today: string;
+  /** The days of its week it is on: its own and its linked copies'. */
+  days: number[];
   onChange: (patch: Partial<BuilderSession>) => void;
   onClose: () => void;
   onDelete: () => void;
+  /** A day clicked: on it (a linked copy) or off it. */
   onDay: (day: number) => void;
   onCopyToWeeks: (weeks: number[]) => void;
 }) {
@@ -62,13 +66,22 @@ export function SessionPanel({
             key={d}
             disabled={past || beforeStart(plan, week, i)}
             onClick={() => onDay(i)}
-            className={`pill px-2.5 py-0.5 text-xs ${session.dayOfWeek === i ? 'pill-on' : ''} disabled:opacity-30`}
+            aria-pressed={days.includes(i)}
+            className={`pill px-2.5 py-0.5 text-xs ${days.includes(i) ? 'pill-on' : ''} disabled:opacity-30`}
           >
             {t(d)}
           </button>
         ))}
       </div>
-      {past && <p className="mt-1 text-xs text-textDim">{t('A past session stays on its day. Drag it to copy it.')}</p>}
+      {past ? (
+        <p className="mt-1 text-xs text-textDim">{t('A past session stays on its day. Drag it to copy it.')}</p>
+      ) : days.length > 1 ? (
+        <p className="mt-1 text-xs text-accent">
+          {fill(t('On {n} days, each its own session. What you change here goes to all of them while this is open.'), { n: days.length })}
+        </p>
+      ) : (
+        <p className="mt-1 text-xs text-textDim">{t('Click more days to put this session on each of them.')}</p>
+      )}
     </div>
   );
 

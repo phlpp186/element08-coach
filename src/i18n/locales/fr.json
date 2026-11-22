@@ -1165,5 +1165,7 @@
   "The app knows this exercise and plays its video.": "L'app connaît cet exercice et lit sa vidéo.",
   "The app knows this exercise. No video for it yet.": "L'app connaît cet exercice. Pas encore de vidéo.",
   "Reorder": "Réordonner",
-  "Order changed on {day}": "Ordre modifié le {day}"
+  "Order changed on {day}": "Ordre modifié le {day}",
+  "On {n} days, each its own session. What you change here goes to all of them while this is open.": "Sur {n} jours, chacun sa propre séance. Ce que vous changez ici s'applique à toutes tant que ceci est ouvert.",
+  "Click more days to put this session on each of them.": "Cliquez sur d’autres jours pour placer cette séance sur chacun d’eux."
 }

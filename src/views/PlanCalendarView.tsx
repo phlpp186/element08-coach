@@ -45,7 +45,7 @@ import {
   isBlankSession,
   isPastSession,
   keepBoth,
-  moveSession,
+  linkedDays,
   nextMonday,
   patchSession,
   phaseFrom,
@@ -54,6 +54,8 @@ import {
   removeSession,
   startShiftWeeks,
   suggestPhases,
+  syncLinked,
+  toggleLinkedDay,
   updateWeek,
   weekIndexOf,
   weekMonday,
@@ -65,6 +67,7 @@ import {
   withoutPhases,
   type CalWeek,
   type PlanCompetition,
+  type DayLink,
 } from '../lib/planCalendar';
 import { applyWeekTemplate, defaultDoseFor, recordUseByDescription, saveWeekTemplate, useWeekTemplates } from '../lib/library';
 import { getSavedPlans, newPlanId, upsertPlan, useAthletes, useSavedPlan } from '../lib/store';
@@ -174,20 +177,32 @@ export function PlanCalendarView({ planId, presetAthleteId }: { planId: string |
 
   // ── the side panel ──
   const at = selected ? findSession(rows, selected) : null;
+  // The open session's copies on other days of its week (its day picker),
+  // kept like it while the panel is open (Philipp, 2026-11-22).
+  const [link, setLink] = useState<DayLink | null>(null);
+  const curLink: DayLink | null = selected
+    ? { anchor: selected, ids: link?.anchor === selected ? link.ids : [] }
+    : null;
+  /** The open session and its linked copies gone. */
+  const withoutOpen = (r: CalWeek[]) =>
+    curLink ? curLink.ids.reduce(removeSession, removeSession(r, curLink.anchor)) : r;
   /** Close the panel; a session opened with "+" and left empty goes again. */
   const closePanel = () => {
-    if (at && isBlankSession(at.session)) mutateRows((r) => removeSession(r, at.session.id));
+    if (at && isBlankSession(at.session)) mutateRows(withoutOpen);
     setSelected(null);
+    setLink(null);
   };
   const openSession = (id: string) => {
-    if (at && at.session.id !== id && isBlankSession(at.session)) mutateRows((r) => removeSession(r, at.session.id));
+    if (at && at.session.id !== id && isBlankSession(at.session)) mutateRows(withoutOpen);
     setSelected(id);
+    setLink(null);
     setPlacing(null);
   };
   const addAt = (week: number, s: BuilderSession) => {
-    if (at && isBlankSession(at.session)) mutateRows((r) => addSession(removeSession(r, at.session.id), week, s));
+    if (at && isBlankSession(at.session)) mutateRows((r) => addSession(withoutOpen(r), week, s));
     else mutateRows((r) => addSession(r, week, s));
     setSelected(s.id);
+    setLink(null);
   };
 
   // ── placing from the rail (click, then a day) and dropping ──
@@ -510,14 +525,27 @@ export function PlanCalendarView({ planId, presetAthleteId }: { planId: string |
               week={at.week}
               session={at.session}
               today={today}
-              onChange={(patch) => mutateRows((r) => patchSession(r, at.session.id, patch))}
+              days={curLink ? linkedDays(rows, curLink) : [at.session.dayOfWeek]}
+              onChange={(patch) =>
+                mutateRows((r) => {
+                  const next = patchSession(r, at.session.id, patch);
+                  return curLink ? syncLinked(next, curLink) : next;
+                })
+              }
               onClose={closePanel}
               onDelete={() => {
-                const id = at.session.id;
+                const gone = withoutOpen;
                 setSelected(null);
-                withUndo(fill(t('{name} deleted'), { name: at.session.label.trim() || t('Untitled session') }), (r) => removeSession(r, id));
+                setLink(null);
+                withUndo(fill(t('{name} deleted'), { name: at.session.label.trim() || t('Untitled session') }), gone);
               }}
-              onDay={(d) => mutateRows((r) => moveSession(r, at.session.id, at.week, d))}
+              onDay={(d) => {
+                if (!curLink) return;
+                const res = toggleLinkedDay(rows, curLink, d);
+                if (res.rows === rows) return;
+                mutateRows(() => res.rows);
+                setLink(res.link);
+              }}
               onCopyToWeeks={(weeks) =>
                 withUndo(
                   fill(t('Copied to {day} in {n} weeks'), { day: t(DAY_LABELS[at.session.dayOfWeek]), n: weeks.length }),

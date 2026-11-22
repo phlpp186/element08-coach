@@ -23,14 +23,18 @@ import {
   isBlankSession,
   isPastSession,
   keepBoth,
+  linkedDays,
   moveSession,
   nextMonday,
+  patchSession,
   phaseFrom,
   placeSession,
   planCompetitions,
   sessionDate,
   startShiftWeeks,
   suggestPhases,
+  syncLinked,
+  toggleLinkedDay,
   weekIndexOf,
   weekStarted,
   weeksToReach,
@@ -280,6 +284,44 @@ describe('sessions: move and copy', () => {
   it('a session with nothing in it counts as blank', () => {
     expect(isBlankSession(newSession(0, 'pool'))).toBe(true);
     expect(isBlankSession(sess('a', 0))).toBe(false);
+  });
+});
+
+describe('one session on several days (Philipp, 2026-11-22)', () => {
+  const rows = () => calWeeks(training([[sess('a', 0)], []]));
+  const start = { anchor: 's-a', ids: [] as string[] };
+
+  it('a day it is not on gets a copy of its own; clicking that day again takes it off', () => {
+    let r = toggleLinkedDay(rows(), start, 2);
+    r = toggleLinkedDay(r.rows, r.link, 4);
+    expect(linkedDays(r.rows, r.link)).toEqual([0, 2, 4]);
+    const ids = r.rows[0].week.sessions.map((s) => s.id);
+    expect(new Set(ids).size).toBe(3);
+    expect(r.rows[0].week.sessions.every((s) => s.label === 'a')).toBe(true);
+    const off = toggleLinkedDay(r.rows, r.link, 2);
+    expect(linkedDays(off.rows, off.link)).toEqual([0, 4]);
+    expect(off.rows[0].week.sessions).toHaveLength(2);
+  });
+
+  it('its own day: the session takes its first copy\'s place, and one day always stays', () => {
+    const r = toggleLinkedDay(rows(), start, 3);
+    const moved = toggleLinkedDay(r.rows, r.link, 0);
+    expect(linkedDays(moved.rows, moved.link)).toEqual([3]);
+    expect(findSession(moved.rows, 's-a')).toMatchObject({ week: 0, session: { dayOfWeek: 3 } });
+    expect(moved.rows[0].week.sessions).toHaveLength(1);
+    expect(toggleLinkedDay(moved.rows, moved.link, 3).rows).toBe(moved.rows);
+  });
+
+  it('an edit goes to every linked day, each keeping its own ids and day', () => {
+    const r = toggleLinkedDay(rows(), start, 1);
+    const copyId = r.link.ids[0];
+    const copyExId = findSession(r.rows, copyId)!.session.exercises[0].id;
+    const edited = syncLinked(patchSession(r.rows, 's-a', { label: 'Gym', exercises: [{ id: 'e-a', description: 'Squat 3x5' }, { id: 'e-new', description: 'Plank' }] }), r.link);
+    const copy = findSession(edited, copyId)!.session;
+    expect(copy).toMatchObject({ id: copyId, dayOfWeek: 1, label: 'Gym' });
+    expect(copy.exercises.map((e) => e.description)).toEqual(['Squat 3x5', 'Plank']);
+    expect(copy.exercises[0].id).toBe(copyExId);
+    expect(copy.exercises[1].id).not.toBe('e-new');
   });
 });
 

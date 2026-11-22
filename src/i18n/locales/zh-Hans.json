@@ -1165,5 +1165,7 @@
   "The app knows this exercise and plays its video.": "应用认识这个动作，并会播放它的视频。",
   "The app knows this exercise. No video for it yet.": "应用认识这个动作。暂时还没有视频。",
   "Reorder": "调整顺序",
-  "Order changed on {day}": "已调整 {day} 的顺序"
+  "Order changed on {day}": "已调整 {day} 的顺序",
+  "On {n} days, each its own session. What you change here goes to all of them while this is open.": "在 {n} 天，每天各是一个训练。此处打开期间的修改会应用到所有这些天。",
+  "Click more days to put this session on each of them.": "点击更多日期，把这个训练放到每一天。"
 }

@@ -361,6 +361,80 @@ export function weekStarted(plan: Pick<BuilderPlan, 'startDate'>, index: number,
 export const startShiftWeeks = (from: string, to: string): number =>
   from && to ? Math.round(daysBetween(mondayOf(from), mondayOf(to)) / 7) : 0;
 
+// ── One session on several days (Philipp, 2026-11-22) ──────────────────────
+
+/** The session open in the panel and its copies on other days of its week.
+ *  Each is a session of its own (own id, so each day has its own report);
+ *  while the panel is open an edit there goes to all of them. */
+export interface DayLink {
+  anchor: string;
+  ids: string[];
+}
+
+/** `onto` with the content of `from`; its id, day and exercise ids stay. */
+export function mirrorSession(from: BuilderSession, onto: BuilderSession): BuilderSession {
+  return {
+    ...from,
+    id: onto.id,
+    dayOfWeek: onto.dayOfWeek,
+    exercises: from.exercises.map((e, i) => ({
+      ...e,
+      id: onto.exercises[i]?.id ?? uid('ex'),
+      ...(e.dose ? { dose: e.dose.map((p) => ({ ...p })) } : {}),
+    })),
+  };
+}
+
+/** The linked copies made like the anchor again, after an edit. */
+export function syncLinked(rows: CalWeek[], link: DayLink): CalWeek[] {
+  const a = findSession(rows, link.anchor);
+  if (!a || !link.ids.length) return rows;
+  const ids = new Set(link.ids);
+  return rows.map((r) =>
+    r.week.sessions.some((s) => ids.has(s.id))
+      ? { ...r, week: { ...r.week, sessions: r.week.sessions.map((s) => (ids.has(s.id) ? mirrorSession(a.session, s) : s)) } }
+      : r,
+  );
+}
+
+/** The linked copies still in the anchor's week. */
+function linkedCopies(rows: CalWeek[], link: DayLink): SessionAt[] {
+  const a = findSession(rows, link.anchor);
+  if (!a) return [];
+  return link.ids
+    .map((id) => findSession(rows, id))
+    .filter((c): c is SessionAt => !!c && c.week === a.week);
+}
+
+/** The days the session is on, in its week: its own and its copies'. */
+export function linkedDays(rows: CalWeek[], link: DayLink): number[] {
+  const a = findSession(rows, link.anchor);
+  if (!a) return [];
+  return [a.session.dayOfWeek, ...linkedCopies(rows, link).map((c) => c.session.dayOfWeek)];
+}
+
+/** A day clicked in the panel's day picker: a day it is not on gets a copy,
+ *  a copy's day loses it. Its own day, while it is on others too: it takes
+ *  the place of its first copy (one day always stays). */
+export function toggleLinkedDay(rows: CalWeek[], link: DayLink, day: number): { rows: CalWeek[]; link: DayLink } {
+  const a = findSession(rows, link.anchor);
+  if (!a) return { rows, link };
+  const copies = linkedCopies(rows, link);
+  const without = (id: string) => ({ anchor: link.anchor, ids: link.ids.filter((x) => x !== id) });
+  if (a.session.dayOfWeek === day) {
+    const c = copies[0];
+    if (!c) return { rows, link };
+    const order = dayOrder(rows, a.week, c.session.dayOfWeek);
+    const after = order[order.indexOf(c.session.id) + 1] ?? null;
+    const next = placeSession(removeSession(rows, c.session.id), link.anchor, a.week, c.session.dayOfWeek, after);
+    return { rows: next, link: without(c.session.id) };
+  }
+  const there = copies.find((c) => c.session.dayOfWeek === day);
+  if (there) return { rows: removeSession(rows, there.session.id), link: without(there.session.id) };
+  const copy = { ...copySession(a.session), dayOfWeek: day };
+  return { rows: addSession(rows, a.week, copy), link: { anchor: link.anchor, ids: [...link.ids, copy.id] } };
+}
+
 /** A move turned into a copy: the original goes back to its day (with
  *  whatever was reported on it), a fresh copy stays on the new day. */
 export function keepBoth(
