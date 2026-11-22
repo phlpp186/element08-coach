@@ -1150,5 +1150,7 @@
   "to {date}": "至 {date}",
   "{from} to {to}": "{from} 至 {to}",
   "{name} deleted": "已刪除 {name}",
-  "{name}: added to week {n}": "{name}：已新增到第 {n} 週"
+  "{name}: added to week {n}": "{name}：已新增到第 {n} 週",
+  "Copy here · past sessions stay": "複製到這裡 · 過去的訓練保持不動",
+  "A past session stays on its day. Drag it to copy it.": "過去的訓練留在原來的日期。拖動即可複製。"
 }

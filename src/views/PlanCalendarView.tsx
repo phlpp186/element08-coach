@@ -41,6 +41,8 @@ import {
   findSession,
   insertWeek,
   isBlankSession,
+  isPastSession,
+  keepBoth,
   moveSession,
   nextMonday,
   patchSession,
@@ -210,7 +212,8 @@ export function PlanCalendarView({ planId, presetAthleteId }: { planId: string |
     const from = findSession(rows, item.id);
     if (!from) return;
     const to = dayName(week, day);
-    if (copy) {
+    // A past session is history: its report stays with it on its day.
+    if (copy || isPastSession(plan, rows, item.id, today)) {
       withUndo(fill(t('Copied to {day}'), { day: to }), (r) => copySessionTo(r, item.id, week, day));
       return;
     }
@@ -219,7 +222,8 @@ export function PlanCalendarView({ planId, presetAthleteId }: { planId: string |
     withUndo(fill(t('Moved to {day}'), { day: to }), (r) => moveSession(r, item.id, week, day), [
       {
         label: fill(t('Keep it on {day} too'), { day: dayName(back.week, back.day) }),
-        run: () => mutateRows((r) => copySessionTo(r, item.id, back.week, back.day)),
+        // The original goes back to its day, the fresh copy stays here.
+        run: () => mutateRows((r) => keepBoth(r, item.id, back, { week, day })),
       },
     ]);
   };
@@ -463,6 +467,7 @@ export function PlanCalendarView({ planId, presetAthleteId }: { planId: string |
               rows={rows}
               week={at.week}
               session={at.session}
+              today={today}
               onChange={(patch) => mutateRows((r) => patchSession(r, at.session.id, patch))}
               onClose={closePanel}
               onDelete={() => {

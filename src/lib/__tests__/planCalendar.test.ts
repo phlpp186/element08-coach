@@ -20,10 +20,13 @@ import {
   findSession,
   insertWeek,
   isBlankSession,
+  isPastSession,
+  keepBoth,
   moveSession,
   nextMonday,
   phaseFrom,
   planCompetitions,
+  sessionDate,
   suggestPhases,
   weekIndexOf,
   weeksToReach,
@@ -205,6 +208,26 @@ describe('sessions: move and copy', () => {
     const r = copyToWeeks(base, 's-a', [0, 2, 3, 3]);
     expect(r.map((w) => w.week.sessions.length)).toEqual([1, 0, 1, 1]);
     expect(r[2].week.sessions[0].dayOfWeek).toBe(3);
+  });
+
+  it('"keep it on the old day too" leaves the original there and puts a fresh copy on the new day', () => {
+    // Sarang, 2026-11-22: the old "keep" put the copy on the old day, so her
+    // report (stored under the original id) moved into the new week.
+    const moved = moveSession(rows(), 's-a', 1, 4);
+    const r = keepBoth(moved, 's-a', { week: 0, day: 0 }, { week: 1, day: 4 });
+    expect(findSession(r, 's-a')).toMatchObject({ week: 0, session: { dayOfWeek: 0 } });
+    const copy = r[1].week.sessions.find((s) => s.label === 'a')!;
+    expect(copy.id).not.toBe('s-a');
+    expect(copy.dayOfWeek).toBe(4);
+  });
+
+  it('a session before today is past, today and later is not', () => {
+    const p = training([[sess('a', 0), sess('b', 3)]], '2026-11-16');
+    const r = calWeeks(p);
+    expect(sessionDate(p, r, 's-a')).toBe('2026-11-16');
+    expect(isPastSession(p, r, 's-a', '2026-11-19')).toBe(true);
+    expect(isPastSession(p, r, 's-b', '2026-11-19')).toBe(false); // Thu 19 = today
+    expect(isPastSession(p, r, 'nope', '2026-11-19')).toBe(false);
   });
 
   it('a session with nothing in it counts as blank', () => {

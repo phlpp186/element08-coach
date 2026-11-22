@@ -1150,5 +1150,7 @@
   "to {date}": "{date}まで",
   "{from} to {to}": "{from}〜{to}",
   "{name} deleted": "{name}を削除しました",
-  "{name}: added to week {n}": "{name}：第{n}週に追加しました"
+  "{name}: added to week {n}": "{name}：第{n}週に追加しました",
+  "Copy here · past sessions stay": "ここにコピー · 過去のセッションはそのまま",
+  "A past session stays on its day. Drag it to copy it.": "過去のセッションはその日に残ります。ドラッグでコピーできます。"
 }

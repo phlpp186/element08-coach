@@ -1150,5 +1150,7 @@
   "to {date}": "ถึง {date}",
   "{from} to {to}": "{from} ถึง {to}",
   "{name} deleted": "ลบ {name} แล้ว",
-  "{name}: added to week {n}": "{name}: เพิ่มลงในสัปดาห์ที่ {n} แล้ว"
+  "{name}: added to week {n}": "{name}: เพิ่มลงในสัปดาห์ที่ {n} แล้ว",
+  "Copy here · past sessions stay": "คัดลอกมาที่นี่ · เซสชันที่ผ่านมาอยู่ที่เดิม",
+  "A past session stays on its day. Drag it to copy it.": "เซสชันที่ผ่านมาจะอยู่ในวันเดิม ลากเพื่อคัดลอก"
 }

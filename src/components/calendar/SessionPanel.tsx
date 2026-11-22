@@ -9,7 +9,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { fill, useT } from '../../i18n';
 import { addDays, calendarFormat, DAY_LABELS, formatIso, type BuilderSession } from '../../lib/e08plan';
-import { beforeStart, isBlankSession, weekMonday, type CalWeek } from '../../lib/planCalendar';
+import { beforeStart, isBlankSession, isPastSession, weekMonday, type CalWeek } from '../../lib/planCalendar';
 import type { BuilderPlan } from '../../lib/e08plan';
 import { SessionEditor } from '../sessions';
 
@@ -20,6 +20,7 @@ export function SessionPanel({
   rows,
   week,
   session,
+  today,
   onChange,
   onClose,
   onDelete,
@@ -30,6 +31,7 @@ export function SessionPanel({
   rows: CalWeek[];
   week: number;
   session: BuilderSession;
+  today: string;
   onChange: (patch: Partial<BuilderSession>) => void;
   onClose: () => void;
   onDelete: () => void;
@@ -41,6 +43,9 @@ export function SessionPanel({
   const [pick, setPick] = useState<Set<number>>(() => new Set());
   const date = addDays(weekMonday(plan, week), session.dayOfWeek);
   const picked = [...pick].filter((w) => w !== week && w < rows.length);
+  // The athlete's report is stored under the session's id, so a past session
+  // stays on its day (Sarang's plan, 2026-11-22). Dragging copies it.
+  const past = isPastSession(plan, rows, session.id, today);
   const ref = useRef<HTMLElement>(null);
   // A session just added with "+" starts at its title.
   useEffect(() => {
@@ -55,7 +60,7 @@ export function SessionPanel({
         {DAY_LABELS.map((d, i) => (
           <button
             key={d}
-            disabled={beforeStart(plan, week, i)}
+            disabled={past || beforeStart(plan, week, i)}
             onClick={() => onDay(i)}
             className={`pill px-2.5 py-0.5 text-xs ${session.dayOfWeek === i ? 'pill-on' : ''} disabled:opacity-30`}
           >
@@ -63,6 +68,7 @@ export function SessionPanel({
           </button>
         ))}
       </div>
+      {past && <p className="mt-1 text-xs text-textDim">{t('A past session stays on its day. Drag it to copy it.')}</p>}
     </div>
   );
 

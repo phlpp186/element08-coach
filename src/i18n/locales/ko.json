@@ -1150,5 +1150,7 @@
   "to {date}": "{date}까지",
   "{from} to {to}": "{from}~{to}",
   "{name} deleted": "{name} 삭제됨",
-  "{name}: added to week {n}": "{name}: {n}주차에 추가됨"
+  "{name}: added to week {n}": "{name}: {n}주차에 추가됨",
+  "Copy here · past sessions stay": "여기에 복사 · 지난 세션은 그대로",
+  "A past session stays on its day. Drag it to copy it.": "지난 세션은 그날에 남습니다. 끌어서 복사하세요."
 }

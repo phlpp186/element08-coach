@@ -1150,5 +1150,7 @@
   "to {date}": "bis {date}",
   "{from} to {to}": "{from} bis {to}",
   "{name} deleted": "{name} gelöscht",
-  "{name}: added to week {n}": "{name}: zu Woche {n} hinzugefügt"
+  "{name}: added to week {n}": "{name}: zu Woche {n} hinzugefügt",
+  "Copy here · past sessions stay": "Hierher kopieren · vergangene Einheiten bleiben",
+  "A past session stays on its day. Drag it to copy it.": "Eine vergangene Einheit bleibt an ihrem Tag. Zum Kopieren ziehen."
 }

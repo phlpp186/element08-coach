@@ -24,7 +24,7 @@ import {
   type MesoType,
   type PlanMode,
 } from '../../lib/e08plan';
-import { beforeStart, weekMonday, type CalWeek, type PlanCompetition } from '../../lib/planCalendar';
+import { beforeStart, isPastSession, weekMonday, type CalWeek, type PlanCompetition } from '../../lib/planCalendar';
 import { PHASE_HEX, PHASE_INK } from '../../lib/phaseColor';
 import { dragging, endDrag, isOurs, readDrag, startDrag, type DragItem } from './dnd';
 
@@ -81,6 +81,9 @@ export function CalendarGrid(props: GridProps) {
     if (!item || item.k === 'exercise') return null;
     if (item.k === 'session') {
       if (day == null) return null;
+      // A past session is history: it is copied, its report stays on its day.
+      if (isPastSession(props.plan, rows, item.id, props.today))
+        return { week, day, copy: true, label: t('Copy here · past sessions stay') };
       return e.altKey
         ? { week, day, copy: true, label: t('Copy here') }
         : { week, day, copy: false, label: t('Move here · ⌥ copies') };

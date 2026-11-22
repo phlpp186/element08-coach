@@ -288,6 +288,36 @@ export function copySessionTo(rows: CalWeek[], id: string, week: number, day: nu
   return addSession(rows, week, { ...copySession(at.session), dayOfWeek: day });
 }
 
+/** The date a session is planned on (YYYY-MM-DD), or null. */
+export function sessionDate(plan: Pick<BuilderPlan, 'startDate'>, rows: CalWeek[], id: string): string | null {
+  const at = findSession(rows, id);
+  return at ? addDays(weekMonday(plan, at.week), at.session.dayOfWeek) : null;
+}
+
+/** A session on a day before today is history, done or missed. The
+ *  athlete's report is stored under its id, so moving it would carry that
+ *  report to the new day (Sarang's plan, 2026-11-22): it is copied instead. */
+export function isPastSession(
+  plan: Pick<BuilderPlan, 'startDate'>,
+  rows: CalWeek[],
+  id: string,
+  today: string,
+): boolean {
+  const date = sessionDate(plan, rows, id);
+  return !!date && date < today;
+}
+
+/** A move turned into a copy: the original goes back to its day (with
+ *  whatever was reported on it), a fresh copy stays on the new day. */
+export function keepBoth(
+  rows: CalWeek[],
+  id: string,
+  from: { week: number; day: number },
+  to: { week: number; day: number },
+): CalWeek[] {
+  return copySessionTo(moveSession(rows, id, from.week, from.day), id, to.week, to.day);
+}
+
 /** Copies of the session on its weekday in each of `weeks`. */
 export function copyToWeeks(rows: CalWeek[], id: string, weeks: number[]): CalWeek[] {
   const at = findSession(rows, id);

@@ -1150,5 +1150,7 @@
   "to {date}": "hasta el {date}",
   "{from} to {to}": "{from} al {to}",
   "{name} deleted": "{name} eliminada",
-  "{name}: added to week {n}": "{name}: añadida a la semana {n}"
+  "{name}: added to week {n}": "{name}: añadida a la semana {n}",
+  "Copy here · past sessions stay": "Copiar aquí · las sesiones pasadas se quedan",
+  "A past session stays on its day. Drag it to copy it.": "Una sesión pasada se queda en su día. Arrástrala para copiarla."
 }
