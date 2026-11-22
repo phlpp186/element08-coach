@@ -1152,5 +1152,6 @@
   "{name} deleted": "{name}を削除しました",
   "{name}: added to week {n}": "{name}：第{n}週に追加しました",
   "Copy here · past sessions stay": "ここにコピー · 過去のセッションはそのまま",
-  "A past session stays on its day. Drag it to copy it.": "過去のセッションはその日に残ります。ドラッグでコピーできます。"
+  "A past session stays on its day. Drag it to copy it.": "過去のセッションはその日に残ります。ドラッグでコピーできます。",
+  "A week that has started stays in place, so the athlete's reports stay on their days.": "始まった週はそのまま残ります。アスリートの報告がその日に残るようにするためです。"
 }

@@ -1152,5 +1152,6 @@
   "{name} deleted": "已删除 {name}",
   "{name}: added to week {n}": "{name}：已添加到第 {n} 周",
   "Copy here · past sessions stay": "复制到这里 · 过去的训练保持不动",
-  "A past session stays on its day. Drag it to copy it.": "过去的训练留在原来的日期。拖动即可复制。"
+  "A past session stays on its day. Drag it to copy it.": "过去的训练留在原来的日期。拖动即可复制。",
+  "A week that has started stays in place, so the athlete's reports stay on their days.": "已开始的一周保持不动，这样运动员的报告会留在原来的日期。"
 }

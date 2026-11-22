@@ -307,6 +307,16 @@ export function isPastSession(
   return !!date && date < today;
 }
 
+/** A week whose first day is today or earlier. Inserting a week before it or
+ *  deleting it would shift every later session, ids and the athlete's
+ *  reports with them, by a week: last week's reports would land on this
+ *  week's days (as Sarang's did by a drag, 2026-11-22). Such a week stays put. */
+export function weekStarted(plan: Pick<BuilderPlan, 'startDate'>, index: number, today: string): boolean {
+  if (!plan.startDate) return false;
+  const first = index === 0 ? plan.startDate : weekMonday(plan, index);
+  return first <= today;
+}
+
 /** A move turned into a copy: the original goes back to its day (with
  *  whatever was reported on it), a fresh copy stays on the new day. */
 export function keepBoth(

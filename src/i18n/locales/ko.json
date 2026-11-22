@@ -1152,5 +1152,6 @@
   "{name} deleted": "{name} 삭제됨",
   "{name}: added to week {n}": "{name}: {n}주차에 추가됨",
   "Copy here · past sessions stay": "여기에 복사 · 지난 세션은 그대로",
-  "A past session stays on its day. Drag it to copy it.": "지난 세션은 그날에 남습니다. 끌어서 복사하세요."
+  "A past session stays on its day. Drag it to copy it.": "지난 세션은 그날에 남습니다. 끌어서 복사하세요.",
+  "A week that has started stays in place, so the athlete's reports stay on their days.": "시작된 주는 그대로 남습니다. 선수의 보고가 해당 날짜에 남도록 하기 위해서입니다."
 }

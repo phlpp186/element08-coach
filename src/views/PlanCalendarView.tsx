@@ -53,6 +53,7 @@ import {
   updateWeek,
   weekIndexOf,
   weekMonday,
+  weekStarted,
   weeksToReach,
   withCalWeeks,
   withCompetitions,
@@ -240,9 +241,10 @@ export function PlanCalendarView({ planId, presetAthleteId }: { planId: string |
   };
 
   // ── weeks ──
-  const weekActions = (w: number) => ({
+  const weekActions = (w: number, started = weekStarted(plan, w, today)) => ({
     onOpen: open === w ? undefined : () => setOpen(w),
-    onInsert: () => {
+    started,
+    onInsert: started ? undefined : () => {
       setOpen((o) => (o >= w ? o + 1 : o));
       withUndo(fill(t('New week {n}: the weeks after it moved one week later'), { n: w + 1 }), (r) => insertWeek(r, w));
     },
@@ -258,7 +260,7 @@ export function PlanCalendarView({ planId, presetAthleteId }: { planId: string |
     },
     onClear: () => withUndo(fill(t('Week {n}: sessions cleared'), { n: w + 1 }), (r) => clearWeek(r, w)),
     onDelete:
-      rows.length < 2
+      started || rows.length < 2
         ? undefined
         : () => {
             if (selected && at?.week === w) setSelected(null);

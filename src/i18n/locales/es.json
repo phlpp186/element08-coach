@@ -1152,5 +1152,6 @@
   "{name} deleted": "{name} eliminada",
   "{name}: added to week {n}": "{name}: añadida a la semana {n}",
   "Copy here · past sessions stay": "Copiar aquí · las sesiones pasadas se quedan",
-  "A past session stays on its day. Drag it to copy it.": "Una sesión pasada se queda en su día. Arrástrala para copiarla."
+  "A past session stays on its day. Drag it to copy it.": "Una sesión pasada se queda en su día. Arrástrala para copiarla.",
+  "A week that has started stays in place, so the athlete's reports stay on their days.": "Una semana ya empezada se queda en su sitio, para que los reportes del atleta sigan en sus días."
 }

@@ -11,11 +11,13 @@ import { useT } from '../../i18n';
 
 export interface WeekMenuActions {
   onOpen?: () => void;
-  onInsert: () => void;
+  /** Missing for a week that has started (see weekStarted). */
+  onInsert?: () => void;
   onCopyNext: () => void;
   onSaveTemplate: () => void;
   onClear: () => void;
   onDelete?: () => void;
+  started?: boolean;
 }
 
 export function WeekMenu({
@@ -89,9 +91,11 @@ export function WeekMenu({
       <hr className="my-1 border-border" />
       {item(t('Delete week'), actions.onDelete, true)}
       <p className="px-3 pb-1 pt-0.5 text-xs text-textDim">
-        {actions.onDelete
-          ? t('The weeks after it move one week earlier. Competitions keep their dates.')
-          : t('A plan keeps at least one week.')}
+        {actions.started
+          ? t("A week that has started stays in place, so the athlete's reports stay on their days.")
+          : actions.onDelete
+            ? t('The weeks after it move one week earlier. Competitions keep their dates.')
+            : t('A plan keeps at least one week.')}
       </p>
     </div>,
     document.body,

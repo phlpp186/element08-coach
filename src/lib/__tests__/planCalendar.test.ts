@@ -29,6 +29,7 @@ import {
   sessionDate,
   suggestPhases,
   weekIndexOf,
+  weekStarted,
   weeksToReach,
   withCalWeeks,
   withCompetitions,
@@ -167,6 +168,18 @@ describe('weeks', () => {
   it('a week inserted into a phase belongs to that phase', () => {
     const r = insertWeek(phaseFrom(rows(), 1, 'build'), 2);
     expect(types(r)).toBe('base build build build');
+  });
+
+  it('a week has started from its first day; week 1 from the start date', () => {
+    // Inserting before or deleting a started week would shift reported
+    // sessions by a week (Sarang's plan, 2026-11-22), so the menu locks both.
+    const p = training([[], [], []], '2026-11-11'); // a Wednesday
+    expect(weekStarted(p, 0, '2026-11-10')).toBe(false); // Tue before the start
+    expect(weekStarted(p, 0, '2026-11-11')).toBe(true);
+    expect(weekStarted(p, 1, '2026-11-15')).toBe(false); // Sun before week 2
+    expect(weekStarted(p, 1, '2026-11-16')).toBe(true); // its Monday = today
+    expect(weekStarted(p, 2, '2026-11-22')).toBe(false);
+    expect(weekStarted({ startDate: '' }, 0, '2026-11-22')).toBe(false);
   });
 
   it('copy to next week adds copies with new ids; at the end it grows the plan', () => {
