@@ -38,6 +38,7 @@ import {
   type TemplateType,
 } from '../../lib/coachTemplates/model';
 import type { BlockType, TrainingBlock } from '../../lib/coachTemplates/deps';
+import { shownName } from '../../lib/typedName';
 import { blockSummary } from '../../lib/coachTemplates/summary';
 import { templateTr } from '../../lib/coachTemplates/tr';
 
@@ -69,6 +70,35 @@ const ADD_TONE: Record<PartKind, string> = {
   dry: 'border-recover text-recover',
   program: 'border-amber text-amber',
 };
+
+/** A programme exercise's name: the session panel stores it trimmed, so the
+ *  field keeps a space typed at the end (lib/typedName). */
+function ProgramName({
+  value,
+  onChange,
+  placeholder,
+  label,
+}: {
+  value: string;
+  onChange: (name: string) => void;
+  placeholder: string;
+  label: string;
+}) {
+  const [typed, setTyped] = useState(value);
+  return (
+    <input
+      className="field min-w-[8rem] flex-1 px-2 py-1 text-sm"
+      value={shownName(typed, value)}
+      maxLength={60}
+      onChange={(e) => {
+        setTyped(e.target.value);
+        onChange(e.target.value);
+      }}
+      placeholder={placeholder}
+      aria-label={label}
+    />
+  );
+}
 
 const ISSUE: Record<TemplateIssueCode, string> = {
   name: 'Give the template a name.',
@@ -313,13 +343,11 @@ function Part({
             };
             return (
               <div key={i} className="flex flex-wrap items-center gap-2">
-                <input
-                  className="field min-w-[8rem] flex-1 px-2 py-1 text-sm"
+                <ProgramName
                   value={it.name}
-                  maxLength={60}
-                  onChange={(e) => set({ ...it, name: e.target.value })}
+                  onChange={(name) => set({ ...it, name })}
                   placeholder={t('e.g. Plank')}
-                  aria-label={t('Exercise')}
+                  label={t('Exercise')}
                 />
                 <button
                   onClick={toggle}
