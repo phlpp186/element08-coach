@@ -1163,5 +1163,7 @@
   "▶ Video": "▶ 影片",
   "In the app": "App 中有",
   "The app knows this exercise and plays its video.": "App 認得這個動作，並會播放它的影片。",
-  "The app knows this exercise. No video for it yet.": "App 認得這個動作。暫時還沒有影片。"
+  "The app knows this exercise. No video for it yet.": "App 認得這個動作。暫時還沒有影片。",
+  "Reorder": "調整順序",
+  "Order changed on {day}": "已調整 {day} 的順序"
 }

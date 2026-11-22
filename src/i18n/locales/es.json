@@ -1163,5 +1163,7 @@
   "▶ Video": "▶ Vídeo",
   "In the app": "En la app",
   "The app knows this exercise and plays its video.": "La app conoce este ejercicio y reproduce su vídeo.",
-  "The app knows this exercise. No video for it yet.": "La app conoce este ejercicio. Aún no tiene vídeo."
+  "The app knows this exercise. No video for it yet.": "La app conoce este ejercicio. Aún no tiene vídeo.",
+  "Reorder": "Reordenar",
+  "Order changed on {day}": "Orden cambiado el {day}"
 }

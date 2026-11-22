@@ -281,11 +281,49 @@ export function moveSession(rows: CalWeek[], id: string, week: number, day: numb
   return addSession(removeSession(rows, id), week, { ...at.session, dayOfWeek: day });
 }
 
-/** A copy of the session on another day; the original stays. */
-export function copySessionTo(rows: CalWeek[], id: string, week: number, day: number): CalWeek[] {
+/** A copy of the session on another day, before `before` (a session of that
+ *  day) or last; the original stays. */
+export function copySessionTo(
+  rows: CalWeek[],
+  id: string,
+  week: number,
+  day: number,
+  before: string | null = null,
+): CalWeek[] {
   const at = findSession(rows, id);
   if (!at || week < 0 || week >= rows.length) return rows;
-  return addSession(rows, week, { ...copySession(at.session), dayOfWeek: day });
+  return insertSession(rows, week, { ...copySession(at.session), dayOfWeek: day }, before);
+}
+
+/** A day's sessions in their order: the order the athlete's app lists them
+ *  in (it keeps the plan's order). */
+export function dayOrder(rows: CalWeek[], week: number, day: number): string[] {
+  return (rows[week]?.week.sessions ?? []).filter((s) => s.dayOfWeek === day).map((s) => s.id);
+}
+
+/** The session on a day, before `before` (another session of that day) or
+ *  last. It keeps its id, so a report stays with it. On its own day this
+ *  reorders the day (Philipp, 2026-11-22). */
+export function placeSession(
+  rows: CalWeek[],
+  id: string,
+  week: number,
+  day: number,
+  before: string | null,
+): CalWeek[] {
+  const at = findSession(rows, id);
+  if (!at || week < 0 || week >= rows.length || before === id) return rows;
+  return insertSession(removeSession(rows, id), week, { ...at.session, dayOfWeek: day }, before);
+}
+
+function insertSession(rows: CalWeek[], week: number, s: BuilderSession, before: string | null): CalWeek[] {
+  return rows.map((r, i) => {
+    if (i !== week) return r;
+    const list = r.week.sessions;
+    const k = before ? list.findIndex((x) => x.id === before && x.dayOfWeek === s.dayOfWeek) : -1;
+    const sessions = k < 0 ? [...list, s] : [...list.slice(0, k), s, ...list.slice(k)];
+    return { ...r, week: { ...r.week, sessions } };
+  });
 }
 
 /** The date a session is planned on (YYYY-MM-DD), or null. */
@@ -328,10 +366,16 @@ export const startShiftWeeks = (from: string, to: string): number =>
 export function keepBoth(
   rows: CalWeek[],
   id: string,
-  from: { week: number; day: number },
+  from: { week: number; day: number; before?: string | null },
   to: { week: number; day: number },
 ): CalWeek[] {
-  return copySessionTo(moveSession(rows, id, from.week, from.day), id, to.week, to.day);
+  // Both keep their places: the original its old one in its day's order, the
+  // copy the one the original was dropped on.
+  const order = dayOrder(rows, to.week, to.day);
+  const i = order.indexOf(id);
+  const after = i >= 0 ? (order[i + 1] ?? null) : null;
+  const back = placeSession(rows, id, from.week, from.day, from.before ?? null);
+  return copySessionTo(back, id, to.week, to.day, after);
 }
 
 /** Copies of the session on its weekday in each of `weeks`. */

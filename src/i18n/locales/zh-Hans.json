@@ -1163,5 +1163,7 @@
   "▶ Video": "▶ 视频",
   "In the app": "应用中有",
   "The app knows this exercise and plays its video.": "应用认识这个动作，并会播放它的视频。",
-  "The app knows this exercise. No video for it yet.": "应用认识这个动作。暂时还没有视频。"
+  "The app knows this exercise. No video for it yet.": "应用认识这个动作。暂时还没有视频。",
+  "Reorder": "调整顺序",
+  "Order changed on {day}": "已调整 {day} 的顺序"
 }

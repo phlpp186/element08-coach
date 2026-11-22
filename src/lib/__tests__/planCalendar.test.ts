@@ -16,6 +16,7 @@ import {
   copyToNextWeek,
   copyToWeeks,
   copySessionTo,
+  dayOrder,
   deleteWeek,
   findSession,
   insertWeek,
@@ -25,6 +26,7 @@ import {
   moveSession,
   nextMonday,
   phaseFrom,
+  placeSession,
   planCompetitions,
   sessionDate,
   startShiftWeeks,
@@ -242,6 +244,37 @@ describe('sessions: move and copy', () => {
     expect(isPastSession(p, r, 's-a', '2026-11-19')).toBe(true);
     expect(isPastSession(p, r, 's-b', '2026-11-19')).toBe(false); // Thu 19 = today
     expect(isPastSession(p, r, 'nope', '2026-11-19')).toBe(false);
+  });
+
+  it('a day reorders: a session goes before another, or last, and keeps its id', () => {
+    // Philipp, 2026-11-22. The athlete's app lists a day in this order.
+    const day = () => calWeeks(training([[sess('a', 2), sess('x', 4), sess('b', 2), sess('c', 2)]]));
+    expect(dayOrder(day(), 0, 2)).toEqual(['s-a', 's-b', 's-c']);
+    expect(dayOrder(placeSession(day(), 's-c', 0, 2, 's-a'), 0, 2)).toEqual(['s-c', 's-a', 's-b']);
+    expect(dayOrder(placeSession(day(), 's-a', 0, 2, null), 0, 2)).toEqual(['s-b', 's-c', 's-a']);
+    expect(dayOrder(placeSession(day(), 's-b', 0, 2, 's-b'), 0, 2)).toEqual(['s-a', 's-b', 's-c']);
+    expect(dayOrder(placeSession(day(), 's-c', 0, 2, 's-a'), 0, 4)).toEqual(['s-x']);
+  });
+
+  it('"keep it on the old day too" keeps both places in their days', () => {
+    const rows = calWeeks(training([[sess('a', 0), sess('b', 0)], [sess('c', 3), sess('d', 3)]]));
+    const moved = placeSession(rows, 's-a', 1, 3, 's-d');
+    const r = keepBoth(moved, 's-a', { week: 0, day: 0, before: 's-b' }, { week: 1, day: 3 });
+    expect(dayOrder(r, 0, 0)).toEqual(['s-a', 's-b']);
+    const day = dayOrder(r, 1, 3);
+    expect([day[0], day[2]]).toEqual(['s-c', 's-d']);
+    expect(day[1]).not.toBe('s-a');
+  });
+
+  it('a session moved or copied to another day lands where it was dropped', () => {
+    const rows = () => calWeeks(training([[sess('a', 0)], [sess('b', 3), sess('c', 3)]]));
+    const moved = placeSession(rows(), 's-a', 1, 3, 's-c');
+    expect(dayOrder(moved, 1, 3)).toEqual(['s-b', 's-a', 's-c']);
+    expect(findSession(moved, 's-a')).toMatchObject({ week: 1, session: { dayOfWeek: 3 } });
+    const copied = copySessionTo(rows(), 's-a', 1, 3, 's-b');
+    expect(dayOrder(copied, 1, 3)).toHaveLength(3);
+    expect(dayOrder(copied, 1, 3).slice(1)).toEqual(['s-b', 's-c']);
+    expect(findSession(copied, 's-a')!.week).toBe(0);
   });
 
   it('a session with nothing in it counts as blank', () => {

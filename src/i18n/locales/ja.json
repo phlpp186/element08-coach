@@ -1163,5 +1163,7 @@
   "▶ Video": "▶ 動画",
   "In the app": "アプリにあり",
   "The app knows this exercise and plays its video.": "アプリはこの種目を認識し、動画を再生します。",
-  "The app knows this exercise. No video for it yet.": "アプリはこの種目を認識しています。動画はまだありません。"
+  "The app knows this exercise. No video for it yet.": "アプリはこの種目を認識しています。動画はまだありません。",
+  "Reorder": "並べ替え",
+  "Order changed on {day}": "{day} の順番を変更しました"
 }

@@ -38,6 +38,7 @@ import {
   copySessionTo,
   copyToNextWeek,
   copyToWeeks,
+  dayOrder,
   deleteWeek,
   findSession,
   insertWeek,
@@ -48,6 +49,7 @@ import {
   nextMonday,
   patchSession,
   phaseFrom,
+  placeSession,
   planCompetitions,
   removeSession,
   startShiftWeeks,
@@ -208,7 +210,7 @@ export function PlanCalendarView({ planId, presetAthleteId }: { planId: string |
     } else placeWeek(placing.id, week);
     setPlacing(null);
   };
-  const onDrop = (item: DragItem, week: number, day: number | null, copy: boolean) => {
+  const onDrop = (item: DragItem, week: number, day: number | null, copy: boolean, before: string | null) => {
     if (item.k === 'week') return placeWeek(item.id, week);
     if (day == null) return;
     if (item.k === 'template') return placeTemplate(item.id, week, day);
@@ -216,14 +218,23 @@ export function PlanCalendarView({ planId, presetAthleteId }: { planId: string |
     const from = findSession(rows, item.id);
     if (!from) return;
     const to = dayName(week, day);
-    // A past session is history: its report stays with it on its day.
-    if (copy || isPastSession(plan, rows, item.id, today)) {
-      withUndo(fill(t('Copied to {day}'), { day: to }), (r) => copySessionTo(r, item.id, week, day));
+    // Its own day: a new place in the day's order (the date stays, so a past
+    // session's report stays with it).
+    if (!copy && from.week === week && from.session.dayOfWeek === day) {
+      const order = dayOrder(rows, week, day);
+      const next = dayOrder(placeSession(rows, item.id, week, day, before), week, day);
+      if (next.join() === order.join()) return;
+      withUndo(fill(t('Order changed on {day}'), { day: to }), (r) => placeSession(r, item.id, week, day, before));
       return;
     }
-    if (from.week === week && from.session.dayOfWeek === day) return;
-    const back = { week: from.week, day: from.session.dayOfWeek };
-    withUndo(fill(t('Moved to {day}'), { day: to }), (r) => moveSession(r, item.id, week, day), [
+    // A past session is history: its report stays with it on its day.
+    if (copy || isPastSession(plan, rows, item.id, today)) {
+      withUndo(fill(t('Copied to {day}'), { day: to }), (r) => copySessionTo(r, item.id, week, day, before));
+      return;
+    }
+    const was = dayOrder(rows, from.week, from.session.dayOfWeek);
+    const back = { week: from.week, day: from.session.dayOfWeek, before: was[was.indexOf(item.id) + 1] ?? null };
+    withUndo(fill(t('Moved to {day}'), { day: to }), (r) => placeSession(r, item.id, week, day, before), [
       {
         label: fill(t('Keep it on {day} too'), { day: dayName(back.week, back.day) }),
         // The original goes back to its day, the fresh copy stays here.

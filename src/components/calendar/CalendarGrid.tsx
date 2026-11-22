@@ -24,7 +24,7 @@ import {
   type MesoType,
   type PlanMode,
 } from '../../lib/e08plan';
-import { beforeStart, isPastSession, weekMonday, type CalWeek, type PlanCompetition } from '../../lib/planCalendar';
+import { beforeStart, findSession, isPastSession, weekMonday, type CalWeek, type PlanCompetition } from '../../lib/planCalendar';
 import { PHASE_HEX, PHASE_INK } from '../../lib/phaseColor';
 import { dragging, endDrag, isOurs, readDrag, startDrag, type DragItem } from './dnd';
 
@@ -55,7 +55,8 @@ export interface GridProps {
   onOpenSession: (id: string) => void;
   /** A click on a day or a week while a template waits to be placed. */
   onPlace: (week: number, day: number | null) => void;
-  onDrop: (item: DragItem, week: number, day: number | null, copy: boolean) => void;
+  /** `before`: the session of that day it was dropped above, null = last. */
+  onDrop: (item: DragItem, week: number, day: number | null, copy: boolean, before: string | null) => void;
   onDropExercise: (sessionId: string, description: string) => void;
   onWeekMenu: (week: number, anchor: HTMLElement) => void;
   onWeek: (week: number, patch: Partial<BuilderWeek>) => void;
@@ -68,6 +69,22 @@ interface Over {
   day: number | null;
   label: string;
   copy: boolean;
+  /** Where a dragged session lands among the day's sessions: before this
+   *  one, null = last, undefined = not a session. */
+  before?: string | null;
+}
+
+/** The session of the day under the pointer's half: a session dropped in the
+ *  upper half of a session goes before it. The dragged one itself does not
+ *  count, so its own spot means "stay". */
+function dropBefore(e: DragEvent, dragged: string): string | null {
+  const els = (e.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('[data-session]');
+  for (const el of els) {
+    if (el.dataset.session === dragged) continue;
+    const r = el.getBoundingClientRect();
+    if (e.clientY < r.top + r.height / 2) return el.dataset.session ?? null;
+  }
+  return null;
 }
 
 export function CalendarGrid(props: GridProps) {
@@ -81,12 +98,18 @@ export function CalendarGrid(props: GridProps) {
     if (!item || item.k === 'exercise') return null;
     if (item.k === 'session') {
       if (day == null) return null;
+      const at = findSession(rows, item.id);
+      const before = dropBefore(e, item.id);
+      // Its own day: a new place in the day's order. The date stays, so a
+      // past session may move here too.
+      if (at && at.week === week && at.session.dayOfWeek === day && !e.altKey)
+        return { week, day, copy: false, label: t('Reorder'), before };
       // A past session is history: it is copied, its report stays on its day.
       if (isPastSession(props.plan, rows, item.id, props.today))
-        return { week, day, copy: true, label: t('Copy here · past sessions stay') };
+        return { week, day, copy: true, label: t('Copy here · past sessions stay'), before };
       return e.altKey
-        ? { week, day, copy: true, label: t('Copy here') }
-        : { week, day, copy: false, label: t('Move here · ⌥ copies') };
+        ? { week, day, copy: true, label: t('Copy here'), before }
+        : { week, day, copy: false, label: t('Move here · ⌥ copies'), before };
     }
     if (item.k === 'template') return day == null ? null : { week, day, copy: true, label: t('Add here') };
     return { week, day, copy: true, label: t('Add to this week') };
@@ -102,7 +125,8 @@ export function CalendarGrid(props: GridProps) {
             if (!h) return;
             e.preventDefault();
             e.dataTransfer.dropEffect = h.copy ? 'copy' : 'move';
-            if (!over || over.week !== h.week || over.day !== h.day || over.copy !== h.copy) setOver(h);
+            if (!over || over.week !== h.week || over.day !== h.day || over.copy !== h.copy || over.before !== h.before)
+              setOver(h);
           },
           onDragLeave: (e: DragEvent) => {
             if (!(e.currentTarget as Node).contains(e.relatedTarget as Node | null)) setOver(null);
@@ -113,11 +137,13 @@ export function CalendarGrid(props: GridProps) {
             endDrag();
             if (!item || item.k === 'exercise') return;
             e.preventDefault();
-            props.onDrop(item, week, day, e.altKey);
+            const before = item.k === 'session' && day != null ? dropBefore(e, item.id) : null;
+            props.onDrop(item, week, day, e.altKey, before);
           },
         };
 
   const isOver = (week: number, day: number | null) => over && over.week === week && over.day === day;
+  const insertAt = (week: number, day: number) => (isOver(week, day) ? over!.before : undefined);
   const overLabel = (week: number, day: number | null) =>
     isOver(week, day) ? (
       <span
@@ -139,9 +165,9 @@ export function CalendarGrid(props: GridProps) {
       </div>
       {rows.map((r, w) =>
         w === open ? (
-          <OpenWeek key={w} {...props} row={r} index={w} dropZone={dropZone} overLabel={overLabel} isOver={isOver} />
+          <OpenWeek key={w} {...props} row={r} index={w} dropZone={dropZone} overLabel={overLabel} isOver={isOver} insertAt={insertAt} />
         ) : (
-          <WeekRow key={w} {...props} row={r} index={w} dropZone={dropZone} overLabel={overLabel} isOver={isOver} />
+          <WeekRow key={w} {...props} row={r} index={w} dropZone={dropZone} overLabel={overLabel} isOver={isOver} insertAt={insertAt} />
         ),
       )}
       <div className="flex items-center gap-3 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-textDim">
@@ -164,6 +190,7 @@ type RowProps = GridProps & {
   dropZone: (week: number, day: number | null, disabled?: boolean) => object;
   overLabel: (week: number, day: number | null) => ReactNode;
   isOver: (week: number, day: number | null) => boolean | null;
+  insertAt: (week: number, day: number) => string | null | undefined;
 };
 
 function phaseStarts(rows: CalWeek[], w: number): boolean {
@@ -326,6 +353,11 @@ function DayCell(p: RowProps & { day: number; big: boolean }) {
   const comps = p.competitions.filter((c) => c.date === iso);
   const sessions = p.row.week.sessions.filter((s) => s.dayOfWeek === d);
   const isToday = iso === p.today;
+  // Where a dragged session would land: a line above that session, or below
+  // the day's last one (not the dragged one itself).
+  const at = p.insertAt(w, d);
+  const dragged = dragging();
+  const lastOther = [...sessions].reverse().find((s) => s.id !== (dragged?.k === 'session' ? dragged.id : ''))?.id;
   if (off)
     return (
       <div className={`rounded-lg border border-dashed border-border/60 p-1 text-[10px] text-textDim/60 ${big ? 'min-h-[11rem]' : 'min-h-[4.25rem]'}`}>
@@ -353,13 +385,14 @@ function DayCell(p: RowProps & { day: number; big: boolean }) {
           🏁 {c.name || t('Competition')}
         </span>
       ))}
-      {sessions.map((s) =>
-        big ? (
-          <SessionCard key={s.id} s={s} selected={p.selected === s.id} onOpen={p.onOpenSession} onDropExercise={p.onDropExercise} />
+      {sessions.map((s) => {
+        const mark = s.id === at ? 'above' : at === null && s.id === lastOther ? 'below' : undefined;
+        return big ? (
+          <SessionCard key={s.id} s={s} selected={p.selected === s.id} onOpen={p.onOpenSession} onDropExercise={p.onDropExercise} mark={mark} />
         ) : (
-          <SessionChipCell key={s.id} s={s} selected={p.selected === s.id} onOpen={p.onOpenSession} onDropExercise={p.onDropExercise} />
-        ),
-      )}
+          <SessionChipCell key={s.id} s={s} selected={p.selected === s.id} onOpen={p.onOpenSession} onDropExercise={p.onDropExercise} mark={mark} />
+        );
+      })}
       {big ? (
         <button
           onClick={() => p.onAdd(w, d)}
@@ -386,7 +419,12 @@ interface SessionViewProps {
   selected: boolean;
   onOpen: (id: string) => void;
   onDropExercise: (sessionId: string, description: string) => void;
+  /** A dragged session would land above or below this one. */
+  mark?: 'above' | 'below';
 }
+
+const markStyle = (mark: SessionViewProps['mark']) =>
+  mark ? { boxShadow: `0 ${mark === 'above' ? -3 : 3}px 0 0 rgb(var(--c-accent))` } : undefined;
 
 /** A session takes an exercise dropped from the library rail. */
 function useExerciseDrop(id: string, onDropExercise: SessionViewProps['onDropExercise']) {
@@ -424,11 +462,12 @@ function firstLine(s: BuilderSession): string {
   return s.body.trim().split('\n')[0] ?? '';
 }
 
-function SessionChipCell({ s, selected, onOpen, onDropExercise }: SessionViewProps) {
+function SessionChipCell({ s, selected, onOpen, onDropExercise, mark }: SessionViewProps) {
   const { hot, handlers } = useExerciseDrop(s.id, onDropExercise);
   return (
     <div
-      data-session
+      data-session={s.id}
+      style={markStyle(mark)}
       draggable
       onDragStart={(e) => startDrag(e, { k: 'session', id: s.id })}
       onClick={() => onOpen(s.id)}
@@ -443,13 +482,14 @@ function SessionChipCell({ s, selected, onOpen, onDropExercise }: SessionViewPro
   );
 }
 
-function SessionCard({ s, selected, onOpen, onDropExercise }: SessionViewProps) {
+function SessionCard({ s, selected, onOpen, onDropExercise, mark }: SessionViewProps) {
   const t = useT();
   const { hot, handlers } = useExerciseDrop(s.id, onDropExercise);
   const lines = s.exercises.filter((e) => e.description.trim() || e.dose?.length);
   return (
     <div
-      data-session
+      data-session={s.id}
+      style={markStyle(mark)}
       draggable
       onDragStart={(e) => startDrag(e, { k: 'session', id: s.id })}
       onClick={() => onOpen(s.id)}

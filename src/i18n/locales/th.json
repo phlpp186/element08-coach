@@ -1163,5 +1163,7 @@
   "▶ Video": "▶ วิดีโอ",
   "In the app": "มีในแอป",
   "The app knows this exercise and plays its video.": "แอปรู้จักท่านี้และเล่นวิดีโอให้",
-  "The app knows this exercise. No video for it yet.": "แอปรู้จักท่านี้ ยังไม่มีวิดีโอ"
+  "The app knows this exercise. No video for it yet.": "แอปรู้จักท่านี้ ยังไม่มีวิดีโอ",
+  "Reorder": "จัดลำดับใหม่",
+  "Order changed on {day}": "เปลี่ยนลำดับของ {day} แล้ว"
 }
