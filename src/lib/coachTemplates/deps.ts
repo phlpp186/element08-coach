@@ -65,6 +65,8 @@ export interface Workout {
           measure: 'reps' | 'time';
           sets: number;
           reps?: number;
+          /** Top of a rep range ("8-12"), as the app's SetsItem. */
+          repsHigh?: number;
           sec?: number;
           restSec: number;
         }[];

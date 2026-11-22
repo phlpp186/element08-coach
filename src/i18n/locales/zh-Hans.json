@@ -1159,5 +1159,9 @@
   "Already on this plan: {names}. The new start moves every session one week earlier, reports included.": "正在使用此计划：{names}。新的开始日期会把每次训练连同报告提前一周。",
   "Already on this plan: {names}. The new start moves every session {n} weeks earlier, reports included.": "正在使用此计划：{names}。新的开始日期会把每次训练连同报告提前 {n} 周。",
   "Keep {date}": "保留 {date}",
-  "Back to the plan. Nothing is saved.": "返回计划。不会保存任何内容。"
+  "Back to the plan. Nothing is saved.": "返回计划。不会保存任何内容。",
+  "▶ Video": "▶ 视频",
+  "In the app": "应用中有",
+  "The app knows this exercise and plays its video.": "应用认识这个动作，并会播放它的视频。",
+  "The app knows this exercise. No video for it yet.": "应用认识这个动作。暂时还没有视频。"
 }

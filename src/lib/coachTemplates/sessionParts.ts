@@ -14,6 +14,11 @@
 import { validateProgramFile, type PlannedSession, type TrainingMode } from './deps';
 import { PLAN_WORKOUT_PREFIX, blockLine, programFileFor, workoutFor, type Tr } from './deliver';
 import { DEFAULT_ASK, newId, type CoachTemplate, type TemplateBlock } from './model';
+import { isCoachExercise } from './exercises';
+
+/** A workout move from the app's exercise list keeps its id in the editor. */
+const listed = (id: string): { exerciseId?: string } =>
+  isCoachExercise(id) ? { exerciseId: id } : {};
 
 export interface SessionParts {
   /** Dry table parts, then fitness programme parts. */
@@ -80,6 +85,8 @@ export function sessionParts(session: PlannedSession): SessionParts {
               workSec: it.sec ?? 0,
               restSec: it.restSec,
               ...(it.measure === 'reps' ? { reps: it.reps ?? 0 } : {}),
+              ...(it.measure === 'reps' && it.repsHigh != null ? { repsHigh: it.repsHigh } : {}),
+              ...listed(it.id),
             })),
             ...((b.restAfterSec ?? 0) > 0 ? { restAfterSec: b.restAfterSec } : {}),
           },
@@ -95,6 +102,7 @@ export function sessionParts(session: PlannedSession): SessionParts {
           kind: 'program',
           items: b.moves.map((m, mi) => ({
             name: m.name ?? m.id.replace(/^custom:/, ''),
+            ...listed(m.id),
             workSec: m.sec ?? b.workSec,
             // The rest after a round's last exercise is the round rest.
             restSec: mi === b.moves.length - 1 ? b.roundRestSec : (m.restSec ?? b.restSec),

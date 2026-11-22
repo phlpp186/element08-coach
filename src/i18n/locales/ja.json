@@ -1159,5 +1159,9 @@
   "Already on this plan: {names}. The new start moves every session one week earlier, reports included.": "このプランを使用中：{names}。新しい開始日で、すべてのセッションが報告ごと1週間前にずれます。",
   "Already on this plan: {names}. The new start moves every session {n} weeks earlier, reports included.": "このプランを使用中：{names}。新しい開始日で、すべてのセッションが報告ごと{n}週間前にずれます。",
   "Keep {date}": "{date} のままにする",
-  "Back to the plan. Nothing is saved.": "プランに戻ります。何も保存されません。"
+  "Back to the plan. Nothing is saved.": "プランに戻ります。何も保存されません。",
+  "▶ Video": "▶ 動画",
+  "In the app": "アプリにあり",
+  "The app knows this exercise and plays its video.": "アプリはこの種目を認識し、動画を再生します。",
+  "The app knows this exercise. No video for it yet.": "アプリはこの種目を認識しています。動画はまだありません。"
 }

@@ -44,6 +44,7 @@
  * app. Imperial is a display concern (resolve.ts formatValue).
  */
 import type { Discipline, LungVolume, SessionTag, TrainingBlock, TrainingMode } from './deps';
+import { isCoachExercise } from './exercises';
 
 export const TEMPLATE_FORMAT = 'e08template';
 /** 2 added the type 'general', the 'program' kind and many lines per text
@@ -104,8 +105,21 @@ export interface ProgramItem {
   workSec: number;
   /** Set = done for this many repetitions instead of on the clock. */
   reps?: number;
+  /** Top of a rep range when `reps` is its bottom ("8-12"): the app's player
+   *  counts up to it, as in its own routines (SetsItem.repsHigh). */
+  repsHigh?: number;
   /** 0 = straight into the next exercise. */
   restSec: number;
+  /** An exercise from the app's list (exercises.ts): the athlete sees its
+   *  name in their language and its clip. Absent = the coach's own name. */
+  exerciseId?: string;
+}
+
+/** "10", or a range "8-12". */
+export function repsText(it: Pick<ProgramItem, 'reps' | 'repsHigh'>): string {
+  return it.repsHigh != null && it.reps != null && it.repsHigh > it.reps
+    ? `${it.reps}-${it.repsHigh}`
+    : String(it.reps ?? '');
 }
 
 /** Dry rows are the Free Session's own TrainingBlocks, so a dry part is a
@@ -370,7 +384,13 @@ export function validateTemplate(t: CoachTemplate): TemplateIssue[] {
             (it) =>
               !it.name.trim() ||
               (it.reps != null
-                ? !(Number.isInteger(it.reps) && it.reps >= 1 && it.reps <= MAX_ITEM_REPS)
+                ? !(Number.isInteger(it.reps) && it.reps >= 1 && it.reps <= MAX_ITEM_REPS) ||
+                  (it.repsHigh != null &&
+                    !(
+                      Number.isInteger(it.repsHigh) &&
+                      it.repsHigh > it.reps &&
+                      it.repsHigh <= MAX_ITEM_REPS
+                    ))
                 : !(Number.isFinite(it.workSec) && it.workSec > 0 && it.workSec <= MAX_ITEM_SEC)) ||
               !(Number.isFinite(it.restSec) && it.restSec >= 0 && it.restSec <= MAX_ITEM_SEC),
           )
@@ -482,13 +502,21 @@ function parseExercise(v: unknown): TemplateExercise | null {
       for (const it of Array.isArray(o.items) ? o.items : []) {
         if (!it || typeof it !== 'object') continue;
         const io = it as Record<string, unknown>;
+        const reps =
+          typeof io.reps === 'number' && Number.isFinite(io.reps)
+            ? Math.max(0, Math.min(MAX_ITEM_REPS, Math.round(io.reps)))
+            : null;
+        const high =
+          reps != null && typeof io.repsHigh === 'number' && Number.isFinite(io.repsHigh)
+            ? Math.min(MAX_ITEM_REPS, Math.round(io.repsHigh))
+            : null;
         items.push({
           name: str(io.name, MAX_NAME),
           workSec: Math.max(0, Math.round(num(io.workSec, 0))),
           restSec: Math.max(0, Math.round(num(io.restSec, 0))),
-          ...(typeof io.reps === 'number' && Number.isFinite(io.reps)
-            ? { reps: Math.max(0, Math.min(MAX_ITEM_REPS, Math.round(io.reps))) }
-            : {}),
+          ...(reps != null ? { reps } : {}),
+          ...(reps != null && high != null && high > reps ? { repsHigh: high } : {}),
+          ...(isCoachExercise(str(io.exerciseId)) ? { exerciseId: str(io.exerciseId) } : {}),
         });
       }
       const after = Math.max(0, Math.min(MAX_ITEM_SEC, Math.round(num(o.restAfterSec, 0))));

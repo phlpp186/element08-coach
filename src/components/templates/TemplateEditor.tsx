@@ -12,8 +12,8 @@
  * A part from an older template (a target relative to a PB, one of the
  * app's own workouts) shows what it says and can only be moved or removed.
  */
-import { useMemo, useState } from 'react';
-import { fill, useT } from '../../i18n';
+import { useId, useMemo, useState } from 'react';
+import { fill, useLangValue, useT } from '../../i18n';
 import {
   MAX_BLOCKS,
   MAX_ITEMS,
@@ -27,6 +27,7 @@ import {
   TEMPLATE_TYPES,
   isLegacyExercise,
   newPart,
+  repsText,
   textLines,
   validateTemplate,
   type CoachTemplate,
@@ -39,6 +40,7 @@ import {
 } from '../../lib/coachTemplates/model';
 import type { BlockType, TrainingBlock } from '../../lib/coachTemplates/deps';
 import { shownName } from '../../lib/typedName';
+import { exerciseSuggestions, hasMedia, parseReps, renamedItem, shownReps } from '../../lib/programExercises';
 import { blockSummary } from '../../lib/coachTemplates/summary';
 import { templateTr } from '../../lib/coachTemplates/tr';
 
@@ -78,11 +80,14 @@ function ProgramName({
   onChange,
   placeholder,
   label,
+  list,
 }: {
   value: string;
   onChange: (name: string) => void;
   placeholder: string;
   label: string;
+  /** The app's exercise names to suggest (a <datalist> id). */
+  list: string;
 }) {
   const [typed, setTyped] = useState(value);
   return (
@@ -90,12 +95,46 @@ function ProgramName({
       className="field min-w-[8rem] flex-1 px-2 py-1 text-sm"
       value={shownName(typed, value)}
       maxLength={60}
+      list={list}
       onChange={(e) => {
         setTyped(e.target.value);
         onChange(e.target.value);
       }}
       placeholder={placeholder}
       aria-label={label}
+    />
+  );
+}
+
+/** Reps as a count or a range: "10" or "8-12". The field keeps what is being
+ *  typed ("8-") and stores it once it reads as reps. */
+function RepsField({
+  item,
+  onChange,
+  label,
+}: {
+  item: ProgramItem;
+  onChange: (item: ProgramItem) => void;
+  label: string;
+}) {
+  const [typed, setTyped] = useState(repsText(item));
+  return (
+    <input
+      inputMode="numeric"
+      className="field w-20 px-2 py-1 text-center text-sm"
+      aria-label={label}
+      title={label}
+      placeholder="8-12"
+      value={shownReps(typed, item)}
+      onChange={(e) => {
+        setTyped(e.target.value);
+        const p = parseReps(e.target.value);
+        if (!p) return;
+        const { repsHigh: _high, ...rest } = item;
+        void _high;
+        onChange({ ...rest, ...p });
+      }}
+      onBlur={() => setTyped(repsText(item))}
     />
   );
 }
@@ -227,6 +266,9 @@ function Part({
   restAfter?: boolean;
 }) {
   const t = useT();
+  const lang = useLangValue();
+  const listId = useId();
+  const suggestions = useMemo(() => exerciseSuggestions(lang), [lang]);
   const ex = block.exercise;
   const setEx = (exercise: TemplateExercise) => onChange({ ...block, exercise });
   const legacy = isLegacyExercise(ex);
@@ -329,6 +371,13 @@ function Part({
 
       {ex.kind === 'program' && (
         <div className="space-y-1.5">
+          <datalist id={listId}>
+            {suggestions.map((sug) => (
+              <option key={sug.name} value={sug.name}>
+                {sug.media ? t('▶ Video') : ''}
+              </option>
+            ))}
+          </datalist>
           <Rounds value={block.reps} onChange={(reps) => onChange({ ...block, reps })} />
           {ex.items.map((it, i) => {
             const set = (item: ProgramItem) =>
@@ -337,18 +386,32 @@ function Part({
             // Time or repetitions: click the unit to switch; the other value is kept.
             const toggle = () => {
               if (!byReps) return set({ ...it, reps: 10 });
-              const { reps: _reps, ...timed } = it;
+              const { reps: _reps, repsHigh: _high, ...timed } = it;
               void _reps;
+              void _high;
               set({ ...timed, workSec: timed.workSec > 0 ? timed.workSec : 30 });
             };
             return (
               <div key={i} className="flex flex-wrap items-center gap-2">
                 <ProgramName
                   value={it.name}
-                  onChange={(name) => set({ ...it, name })}
+                  onChange={(name) => set(renamedItem(it, name))}
                   placeholder={t('e.g. Plank')}
                   label={t('Exercise')}
+                  list={listId}
                 />
+                {it.exerciseId && (
+                  <span
+                    className="rounded-full border border-amber/60 px-2 py-0.5 text-[10px] font-bold text-amber"
+                    title={
+                      hasMedia(it.exerciseId)
+                        ? t('The app knows this exercise and plays its video.')
+                        : t('The app knows this exercise. No video for it yet.')
+                    }
+                  >
+                    {hasMedia(it.exerciseId) ? t('▶ Video') : t('In the app')}
+                  </span>
+                )}
                 <button
                   onClick={toggle}
                   className="pill w-16 px-2 py-1 text-xs text-amber"
@@ -357,17 +420,7 @@ function Part({
                   {byReps ? t('Reps') : t('Time')}
                 </button>
                 {byReps ? (
-                  <input
-                    type="number"
-                    min={1}
-                    max={999}
-                    className="field w-16 px-2 py-1 text-center text-sm"
-                    aria-label={t('Reps')}
-                    value={it.reps || ''}
-                    onChange={(e) =>
-                      set({ ...it, reps: Math.max(0, Math.round(Number(e.target.value) || 0)) })
-                    }
-                  />
+                  <RepsField item={it} onChange={set} label={t('Reps')} />
                 ) : (
                   <TimeField
                     value={it.workSec}

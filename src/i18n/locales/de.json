@@ -1159,5 +1159,9 @@
   "Already on this plan: {names}. The new start moves every session one week earlier, reports included.": "Schon auf diesem Plan: {names}. Der neue Start verschiebt jede Einheit um eine Woche nach vorne, samt Berichten.",
   "Already on this plan: {names}. The new start moves every session {n} weeks earlier, reports included.": "Schon auf diesem Plan: {names}. Der neue Start verschiebt jede Einheit um {n} Wochen nach vorne, samt Berichten.",
   "Keep {date}": "{date} behalten",
-  "Back to the plan. Nothing is saved.": "Zurück zum Plan. Nichts wird gespeichert."
+  "Back to the plan. Nothing is saved.": "Zurück zum Plan. Nichts wird gespeichert.",
+  "▶ Video": "▶ Video",
+  "In the app": "In der App",
+  "The app knows this exercise and plays its video.": "Die App kennt diese Übung und spielt ihr Video ab.",
+  "The app knows this exercise. No video for it yet.": "Die App kennt diese Übung. Noch kein Video dafür."
 }

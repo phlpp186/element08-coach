@@ -1159,5 +1159,9 @@
   "Already on this plan: {names}. The new start moves every session one week earlier, reports included.": "이 플랜을 사용 중: {names}. 새 시작일로 모든 세션이 보고와 함께 1주 앞으로 옮겨집니다.",
   "Already on this plan: {names}. The new start moves every session {n} weeks earlier, reports included.": "이 플랜을 사용 중: {names}. 새 시작일로 모든 세션이 보고와 함께 {n}주 앞으로 옮겨집니다.",
   "Keep {date}": "{date} 유지",
-  "Back to the plan. Nothing is saved.": "플랜으로 돌아갑니다. 아무것도 저장되지 않습니다."
+  "Back to the plan. Nothing is saved.": "플랜으로 돌아갑니다. 아무것도 저장되지 않습니다.",
+  "▶ Video": "▶ 동영상",
+  "In the app": "앱에 있음",
+  "The app knows this exercise and plays its video.": "앱이 이 운동을 알고 동영상을 재생합니다.",
+  "The app knows this exercise. No video for it yet.": "앱이 이 운동을 알고 있습니다. 아직 동영상은 없습니다."
 }

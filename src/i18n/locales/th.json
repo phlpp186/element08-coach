@@ -1159,5 +1159,9 @@
   "Already on this plan: {names}. The new start moves every session one week earlier, reports included.": "ใช้แผนนี้อยู่: {names} วันเริ่มใหม่จะเลื่อนทุกเซสชันเร็วขึ้นหนึ่งสัปดาห์ รวมถึงรายงานด้วย",
   "Already on this plan: {names}. The new start moves every session {n} weeks earlier, reports included.": "ใช้แผนนี้อยู่: {names} วันเริ่มใหม่จะเลื่อนทุกเซสชันเร็วขึ้น {n} สัปดาห์ รวมถึงรายงานด้วย",
   "Keep {date}": "คงไว้ที่ {date}",
-  "Back to the plan. Nothing is saved.": "กลับไปที่แผน ไม่มีการบันทึก"
+  "Back to the plan. Nothing is saved.": "กลับไปที่แผน ไม่มีการบันทึก",
+  "▶ Video": "▶ วิดีโอ",
+  "In the app": "มีในแอป",
+  "The app knows this exercise and plays its video.": "แอปรู้จักท่านี้และเล่นวิดีโอให้",
+  "The app knows this exercise. No video for it yet.": "แอปรู้จักท่านี้ ยังไม่มีวิดีโอ"
 }

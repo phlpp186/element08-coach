@@ -26,6 +26,9 @@ const SUBTREES = ['deliver', 'summary'];
 // editor.parts.dry: the name sessionParts.ts gives a table on an unnamed session.
 const EXTRA = ['library.blocks_one', 'library.blocks_other', 'editor.parts.dry'];
 const WORKOUT_TITLES = ['courses.circuit.title', 'courses.hiit.title', 'courses.apneaHiit.title'];
+// The app's exercise names (exercises.ts lists the ids): the programme editor
+// finds a typed exercise by any of them and suggests them.
+const FITNESS_SUBTREES = ['exercise'];
 
 const at = (o, path) => path.split('.').reduce((x, k) => (x == null ? undefined : x[k]), o);
 function flatten(o, prefix, out) {
@@ -41,10 +44,12 @@ function strings() {
     const dir = join(app, 'src/i18n/locales', lang);
     const tpl = JSON.parse(readFileSync(join(dir, 'coachTemplates.json'), 'utf8'));
     const plans = JSON.parse(readFileSync(join(dir, 'trainingPlans.json'), 'utf8'));
+    const fitness = JSON.parse(readFileSync(join(dir, 'fitness.json'), 'utf8'));
     const out = {};
     for (const s of SUBTREES) flatten(tpl[s], `${s}.`, out);
     for (const k of EXTRA) if (at(tpl, k) != null) out[k] = at(tpl, k);
     for (const k of WORKOUT_TITLES) if (at(plans, k) != null) out[`trainingPlans:${k}`] = at(plans, k);
+    for (const s of FITNESS_SUBTREES) flatten(fitness[s], `fitness:${s}.`, out);
     all[lang] = out;
   }
   return `${JSON.stringify(all, null, 2)}\n`;

@@ -28,8 +28,10 @@ import {
 import {
   FITNESS_WORKOUTS,
   newId,
+  repsText,
   textLines,
   type CoachTemplate,
+  type ProgramItem,
   type RestRule,
   type TemplateBlock,
   type TemplateType,
@@ -191,7 +193,7 @@ export function blockLine(
         .map((it) => {
           const work =
             it.reps != null
-              ? t('deliver.reps', { n: it.reps, what: it.name.trim() })
+              ? t('deliver.reps', { n: repsText(it), what: it.name.trim() })
               : t('deliver.programItem', {
                   name: it.name.trim(),
                   time: formatValue(it.workSec, 's', false),
@@ -297,22 +299,25 @@ export function workoutFor(template: CoachTemplate, id: string): Workout | null 
     const items = b.exercise.items;
     const after = b.exercise.restAfterSec ?? 0;
     const restAfter = after > 0 ? { restAfterSec: after } : {};
-    const ref = (name: string) => {
-      const clean = name.trim().slice(0, 60);
-      return { id: `custom:${clean.toLowerCase()}`, name: clean };
+    // An exercise from the app's list runs as that exercise (its name in the
+    // athlete's language, its clip); any other name as the coach's own.
+    const ref = (it: ProgramItem) => {
+      const clean = it.name.trim().slice(0, 60);
+      return { id: it.exerciseId ?? `custom:${clean.toLowerCase()}`, name: clean };
     };
     if (items.some((it) => it.reps != null)) {
       const round = items.map((it) =>
         it.reps != null
           ? {
-              ...ref(it.name),
+              ...ref(it),
               measure: 'reps' as const,
               sets: 1,
               reps: it.reps,
+              ...(it.repsHigh != null ? { repsHigh: it.repsHigh } : {}),
               restSec: it.restSec,
             }
           : {
-              ...ref(it.name),
+              ...ref(it),
               measure: 'time' as const,
               sets: 1,
               sec: it.workSec,
@@ -330,7 +335,7 @@ export function workoutFor(template: CoachTemplate, id: string): Workout | null 
     const last = items[items.length - 1];
     blocks.push({
       kind: 'circuit',
-      moves: items.map((it) => ({ ...ref(it.name), sec: it.workSec, restSec: it.restSec })),
+      moves: items.map((it) => ({ ...ref(it), sec: it.workSec, restSec: it.restSec })),
       // Builds that do not know per-move clocks run every move on these.
       workSec: items[0].workSec,
       restSec: items[0].restSec,
