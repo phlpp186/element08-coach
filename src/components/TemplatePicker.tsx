@@ -8,6 +8,7 @@
  * backdrop click close it, like the completion bell.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useT } from "../i18n";
 import { groupTemplates, type PickableTemplate } from "../lib/templateGroups";
 import type { PlanMode } from "../lib/e08plan";
@@ -91,7 +92,10 @@ export function TemplatePicker({
         {triggerLabel}
       </button>
 
-      {open && (
+      {/* At the page root: inside a sticky box (the plan calendar's rail) a
+          fixed overlay only layers within that box, and the calendar grid
+          drew over it (Philipp's screenshot, 2026-11-22). */}
+      {open && createPortal(
         <div
           className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 pt-[8vh]"
           onMouseDown={(e) => {
@@ -184,7 +188,8 @@ export function TemplatePicker({
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );
