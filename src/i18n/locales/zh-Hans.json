@@ -1158,5 +1158,6 @@
   "Already on this plan: {names}. The new start moves every session {n} weeks later, reports included.": "正在使用此计划：{names}。新的开始日期会把每次训练连同报告推后 {n} 周。",
   "Already on this plan: {names}. The new start moves every session one week earlier, reports included.": "正在使用此计划：{names}。新的开始日期会把每次训练连同报告提前一周。",
   "Already on this plan: {names}. The new start moves every session {n} weeks earlier, reports included.": "正在使用此计划：{names}。新的开始日期会把每次训练连同报告提前 {n} 周。",
-  "Keep {date}": "保留 {date}"
+  "Keep {date}": "保留 {date}",
+  "Back to the plan. Nothing is saved.": "返回计划。不会保存任何内容。"
 }

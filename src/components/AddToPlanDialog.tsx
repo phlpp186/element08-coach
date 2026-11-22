@@ -167,6 +167,11 @@ export function AddToPlanDialog({
       let ok = true;
       if (online) {
         const outcome = await library.publish(sp.id, next);
+        if (outcome === 'cancelled') {
+          // Back from "who gets this version": nothing is added.
+          upsertPlan(sp);
+          return;
+        }
         if (outcome === 'offline')
           text = `${text} ${t('Not synced yet: it goes to the library on the next sync.')}`;
         if (outcome === 'conflict') {

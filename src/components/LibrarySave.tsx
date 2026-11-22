@@ -30,8 +30,10 @@ import { editedAgo } from '../views/PlansView';
 import { fill, useT } from '../i18n';
 
 export type LibraryStatus = 'idle' | 'saving' | 'synced' | 'offline' | 'conflict';
-/** 'appPlan': an app-only plan, not saved from here (isAppPlan). */
-export type PublishOutcome = 'ok' | 'conflict' | 'offline' | 'appPlan';
+/** 'appPlan': an app-only plan, not saved from here (isAppPlan).
+ *  'cancelled': "Cancel" at "Who gets this version?", nothing was sent; the
+ *  caller puts its local save back (Philipp pressed Done too early, 2026-11-22). */
+export type PublishOutcome = 'ok' | 'conflict' | 'offline' | 'appPlan' | 'cancelled';
 
 const DEVICE: Record<LibraryDevice, string> = {
   iphone: 'iPhone',
@@ -151,6 +153,14 @@ export function useLibrarySave() {
     }
   }
 
+  /** Back to the plan: nothing goes out, nobody's version changes. */
+  function cancelAsk() {
+    if (!ask || busy) return;
+    setNaming(false);
+    ask.done('cancelled');
+    setAsk(null);
+  }
+
   /** The name the plan has in the library now, before this save. */
   function oldName(a: { cloudId: string; plan: BuilderPlan }): string {
     return lib.rows[a.cloudId]?.title?.trim() || a.plan.name.trim();
@@ -194,7 +204,8 @@ export function useLibrarySave() {
         />
       )}
       {ask && !naming && (
-        // No dismiss: the save has to say who gets it.
+        // A click beside it does nothing: the save has to say who gets it,
+        // or Cancel goes back to the plan.
         <Modal onClose={() => {}}>
           <h3 className="font-heading text-lg">
             {fill(t('Assigned to {n} athletes'), { n: ask.athletes.length })}
@@ -237,6 +248,14 @@ export function useLibrarySave() {
               className="rounded-lg border border-border px-4 py-2 text-sm disabled:opacity-50"
             >
               {t('Save to library only')}
+            </button>
+            <button
+              disabled={busy}
+              onClick={cancelAsk}
+              title={t('Back to the plan. Nothing is saved.')}
+              className="ml-auto rounded-lg px-3 py-2 text-sm text-textDim hover:text-text disabled:opacity-50"
+            >
+              {t('Cancel')}
             </button>
           </div>
         </Modal>

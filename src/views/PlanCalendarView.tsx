@@ -10,6 +10,7 @@
  * same BuilderPlan, lib/planCalendar only reads and writes it as weeks.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { fill, tr, useT } from '../i18n';
 import {
   addDays,
@@ -64,10 +65,10 @@ import {
   type PlanCompetition,
 } from '../lib/planCalendar';
 import { applyWeekTemplate, defaultDoseFor, recordUseByDescription, saveWeekTemplate, useWeekTemplates } from '../lib/library';
-import { newPlanId, upsertPlan, useAthletes, useSavedPlan } from '../lib/store';
+import { getSavedPlans, newPlanId, upsertPlan, useAthletes, useSavedPlan } from '../lib/store';
 import type { Athlete } from '../lib/types';
 import { navigate } from '../hooks/useHashRoute';
-import { useLibrarySave } from '../components/LibrarySave';
+import { useLibrarySave, type PublishOutcome } from '../components/LibrarySave';
 import { useLibrary } from '../lib/supabase/planLibrary';
 import { getCloudPlanLink } from '../lib/supabase/cloudPlanLinks';
 import { useCoachAssignments } from '../lib/supabase/useCoachAssignments';
@@ -312,10 +313,27 @@ export function PlanCalendarView({ planId, presetAthleteId }: { planId: string |
     setSavedTick(true);
     return id;
   };
-  const doSave = () => library.publish(saveLocal(), plan);
-  const ensurePublished = async () => {
+  /** Save here and send it to the library, which may first ask who of the
+   *  plan's athletes gets the new version. Cancel there: the stored plan goes
+   *  back to what it was and the edits stay here, unsaved. */
+  const saveAndSend = async (): Promise<{ id: string; outcome: PublishOutcome }> => {
+    const before = recordId ? getSavedPlans().find((p) => p.id === recordId) : undefined;
     const id = saveLocal();
-    return (await library.publish(id, plan)) === 'ok' ? id : null;
+    const outcome = await library.publish(id, plan);
+    if (outcome === 'cancelled') {
+      // Unsaved first, so the store going back does not replace the edits.
+      flushSync(() => {
+        setDirty(true);
+        setSavedTick(false);
+      });
+      if (before) upsertPlan(before);
+    }
+    return { id, outcome };
+  };
+  const doSave = async () => (await saveAndSend()).outcome;
+  const ensurePublished = async () => {
+    const r = await saveAndSend();
+    return r.outcome === 'ok' ? r.id : null;
   };
 
   useEffect(() => {
@@ -403,7 +421,7 @@ export function PlanCalendarView({ planId, presetAthleteId }: { planId: string |
         startMove={startMove}
         onKeepStart={() => setMeta({ startDate: liveStart })}
         onSave={() => void doSave()}
-        onDone={() => void doSave().then(() => navigate('/plan'))}
+        onDone={() => void doSave().then((o) => o !== 'cancelled' && navigate('/plan'))}
         onDownload={() => {
           void doSave();
           downloadPlanFile(plan);

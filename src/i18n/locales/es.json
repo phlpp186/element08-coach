@@ -1158,5 +1158,6 @@
   "Already on this plan: {names}. The new start moves every session {n} weeks later, reports included.": "Ya en este plan: {names}. El nuevo inicio mueve cada sesión {n} semanas más tarde, con sus reportes.",
   "Already on this plan: {names}. The new start moves every session one week earlier, reports included.": "Ya en este plan: {names}. El nuevo inicio mueve cada sesión una semana antes, con sus reportes.",
   "Already on this plan: {names}. The new start moves every session {n} weeks earlier, reports included.": "Ya en este plan: {names}. El nuevo inicio mueve cada sesión {n} semanas antes, con sus reportes.",
-  "Keep {date}": "Mantener {date}"
+  "Keep {date}": "Mantener {date}",
+  "Back to the plan. Nothing is saved.": "Volver al plan. No se guarda nada."
 }

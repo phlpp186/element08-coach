@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { flushSync } from 'react-dom';
 import { daysBetween } from '../lib/planHelpers';
 import {
   addDays,
@@ -38,6 +39,7 @@ import { PhaseCard } from '../components/PhaseCard';
 import { SeasonMap } from '../components/SeasonMap';
 import { navigate } from '../hooks/useHashRoute';
 import {
+  getSavedPlans,
   newPlanId,
   upsertPlan,
   useAthletes,
@@ -45,7 +47,7 @@ import {
 } from '../lib/store';
 import type { Athlete } from '../lib/types';
 import { AssignToConnectedButton } from '../components/AssignToConnectedButton';
-import { useLibrarySave } from '../components/LibrarySave';
+import { useLibrarySave, type PublishOutcome } from '../components/LibrarySave';
 import { useLibrary } from '../lib/supabase/planLibrary';
 import { getCloudPlanLink } from '../lib/supabase/cloudPlanLinks';
 import { isAppPlan } from '../lib/planLibrary';
@@ -249,11 +251,28 @@ export function PlanBuilderView({
   };
   /** Save here and send it to the library, which may first ask who of the
    *  plan's athletes gets the new version. */
-  const doSave = () => library.publish(saveLocal(), plan);
+  /** Save here and send it to the library, which may first ask who of the
+   *  plan's athletes gets the new version. Cancel there: the stored plan goes
+   *  back to what it was and the edits stay here, unsaved. */
+  const saveAndSend = async (): Promise<{ id: string; outcome: PublishOutcome }> => {
+    const before = recordId ? getSavedPlans().find((p) => p.id === recordId) : undefined;
+    const id = saveLocal();
+    const outcome = await library.publish(id, plan);
+    if (outcome === 'cancelled') {
+      // Unsaved first, so the store going back does not replace the edits.
+      flushSync(() => {
+        setDirty(true);
+        setSavedTick(false);
+      });
+      if (before) upsertPlan(before);
+    }
+    return { id, outcome };
+  };
+  const doSave = async () => (await saveAndSend()).outcome;
   /** For the assign button: saved and in the library, or null with why not. */
   const ensurePublished = async () => {
-    const id = saveLocal();
-    return (await library.publish(id, plan)) === 'ok' ? id : null;
+    const r = await saveAndSend();
+    return r.outcome === 'ok' ? r.id : null;
   };
   const doDownload = () => {
     void doSave();
@@ -314,7 +333,7 @@ export function PlanBuilderView({
           )}
           <button
             onClick={() => {
-              void doSave().then(() => navigate('/plan'));
+              void doSave().then((o) => o !== 'cancelled' && navigate('/plan'));
             }}
             title={t('Save and return to Plans')}
             className="pill px-3 py-1.5 text-sm"

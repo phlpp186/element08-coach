@@ -1158,5 +1158,6 @@
   "Already on this plan: {names}. The new start moves every session {n} weeks later, reports included.": "ใช้แผนนี้อยู่: {names} วันเริ่มใหม่จะเลื่อนทุกเซสชันไปช้าลง {n} สัปดาห์ รวมถึงรายงานด้วย",
   "Already on this plan: {names}. The new start moves every session one week earlier, reports included.": "ใช้แผนนี้อยู่: {names} วันเริ่มใหม่จะเลื่อนทุกเซสชันเร็วขึ้นหนึ่งสัปดาห์ รวมถึงรายงานด้วย",
   "Already on this plan: {names}. The new start moves every session {n} weeks earlier, reports included.": "ใช้แผนนี้อยู่: {names} วันเริ่มใหม่จะเลื่อนทุกเซสชันเร็วขึ้น {n} สัปดาห์ รวมถึงรายงานด้วย",
-  "Keep {date}": "คงไว้ที่ {date}"
+  "Keep {date}": "คงไว้ที่ {date}",
+  "Back to the plan. Nothing is saved.": "กลับไปที่แผน ไม่มีการบันทึก"
 }

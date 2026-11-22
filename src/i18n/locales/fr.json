@@ -1158,5 +1158,6 @@
   "Already on this plan: {names}. The new start moves every session {n} weeks later, reports included.": "Déjà sur ce plan : {names}. Le nouveau début décale chaque séance de {n} semaines plus tard, retours compris.",
   "Already on this plan: {names}. The new start moves every session one week earlier, reports included.": "Déjà sur ce plan : {names}. Le nouveau début décale chaque séance d'une semaine plus tôt, retours compris.",
   "Already on this plan: {names}. The new start moves every session {n} weeks earlier, reports included.": "Déjà sur ce plan : {names}. Le nouveau début décale chaque séance de {n} semaines plus tôt, retours compris.",
-  "Keep {date}": "Garder le {date}"
+  "Keep {date}": "Garder le {date}",
+  "Back to the plan. Nothing is saved.": "Retour au plan. Rien n'est enregistré."
 }
