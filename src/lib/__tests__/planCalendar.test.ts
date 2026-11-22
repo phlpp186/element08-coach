@@ -27,6 +27,7 @@ import {
   phaseFrom,
   planCompetitions,
   sessionDate,
+  startShiftWeeks,
   suggestPhases,
   weekIndexOf,
   weekStarted,
@@ -281,6 +282,16 @@ describe('competitions', () => {
     expect(weeksToReach(p, '2026-11-29')).toBe(1);
     expect(weeksToReach(p, '2026-11-30')).toBe(2);
     expect(weeksToReach(p, '2027-03-14')).toBe(16);
+  });
+});
+
+describe('moving the start date', () => {
+  it('moves sessions by whole weeks; a new start in the same week moves nothing', () => {
+    // The calendar warns when this is not 0 on a plan athletes already train on.
+    expect(startShiftWeeks('2026-11-16', '2026-11-18')).toBe(0);
+    expect(startShiftWeeks('2026-11-16', '2026-11-23')).toBe(1);
+    expect(startShiftWeeks('2026-11-18', '2026-11-02')).toBe(-2);
+    expect(startShiftWeeks('', '2026-11-02')).toBe(0);
   });
 });
 

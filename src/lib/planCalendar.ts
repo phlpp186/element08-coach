@@ -317,6 +317,12 @@ export function weekStarted(plan: Pick<BuilderPlan, 'startDate'>, index: number,
   return first <= today;
 }
 
+/** Weeks every session moves when the start date changes (sessions sit on
+ *  week 1's Monday plus their weekday, so a new start in the same week moves
+ *  nothing). Negative = earlier. */
+export const startShiftWeeks = (from: string, to: string): number =>
+  from && to ? Math.round(daysBetween(mondayOf(from), mondayOf(to)) / 7) : 0;
+
 /** A move turned into a copy: the original goes back to its day (with
  *  whatever was reported on it), a fresh copy stays on the new day. */
 export function keepBoth(

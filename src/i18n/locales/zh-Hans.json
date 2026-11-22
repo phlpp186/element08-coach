@@ -1153,5 +1153,10 @@
   "{name}: added to week {n}": "{name}：已添加到第 {n} 周",
   "Copy here · past sessions stay": "复制到这里 · 过去的训练保持不动",
   "A past session stays on its day. Drag it to copy it.": "过去的训练留在原来的日期。拖动即可复制。",
-  "A week that has started stays in place, so the athlete's reports stay on their days.": "已开始的一周保持不动，这样运动员的报告会留在原来的日期。"
+  "A week that has started stays in place, so the athlete's reports stay on their days.": "已开始的一周保持不动，这样运动员的报告会留在原来的日期。",
+  "Already on this plan: {names}. The new start moves every session one week later, reports included.": "正在使用此计划：{names}。新的开始日期会把每次训练连同报告推后一周。",
+  "Already on this plan: {names}. The new start moves every session {n} weeks later, reports included.": "正在使用此计划：{names}。新的开始日期会把每次训练连同报告推后 {n} 周。",
+  "Already on this plan: {names}. The new start moves every session one week earlier, reports included.": "正在使用此计划：{names}。新的开始日期会把每次训练连同报告提前一周。",
+  "Already on this plan: {names}. The new start moves every session {n} weeks earlier, reports included.": "正在使用此计划：{names}。新的开始日期会把每次训练连同报告提前 {n} 周。",
+  "Keep {date}": "保留 {date}"
 }

@@ -1153,5 +1153,10 @@
   "{name}: added to week {n}": "{name}: zu Woche {n} hinzugefügt",
   "Copy here · past sessions stay": "Hierher kopieren · vergangene Einheiten bleiben",
   "A past session stays on its day. Drag it to copy it.": "Eine vergangene Einheit bleibt an ihrem Tag. Zum Kopieren ziehen.",
-  "A week that has started stays in place, so the athlete's reports stay on their days.": "Eine begonnene Woche bleibt an ihrem Platz, damit die Berichte des Athleten auf ihren Tagen bleiben."
+  "A week that has started stays in place, so the athlete's reports stay on their days.": "Eine begonnene Woche bleibt an ihrem Platz, damit die Berichte des Athleten auf ihren Tagen bleiben.",
+  "Already on this plan: {names}. The new start moves every session one week later, reports included.": "Schon auf diesem Plan: {names}. Der neue Start verschiebt jede Einheit um eine Woche nach hinten, samt Berichten.",
+  "Already on this plan: {names}. The new start moves every session {n} weeks later, reports included.": "Schon auf diesem Plan: {names}. Der neue Start verschiebt jede Einheit um {n} Wochen nach hinten, samt Berichten.",
+  "Already on this plan: {names}. The new start moves every session one week earlier, reports included.": "Schon auf diesem Plan: {names}. Der neue Start verschiebt jede Einheit um eine Woche nach vorne, samt Berichten.",
+  "Already on this plan: {names}. The new start moves every session {n} weeks earlier, reports included.": "Schon auf diesem Plan: {names}. Der neue Start verschiebt jede Einheit um {n} Wochen nach vorne, samt Berichten.",
+  "Keep {date}": "{date} behalten"
 }

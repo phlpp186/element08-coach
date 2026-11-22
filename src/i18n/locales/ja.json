@@ -1153,5 +1153,10 @@
   "{name}: added to week {n}": "{name}：第{n}週に追加しました",
   "Copy here · past sessions stay": "ここにコピー · 過去のセッションはそのまま",
   "A past session stays on its day. Drag it to copy it.": "過去のセッションはその日に残ります。ドラッグでコピーできます。",
-  "A week that has started stays in place, so the athlete's reports stay on their days.": "始まった週はそのまま残ります。アスリートの報告がその日に残るようにするためです。"
+  "A week that has started stays in place, so the athlete's reports stay on their days.": "始まった週はそのまま残ります。アスリートの報告がその日に残るようにするためです。",
+  "Already on this plan: {names}. The new start moves every session one week later, reports included.": "このプランを使用中：{names}。新しい開始日で、すべてのセッションが報告ごと1週間後ろにずれます。",
+  "Already on this plan: {names}. The new start moves every session {n} weeks later, reports included.": "このプランを使用中：{names}。新しい開始日で、すべてのセッションが報告ごと{n}週間後ろにずれます。",
+  "Already on this plan: {names}. The new start moves every session one week earlier, reports included.": "このプランを使用中：{names}。新しい開始日で、すべてのセッションが報告ごと1週間前にずれます。",
+  "Already on this plan: {names}. The new start moves every session {n} weeks earlier, reports included.": "このプランを使用中：{names}。新しい開始日で、すべてのセッションが報告ごと{n}週間前にずれます。",
+  "Keep {date}": "{date} のままにする"
 }

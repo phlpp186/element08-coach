@@ -71,6 +71,10 @@ export function PlanTopBar(props: {
   onDownload: () => void;
   onOldBuilder: () => void;
   ensurePublished: () => Promise<string | null>;
+  /** Set when the start date moves the sessions of a plan athletes already
+   *  train on: their reports are stored under the session ids and move too. */
+  startMove: { names: string[]; weeks: number; was: string } | null;
+  onKeepStart: () => void;
 }) {
   const t = useT();
   const { plan } = props;
@@ -110,6 +114,25 @@ export function PlanTopBar(props: {
         />
         · {fill(t('{n} weeks'), { n: props.weeks })} · {fill(t('to {date}'), { date: formatIso(DATE_FMT, end) })}
       </span>
+      {props.startMove && (
+        <p role="alert" className="basis-full rounded-md border border-amber/50 bg-amber/10 px-2 py-1 text-xs text-amber">
+          {fill(
+            t(
+              props.startMove.weeks > 0
+                ? Math.abs(props.startMove.weeks) === 1
+                  ? 'Already on this plan: {names}. The new start moves every session one week later, reports included.'
+                  : 'Already on this plan: {names}. The new start moves every session {n} weeks later, reports included.'
+                : Math.abs(props.startMove.weeks) === 1
+                  ? 'Already on this plan: {names}. The new start moves every session one week earlier, reports included.'
+                  : 'Already on this plan: {names}. The new start moves every session {n} weeks earlier, reports included.',
+            ),
+            { names: props.startMove.names.join(', '), n: Math.abs(props.startMove.weeks) },
+          )}{' '}
+          <button onClick={props.onKeepStart} className="font-bold underline">
+            {fill(t('Keep {date}'), { date: formatIso(DATE_FMT, props.startMove.was) })}
+          </button>
+        </p>
+      )}
 
       {props.competitions.map((c) => (
         <span

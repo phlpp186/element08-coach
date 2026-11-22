@@ -1153,5 +1153,10 @@
   "{name}: added to week {n}": "{name}: เพิ่มลงในสัปดาห์ที่ {n} แล้ว",
   "Copy here · past sessions stay": "คัดลอกมาที่นี่ · เซสชันที่ผ่านมาอยู่ที่เดิม",
   "A past session stays on its day. Drag it to copy it.": "เซสชันที่ผ่านมาจะอยู่ในวันเดิม ลากเพื่อคัดลอก",
-  "A week that has started stays in place, so the athlete's reports stay on their days.": "สัปดาห์ที่เริ่มแล้วจะอยู่ที่เดิม เพื่อให้รายงานของนักกีฬาอยู่ในวันเดิม"
+  "A week that has started stays in place, so the athlete's reports stay on their days.": "สัปดาห์ที่เริ่มแล้วจะอยู่ที่เดิม เพื่อให้รายงานของนักกีฬาอยู่ในวันเดิม",
+  "Already on this plan: {names}. The new start moves every session one week later, reports included.": "ใช้แผนนี้อยู่: {names} วันเริ่มใหม่จะเลื่อนทุกเซสชันไปช้าลงหนึ่งสัปดาห์ รวมถึงรายงานด้วย",
+  "Already on this plan: {names}. The new start moves every session {n} weeks later, reports included.": "ใช้แผนนี้อยู่: {names} วันเริ่มใหม่จะเลื่อนทุกเซสชันไปช้าลง {n} สัปดาห์ รวมถึงรายงานด้วย",
+  "Already on this plan: {names}. The new start moves every session one week earlier, reports included.": "ใช้แผนนี้อยู่: {names} วันเริ่มใหม่จะเลื่อนทุกเซสชันเร็วขึ้นหนึ่งสัปดาห์ รวมถึงรายงานด้วย",
+  "Already on this plan: {names}. The new start moves every session {n} weeks earlier, reports included.": "ใช้แผนนี้อยู่: {names} วันเริ่มใหม่จะเลื่อนทุกเซสชันเร็วขึ้น {n} สัปดาห์ รวมถึงรายงานด้วย",
+  "Keep {date}": "คงไว้ที่ {date}"
 }

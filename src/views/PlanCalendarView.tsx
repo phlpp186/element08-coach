@@ -49,6 +49,7 @@ import {
   phaseFrom,
   planCompetitions,
   removeSession,
+  startShiftWeeks,
   suggestPhases,
   updateWeek,
   weekIndexOf,
@@ -69,6 +70,7 @@ import { navigate } from '../hooks/useHashRoute';
 import { useLibrarySave } from '../components/LibrarySave';
 import { useLibrary } from '../lib/supabase/planLibrary';
 import { getCloudPlanLink } from '../lib/supabase/cloudPlanLinks';
+import { useCoachAssignments } from '../lib/supabase/useCoachAssignments';
 import { isAppPlan } from '../lib/planLibrary';
 import { useAuth } from '../lib/supabase/AuthProvider';
 import { useTemplateChoices } from '../components/sessions';
@@ -331,6 +333,13 @@ export function PlanCalendarView({ planId, presetAthleteId }: { planId: string |
   const libraryRows = useLibrary().rows;
   const cloudId = recordId ? getCloudPlanLink(recordId)?.cloudPlanId : undefined;
   const appPlan = !!cloudId && isAppPlan(libraryRows[cloudId]?.definition);
+  // A new start date moves every session, and the athletes' reports with
+  // them (stored under the session ids): say so on a plan that has started.
+  const { byCloudPlanId } = useCoachAssignments();
+  const onIt = cloudId ? (byCloudPlanId.get(cloudId) ?? []) : [];
+  const liveStart = storedPlan?.startDate ?? '';
+  const shift = onIt.length && liveStart && liveStart <= today ? startShiftWeeks(liveStart, plan.startDate) : 0;
+  const startMove = shift ? { names: [...new Set(onIt.map((a) => a.studentName))], weeks: shift, was: liveStart } : null;
   useEffect(() => {
     if (appPlan && cloudId) navigate(`/block/${cloudId}`, { replace: true });
   }, [appPlan, cloudId]);
@@ -391,6 +400,8 @@ export function PlanCalendarView({ planId, presetAthleteId }: { planId: string |
         }}
         ready={ready}
         issue={issues[0] ?? null}
+        startMove={startMove}
+        onKeepStart={() => setMeta({ startDate: liveStart })}
         onSave={() => void doSave()}
         onDone={() => void doSave().then(() => navigate('/plan'))}
         onDownload={() => {
