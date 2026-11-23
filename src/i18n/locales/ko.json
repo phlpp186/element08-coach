@@ -1173,5 +1173,18 @@
   "Where do you dive?": "어디서 다이빙하나요?",
   "Your cycle": "나의 주기",
   "It goes to your library and shows in your own app as your own plan, like one you started there.": "라이브러리에 저장되고, 내 앱에서 내가 직접 시작한 것처럼 내 플랜으로 표시됩니다.",
-  "Create for myself": "나를 위해 만들기"
+  "Create for myself": "나를 위해 만들기",
+  "Strength": "근력",
+  "per side": "한쪽씩",
+  "not done": "하지 않음",
+  "Bike": "자전거",
+  "Row": "로잉",
+  "Run": "달리기",
+  "Ski erg": "스키 에르그",
+  "Circuit": "서킷",
+  "AMRAP": "AMRAP",
+  "For time": "기록 측정",
+  "Timed": "시간제",
+  "{n} rounds": "{n}라운드",
+  "{n} kg moved": "총 {n}kg"
 }

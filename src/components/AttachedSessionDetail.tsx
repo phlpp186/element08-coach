@@ -7,7 +7,7 @@
  * main bundle stays lean and echarts only downloads when a coach expands a dive.
  */
 import { lazy, Suspense, useMemo, useState } from 'react';
-import { fill, useT } from '../i18n';
+import { fill, useLangValue, useT } from '../i18n';
 import { extractDiveData } from '../lib/analytics/diveProfile';
 import { formatSessionDate } from '../lib/sessionDate';
 import { SpeedBands } from './SpeedBands';
@@ -17,6 +17,7 @@ import { extractDrySessionData } from '../lib/analytics/drySessionProfile';
 import { poolLengthLabel, poolMeters } from '../lib/poolLength';
 import { holdNotes } from '../lib/sessionNotes';
 import type { Json } from '../lib/supabase/coachData';
+import { exerciseName, fmtDuration, planText, setText, strengthOf, volumeKg, type BlockLog, type StrengthLog } from '../lib/strengthLog';
 
 const DepthDiveTracks = lazy(() =>
   import('./charts/DepthDiveTracks').then((m) => ({ default: m.DepthDiveTracks })),
@@ -77,6 +78,7 @@ export function AttachedSessionDetail({ blob }: { blob: Json }) {
   return (
     <div className="space-y-4">
       <StatHeader s={s} t={t} />
+      <StrengthSection session={blob} />
 
       {mode === 'depth' && <DepthDives dives={s.dives ?? []} t={t} />}
       {mode === 'pool' && <PoolDives dives={s.dives ?? []} t={t} />}
@@ -137,6 +139,88 @@ function StatHeader({ s, t }: { s: SessionBlob; t: (k: string) => string }) {
       ))}
     </div>
   );
+}
+
+const MACHINE: Record<string, string> = { bike: 'Bike', row: 'Row', skierg: 'Ski erg', swim: 'Swim', run: 'Run' };
+
+/** What she lifted: each exercise with its plan and one chip per set, and
+ *  the timed, circuit and AMRAP parts (Philipp, 2026-11-23). */
+function StrengthSection({ session }: { session: Json }) {
+  const t = useT();
+  const lang = useLangValue();
+  const st = useMemo(() => strengthOf(session), [session]);
+  if (!st) return null;
+  const words = { max: t('max'), perSide: t('per side') };
+  return (
+    <section className="board overflow-hidden">
+      <div className="border-b border-border px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-textDim">
+        {t('Strength')}
+        {st.workoutName ? <span className="ml-2 normal-case tracking-normal text-text">{st.workoutName}</span> : null}
+      </div>
+      <ul className="divide-y divide-border">
+        {st.exercises.map((ex, i) => {
+          const plan = planText(ex.target, words);
+          const kg = volumeKg(ex);
+          const notes = ex.sets.map((x, n) => [n + 1, x.note?.trim()] as const).filter(([, note]) => !!note);
+          return (
+            <li key={`${ex.id}-${i}`} className="bg-panel px-4 py-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <span className="font-heading text-text">{exerciseName(ex, lang)}</span>
+                {kg > 0 && <span className="text-xs text-textDim">{fill(t('{n} kg moved'), { n: kg })}</span>}
+              </div>
+              {plan && (
+                <div className="text-xs text-textDim">
+                  {t('Plan')}: {plan}
+                </div>
+              )}
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {ex.sets.map((x, n) => (
+                  <span
+                    key={n}
+                    title={x.done ? undefined : t('not done')}
+                    className={`rounded-md border px-2 py-0.5 text-xs font-bold ${
+                      x.done ? 'border-accent/50 bg-accent/10 text-text' : 'border-border text-textDim line-through'
+                    }`}
+                  >
+                    {setText(x, ex.measure)}
+                  </span>
+                ))}
+              </div>
+              {notes.map(([n, note]) => (
+                <p key={n} className="mt-1 break-words text-xs italic text-text">
+                  {fill(t('Set {n}'), { n })}: “{note}”
+                </p>
+              ))}
+            </li>
+          );
+        })}
+        {st.blocks.map((b, i) => (
+          <li key={`b-${i}`} className="bg-panel px-4 py-3 text-sm text-text">
+            {blockLine(b, st, t, lang)}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function blockLine(b: BlockLog, st: StrengthLog, t: (k: string) => string, lang: string): string {
+  const moves = (ms: { id: string; name?: string }[]) => ms.map((m) => exerciseName(m, lang)).join(', ');
+  if (b.kind === 'timed') {
+    const what = st.machine ? t(MACHINE[st.machine] ?? st.machine) : t('Timed');
+    const c = st.cardio;
+    const out = c
+      ? ` · ${Math.round(c.m)} m${c.watts ? ` · ${Math.round(c.watts)} W` : ''}${c.rate ? ` · ${Math.round(c.rate)}/min` : ''}`
+      : '';
+    return `${what} · ${fmtDuration(b.sec)}${out}`;
+  }
+  if (b.kind === 'circuit') {
+    return `${t('Circuit')} · ${fill(t('{n} rounds'), { n: b.rounds })} · ${fmtDuration(b.workSec)} / ${fmtDuration(b.restSec)} · ${moves(b.moves)}`;
+  }
+  const result = b.forTime
+    ? `${t('For time')} · ${fmtDuration(b.sec)}`
+    : `${t('AMRAP')} ${fmtDuration(b.capSec)} · ${fill(t('{n} rounds'), { n: b.rounds })}${b.extraReps ? ` + ${b.extraReps}` : ''}`;
+  return `${result} · ${moves(b.moves)}`;
 }
 
 /** The athlete's own note on this one dive (the app's per-dive remarks), as a

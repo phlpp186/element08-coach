@@ -1173,5 +1173,18 @@
   "Where do you dive?": "你在哪裡潛水？",
   "Your cycle": "你的週期",
   "It goes to your library and shows in your own app as your own plan, like one you started there.": "它會進入你的資料庫，並在你自己的 App 中顯示為你自己的計畫，就像你在 App 裡開始的一樣。",
-  "Create for myself": "為自己建立"
+  "Create for myself": "為自己建立",
+  "Strength": "力量",
+  "per side": "每側",
+  "not done": "未完成",
+  "Bike": "單車",
+  "Row": "划船機",
+  "Run": "跑步",
+  "Ski erg": "滑雪機",
+  "Circuit": "循環訓練",
+  "AMRAP": "AMRAP",
+  "For time": "計時",
+  "Timed": "定時",
+  "{n} rounds": "{n} 輪",
+  "{n} kg moved": "共 {n} 公斤"
 }

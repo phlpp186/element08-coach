@@ -1173,5 +1173,18 @@
   "Where do you dive?": "คุณดำน้ำที่ไหน?",
   "Your cycle": "รอบเดือนของคุณ",
   "It goes to your library and shows in your own app as your own plan, like one you started there.": "จะไปอยู่ในคลังของคุณ และแสดงในแอปของคุณเป็นแผนของคุณเอง เหมือนแผนที่คุณเริ่มในแอป",
-  "Create for myself": "สร้างสำหรับตัวเอง"
+  "Create for myself": "สร้างสำหรับตัวเอง",
+  "Strength": "ความแข็งแรง",
+  "per side": "ต่อข้าง",
+  "not done": "ไม่ได้ทำ",
+  "Bike": "จักรยาน",
+  "Row": "กรรเชียงบก",
+  "Run": "วิ่ง",
+  "Ski erg": "สกีเอิร์ก",
+  "Circuit": "เซอร์กิต",
+  "AMRAP": "AMRAP",
+  "For time": "จับเวลา",
+  "Timed": "ตามเวลา",
+  "{n} rounds": "{n} รอบ",
+  "{n} kg moved": "รวม {n} กก."
 }

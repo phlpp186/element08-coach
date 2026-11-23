@@ -1173,5 +1173,18 @@
   "Where do you dive?": "どこで潜りますか？",
   "Your cycle": "あなたの周期",
   "It goes to your library and shows in your own app as your own plan, like one you started there.": "ライブラリに保存され、自分のアプリで自分のプランとして表示されます。アプリで始めたプランと同じです。",
-  "Create for myself": "自分用に作成"
+  "Create for myself": "自分用に作成",
+  "Strength": "筋力",
+  "per side": "片側ずつ",
+  "not done": "未実施",
+  "Bike": "バイク",
+  "Row": "ローイング",
+  "Run": "ラン",
+  "Ski erg": "スキーエルグ",
+  "Circuit": "サーキット",
+  "AMRAP": "AMRAP",
+  "For time": "タイム計測",
+  "Timed": "時間指定",
+  "{n} rounds": "{n} ラウンド",
+  "{n} kg moved": "合計 {n} kg"
 }

@@ -1173,5 +1173,18 @@
   "Where do you dive?": "¿Dónde buceas?",
   "Your cycle": "Tu ciclo",
   "It goes to your library and shows in your own app as your own plan, like one you started there.": "Va a tu biblioteca y aparece en tu propia app como tu plan, como uno que empezaste allí.",
-  "Create for myself": "Crear para mí"
+  "Create for myself": "Crear para mí",
+  "Strength": "Fuerza",
+  "per side": "por lado",
+  "not done": "no hecho",
+  "Bike": "Bici",
+  "Row": "Remo",
+  "Run": "Carrera",
+  "Ski erg": "Ski erg",
+  "Circuit": "Circuito",
+  "AMRAP": "AMRAP",
+  "For time": "Por tiempo",
+  "Timed": "Cronometrado",
+  "{n} rounds": "{n} rondas",
+  "{n} kg moved": "{n} kg movidos"
 }
