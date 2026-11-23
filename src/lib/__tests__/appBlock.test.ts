@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { isAppPlan } from '../planLibrary';
 import {
   accessories,
   addedAsBuilder,
@@ -11,6 +12,10 @@ import {
   blankSession,
   blockDefinition,
   newBlockDefinition,
+  BLOCK_FOR_SELF,
+  blockCoachFor,
+  blockForOf,
+  blockPlanName,
   canRemoveLine,
   copySession,
   currentWeekIndex,
@@ -448,6 +453,25 @@ describe('saving and creating', () => {
     expect(d.active).toBe(false);
     expect(d.coachFor).toEqual({ studentId: 's1', name: 'Ana' });
     expect(d.library).toEqual({ v: 1, editedOn: 'web', editedAt: '2026-11-08T10:00:00Z' });
+  });
+
+  it('a block for the coach is her own plan: no athlete, no coachFor, the block’s name', () => {
+    // Philipp is his own coach and could not make one (2026-11-23).
+    const me = blockForOf(BLOCK_FOR_SELF, [{ studentId: 's1', name: 'Ana' }])!;
+    expect(me).toEqual({ self: true });
+    expect(blockPlanName(me, 'S&C Base Block')).toBe('S&C Base Block');
+    // Even a plan that came back with an athlete on it.
+    const withAna = { ...planOf(), id: 0, coachFor: { studentId: 's1', name: 'Ana' } } as BlockPlan;
+    const d = newBlockDefinition(withAna, blockCoachFor(me), '2026-11-23T07:00:00Z', 1763881200000);
+    expect('coachFor' in d).toBe(false);
+    expect(isAppPlan(d)).toBe(true);
+  });
+
+  it('a block for an athlete is her coach’s copy, named after her', () => {
+    const ana = blockForOf('s1', [{ studentId: 's1', name: 'Ana' }])!;
+    expect(blockPlanName(ana, 'S&C Base Block')).toBe('Ana · S&C Base Block');
+    expect(blockCoachFor(ana)).toEqual({ studentId: 's1', name: 'Ana' });
+    expect(blockForOf('', [{ studentId: 's1', name: 'Ana' }])).toBeNull();
   });
 
   it('picks and checks the test-week Monday', () => {

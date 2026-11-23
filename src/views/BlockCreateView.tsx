@@ -1,14 +1,26 @@
 /**
  * BlockCreateView, at /block/new: a new plan is either built here (the
  * builder) or an app block. For a block the coach answers its start
- * questions for one paired athlete; the block service builds it, the plan
- * goes to the coach's library (assigned to her now, or sent later from the
- * editor), and the block editor opens.
+ * questions for one paired athlete, or for herself; the block service builds
+ * it, the plan goes to the coach's library (assigned to the athlete now, or
+ * sent later from the editor; the coach's own shows in her own app), and the
+ * block editor opens.
  */
 import { useEffect, useState } from 'react';
 import { navigate } from '../hooks/useHashRoute';
 import { fill, useT } from '../i18n';
-import { DEFAULT_KG_STEP, isMonday, newBlockDefinition, nextMonday, type Focus, type Pull } from '../lib/appBlock';
+import {
+  BLOCK_FOR_SELF,
+  DEFAULT_KG_STEP,
+  blockCoachFor,
+  blockForOf,
+  blockPlanName,
+  isMonday,
+  newBlockDefinition,
+  nextMonday,
+  type Focus,
+  type Pull,
+} from '../lib/appBlock';
 import { newDefId } from '../lib/planLibrary';
 import { calendarFormat, formatIso, mondayOf, todayIso } from '../lib/e08plan';
 import { useAuth } from '../lib/supabase/AuthProvider';
@@ -118,31 +130,34 @@ export function BlockCreateForm({
   }, [athletes, studentId]);
 
   const block = blocks?.find((b) => b.id === picked) ?? null;
-  const athlete = athletes.find((a) => a.studentId === studentId) ?? null;
-  const ready = !!block && !!athlete && isMonday(start) && !busy;
+  const forWhom = blockForOf(studentId, athletes);
+  const self = forWhom?.self === true;
+  const athlete = forWhom && !forWhom.self ? forWhom : null;
+  const ready = !!block && !!forWhom && isMonday(start) && !busy;
 
-  /** `send` assigns it to her now; without, it waits for Send in the editor. */
+  /** `send` assigns it to her now; without, it waits for Send in the editor.
+   *  The coach's own goes to her library, which her app follows. */
   const create = async (send: boolean) => {
-    if (!block || !athlete) return;
+    if (!block || !forWhom) return;
     setBusy(send ? 'now' : 'later');
     setError(null);
+    const name = blockPlanName(forWhom, block.name);
     try {
       const r = await service.call({
         op: 'create',
         block: block.id,
         start,
         answers: { focus, kgStep, pull, cycle },
-        name: `${athlete.name} · ${block.name}`,
+        name,
       });
       if (!r.ok || !r.data.plan) {
         setError(r.ok ? t('The block service did not answer.') : failureText(r.reason, r.message, t));
         return;
       }
       const plan = r.data.plan;
-      const coachFor = { studentId: athlete.studentId, name: athlete.name };
-      const definition = newBlockDefinition(plan, coachFor, new Date().toISOString(), newDefId());
-      const id = await deps.insert(plan.name?.trim() || `${athlete.name} · ${block.name}`, definition as Json);
-      if (send) await deps.assign(id, athlete.studentId);
+      const definition = newBlockDefinition(plan, blockCoachFor(forWhom), new Date().toISOString(), newDefId());
+      const id = await deps.insert(plan.name?.trim() || name, definition as Json);
+      if (send && !forWhom.self) await deps.assign(id, forWhom.studentId);
       deps.open(id);
     } catch (e) {
       setError(fill(t('Could not create the block: {error}'), { error: (e as Error).message }));
@@ -203,20 +218,20 @@ export function BlockCreateForm({
         <section className="board p-4">
           <div className="grid gap-x-6 sm:grid-cols-2">
             <div>
-              <span className={lbl}>{t('Athlete')}</span>
-              {athletes.length === 0 ? (
-                <p className="text-sm text-textDim">
+              <span className={lbl}>{t('For')}</span>
+              <select className="field" value={studentId} onChange={(e) => setStudentId(e.target.value)}>
+                <option value="">{t('Pick an athlete')}</option>
+                <option value={BLOCK_FOR_SELF}>{t('Myself (my own app)')}</option>
+                {athletes.map((a) => (
+                  <option key={a.studentId} value={a.studentId}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+              {athletes.length === 0 && !self && (
+                <p className="mt-1 text-xs text-textDim">
                   {loading ? t('Loading…') : t('Pair an athlete first: only connected athletes can get an app block.')}
                 </p>
-              ) : (
-                <select className="field" value={studentId} onChange={(e) => setStudentId(e.target.value)}>
-                  <option value="">{t('Pick an athlete')}</option>
-                  {athletes.map((a) => (
-                    <option key={a.studentId} value={a.studentId}>
-                      {a.name}
-                    </option>
-                  ))}
-                </select>
               )}
               <span className={lbl}>{t('Test week starts')}</span>
               <input
@@ -228,7 +243,7 @@ export function BlockCreateForm({
               <span className="mt-1 block text-xs text-textDim">
                 {isMonday(start) ? formatIso(DATE_FMT, start) : ''} · {t('The test week starts on a Monday.')}
               </span>
-              <span className={lbl}>{t('Where does she dive?')}</span>
+              <span className={lbl}>{self ? t('Where do you dive?') : t('Where does she dive?')}</span>
               <div className="flex flex-wrap gap-1.5">
                 {FOCI.map((f) => (
                   <button key={f.id} onClick={() => setFocus(f.id)} className={pill(focus === f.id)}>
@@ -254,7 +269,7 @@ export function BlockCreateForm({
                   </button>
                 ))}
               </div>
-              <span className={lbl}>{t('Her cycle')}</span>
+              <span className={lbl}>{self ? t('Your cycle') : t('Her cycle')}</span>
               <div className="flex flex-wrap gap-1.5">
                 <button onClick={() => setCycle(true)} className={pill(cycle)}>
                   {t('Take it into account')}
@@ -267,19 +282,29 @@ export function BlockCreateForm({
           </div>
           <div className="mt-4 space-y-3 border-t border-border pt-3">
             <p className="text-sm text-textDim">
-              {t('Send it now and she gets it right away, or create it first and send it from the editor when it is ready. It shows in your app either way.')}
+              {self
+                ? t('It goes to your library and shows in your own app as your own plan, like one you started there.')
+                : t('Send it now and she gets it right away, or create it first and send it from the editor when it is ready. It shows in your app either way.')}
             </p>
             <div className="flex flex-wrap justify-end gap-2">
-              <button disabled={!ready} onClick={() => void create(false)} className="pill px-4 py-2">
-                {busy === 'later' ? t('Creating…') : t('Create, send later')}
-              </button>
-              <button disabled={!ready} onClick={() => void create(true)} className="pill pill-on btn-raised px-4 py-2">
-                {busy === 'now'
-                  ? t('Creating…')
-                  : athlete
-                    ? fill(t('Create and send to {name}'), { name: athlete.name })
-                    : t('Create and send')}
-              </button>
+              {self ? (
+                <button disabled={!ready} onClick={() => void create(false)} className="pill pill-on btn-raised px-4 py-2">
+                  {busy ? t('Creating…') : t('Create for myself')}
+                </button>
+              ) : (
+                <>
+                  <button disabled={!ready} onClick={() => void create(false)} className="pill px-4 py-2">
+                    {busy === 'later' ? t('Creating…') : t('Create, send later')}
+                  </button>
+                  <button disabled={!ready} onClick={() => void create(true)} className="pill pill-on btn-raised px-4 py-2">
+                    {busy === 'now'
+                      ? t('Creating…')
+                      : athlete
+                        ? fill(t('Create and send to {name}'), { name: athlete.name })
+                        : t('Create and send')}
+                  </button>
+                </>
+              )}
             </div>
           </div>
           {error && <p className="mt-2 text-sm text-red">{error}</p>}

@@ -1167,5 +1167,11 @@
   "Reorder": "Reordenar",
   "Order changed on {day}": "Orden cambiado el {day}",
   "On {n} days, each its own session. What you change here goes to all of them while this is open.": "En {n} días, cada uno con su propia sesión. Lo que cambies aquí se aplica a todas mientras esto esté abierto.",
-  "Click more days to put this session on each of them.": "Haz clic en más días para poner esta sesión en cada uno."
+  "Click more days to put this session on each of them.": "Haz clic en más días para poner esta sesión en cada uno.",
+  "For": "Para",
+  "Myself (my own app)": "Yo mismo (mi propia app)",
+  "Where do you dive?": "¿Dónde buceas?",
+  "Your cycle": "Tu ciclo",
+  "It goes to your library and shows in your own app as your own plan, like one you started there.": "Va a tu biblioteca y aparece en tu propia app como tu plan, como uno que empezaste allí.",
+  "Create for myself": "Crear para mí"
 }

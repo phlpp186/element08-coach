@@ -981,14 +981,41 @@ export function blockDefinition(plan: BlockPlan, coachFor: CoachFor | undefined,
 
 /** The definition of a block made here (`create`): the service builds it
  *  with `id: 0`, the template's placeholder, and every app holding two such
- *  plans would match both rows to one plan. */
+ *  plans would match both rows to one plan. Its athlete is the one picked
+ *  here and no other: none makes it the coach's own plan. */
 export function newBlockDefinition(
   plan: BlockPlan,
   coachFor: CoachFor | undefined,
   at: string,
   id: number,
 ): Obj {
-  return { ...blockDefinition(plan, coachFor, at), id, active: false };
+  return { ...blockDefinition(without(plan, 'coachFor') as BlockPlan, coachFor, at), id, active: false };
+}
+
+/** Who a new block is for: a paired athlete (a coach's copy, sent to her)
+ *  or the coach herself, as her own plan in her own app (Philipp is his own
+ *  coach and could not make one, 2026-11-23). */
+export type BlockFor = { self: true } | { self: false; studentId: string; name: string };
+
+/** The athlete picker's value for "Myself". */
+export const BLOCK_FOR_SELF = '__self__';
+
+export function blockForOf(value: string, athletes: { studentId: string; name: string }[]): BlockFor | null {
+  if (value === BLOCK_FOR_SELF) return { self: true };
+  const a = athletes.find((x) => x.studentId === value);
+  return a ? { self: false, studentId: a.studentId, name: a.name } : null;
+}
+
+/** The plan's name: the block's own for the coach, "Ana · S&C Base Block"
+ *  for an athlete. */
+export function blockPlanName(forWhom: BlockFor, blockName: string): string {
+  return forWhom.self ? blockName : `${forWhom.name} · ${blockName}`;
+}
+
+/** Not a coach's copy when it is the coach's own: no `coachFor`, so her app
+ *  takes it as her own plan and the editor offers no Send. */
+export function blockCoachFor(forWhom: BlockFor): CoachFor | undefined {
+  return forWhom.self ? undefined : { studentId: forWhom.studentId, name: forWhom.name };
 }
 
 /** A Monday on or after `today`, the default test week. */

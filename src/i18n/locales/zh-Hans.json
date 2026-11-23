@@ -1167,5 +1167,11 @@
   "Reorder": "调整顺序",
   "Order changed on {day}": "已调整 {day} 的顺序",
   "On {n} days, each its own session. What you change here goes to all of them while this is open.": "在 {n} 天，每天各是一个训练。此处打开期间的修改会应用到所有这些天。",
-  "Click more days to put this session on each of them.": "点击更多日期，把这个训练放到每一天。"
+  "Click more days to put this session on each of them.": "点击更多日期，把这个训练放到每一天。",
+  "For": "给",
+  "Myself (my own app)": "我自己（我自己的应用）",
+  "Where do you dive?": "你在哪里潜水？",
+  "Your cycle": "你的周期",
+  "It goes to your library and shows in your own app as your own plan, like one you started there.": "它会进入你的资料库，并在你自己的应用中显示为你自己的计划，就像你在应用里开始的一样。",
+  "Create for myself": "为自己创建"
 }

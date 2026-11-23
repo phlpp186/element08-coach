@@ -1167,5 +1167,11 @@
   "Reorder": "순서 바꾸기",
   "Order changed on {day}": "{day} 순서를 바꿨습니다",
   "On {n} days, each its own session. What you change here goes to all of them while this is open.": "{n}일에 배치됨(각각 별도의 세션). 이 창이 열려 있는 동안 여기서 바꾼 내용은 모두에 적용됩니다.",
-  "Click more days to put this session on each of them.": "다른 요일을 클릭하면 이 세션을 각 요일에 넣습니다."
+  "Click more days to put this session on each of them.": "다른 요일을 클릭하면 이 세션을 각 요일에 넣습니다.",
+  "For": "대상",
+  "Myself (my own app)": "나 자신 (내 앱)",
+  "Where do you dive?": "어디서 다이빙하나요?",
+  "Your cycle": "나의 주기",
+  "It goes to your library and shows in your own app as your own plan, like one you started there.": "라이브러리에 저장되고, 내 앱에서 내가 직접 시작한 것처럼 내 플랜으로 표시됩니다.",
+  "Create for myself": "나를 위해 만들기"
 }
