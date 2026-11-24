@@ -30,6 +30,9 @@ export interface TrainingBlock {
   endMode?: 'timed' | 'signal' | 'signalPlus';
   stepSec?: number;
   cues?: number[];
+  /** Watch buzzes counted back from the block's end (the app resolves them
+   *  per round, so they follow a progressive block's end). */
+  cuesFromEnd?: number[];
   lungVol?: LungVolume | null;
 }
 
