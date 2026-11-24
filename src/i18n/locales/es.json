@@ -1186,5 +1186,14 @@
   "For time": "Por tiempo",
   "Timed": "Cronometrado",
   "{n} rounds": "{n} rondas",
-  "{n} kg moved": "{n} kg movidos"
+  "{n} kg moved": "{n} kg movidos",
+  "On signal": "A la señal",
+  "On signal + time": "Señal + tiempo",
+  "How it ends": "Cómo termina",
+  "after the signal": "tras la señal",
+  "stops at 11:35": "se detiene a los 11:35",
+  "Each round": "Cada ronda",
+  "same": "igual",
+  "5 s shorter each round": "5 s menos cada ronda",
+  "5 s longer each round": "5 s más cada ronda"
 }

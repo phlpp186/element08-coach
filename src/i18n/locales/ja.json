@@ -1186,5 +1186,14 @@
   "For time": "タイム計測",
   "Timed": "時間指定",
   "{n} rounds": "{n} ラウンド",
-  "{n} kg moved": "合計 {n} kg"
+  "{n} kg moved": "合計 {n} kg",
+  "On signal": "合図で終了",
+  "On signal + time": "合図＋時間",
+  "How it ends": "終わり方",
+  "after the signal": "合図の後",
+  "stops at 11:35": "11:35 で自動終了",
+  "Each round": "各ラウンド",
+  "same": "同じ",
+  "5 s shorter each round": "毎ラウンド 5 秒短く",
+  "5 s longer each round": "毎ラウンド 5 秒長く"
 }

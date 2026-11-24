@@ -1186,5 +1186,14 @@
   "For time": "Auf Zeit",
   "Timed": "Auf Zeit",
   "{n} rounds": "{n} Runden",
-  "{n} kg moved": "{n} kg bewegt"
+  "{n} kg moved": "{n} kg bewegt",
+  "On signal": "Auf Signal",
+  "On signal + time": "Signal + Zeit",
+  "How it ends": "Wie es endet",
+  "after the signal": "nach dem Signal",
+  "stops at 11:35": "endet spätestens bei 11:35",
+  "Each round": "Jede Runde",
+  "same": "gleich",
+  "5 s shorter each round": "Jede Runde 5 s kürzer",
+  "5 s longer each round": "Jede Runde 5 s länger"
 }

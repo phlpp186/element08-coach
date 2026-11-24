@@ -1186,5 +1186,14 @@
   "For time": "จับเวลา",
   "Timed": "ตามเวลา",
   "{n} rounds": "{n} รอบ",
-  "{n} kg moved": "รวม {n} กก."
+  "{n} kg moved": "รวม {n} กก.",
+  "On signal": "จบเมื่อให้สัญญาณ",
+  "On signal + time": "สัญญาณ + เวลา",
+  "How it ends": "วิธีจบ",
+  "after the signal": "หลังสัญญาณ",
+  "stops at 11:35": "หยุดเองที่ 11:35",
+  "Each round": "ทุกรอบ",
+  "same": "เท่าเดิม",
+  "5 s shorter each round": "สั้นลงรอบละ 5 วิ",
+  "5 s longer each round": "ยาวขึ้นรอบละ 5 วิ"
 }

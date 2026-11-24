@@ -1186,5 +1186,14 @@
   "For time": "기록 측정",
   "Timed": "시간제",
   "{n} rounds": "{n}라운드",
-  "{n} kg moved": "총 {n}kg"
+  "{n} kg moved": "총 {n}kg",
+  "On signal": "신호로 종료",
+  "On signal + time": "신호 + 시간",
+  "How it ends": "끝나는 방식",
+  "after the signal": "신호 후",
+  "stops at 11:35": "11:35에 자동 종료",
+  "Each round": "라운드마다",
+  "same": "동일",
+  "5 s shorter each round": "라운드마다 5초 짧게",
+  "5 s longer each round": "라운드마다 5초 길게"
 }

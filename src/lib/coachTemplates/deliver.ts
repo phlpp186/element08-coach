@@ -172,6 +172,10 @@ export function blockLine(
         .map((r) => {
           const type = t(`deliver.rowTypes.${r.type}`);
           if (r.endMode === 'signal') return t('deliver.dryRowOpen', { type });
+          // Open until the athlete's signal, then `seconds` more: not a
+          // 15-second hold ("Hold 0:15" before, 2026-11-24).
+          if (r.endMode === 'signalPlus')
+            return t('deliver.dryRowOpenPlus', { type, time: formatValue(r.seconds, 's', false) });
           const isTargetHold =
             !!ex.holdTarget && r.type === 'Hold' && (!r.endMode || r.endMode === 'timed');
           const sec = isTargetHold && rt?.value != null ? rt.value : r.seconds;

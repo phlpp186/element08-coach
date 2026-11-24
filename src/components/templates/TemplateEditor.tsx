@@ -40,6 +40,17 @@ import {
 } from '../../lib/coachTemplates/model';
 import type { BlockType, TrainingBlock } from '../../lib/coachTemplates/deps';
 import { shownName } from '../../lib/typedName';
+import {
+  STEP_SEC,
+  canProgress,
+  endModeOf,
+  hasEndMode,
+  stepLabel,
+  withEndMode,
+  withRowType,
+  withStep,
+  type EndMode,
+} from '../../lib/dryRows';
 import { exerciseSuggestions, hasMedia, parseReps, renamedItem, shownReps } from '../../lib/programExercises';
 import { blockSummary } from '../../lib/coachTemplates/summary';
 import { templateTr } from '../../lib/coachTemplates/tr';
@@ -323,24 +334,67 @@ function Part({
             const set = (row: TrainingBlock) =>
               setEx({ ...ex, rows: ex.rows.map((y, j) => (j === i ? row : y)) });
             const cyc = ROW_CYCLE.indexOf(r.type);
+            const mode = endModeOf(r);
             return (
-              <div key={i} className="flex items-center gap-2">
+              <div key={i} className="flex flex-wrap items-center gap-2">
                 <button
                   // Attempt and Swim rows (device tables) keep their type.
-                  onClick={() => cyc >= 0 && set({ ...r, type: ROW_CYCLE[(cyc + 1) % 3] })}
+                  onClick={() => cyc >= 0 && set(withRowType(r, ROW_CYCLE[(cyc + 1) % 3]))}
                   className={`pill w-24 px-2 py-1 text-sm ${ROW_TONE[r.type]}`}
                   title={t('Click to change: rest, hold, recover')}
                 >
                   {t(ROW_LABEL[r.type])}
                 </button>
-                {r.endMode === 'signal' ? (
-                  <span className="text-sm text-textDim">{t('open, ended by the athlete')}</span>
+                {hasEndMode(r) && (
+                  // How it ends, as in the app's builder: on the clock, on the
+                  // athlete's signal, or a set time after the signal.
+                  <select
+                    className="field w-auto px-2 py-1 text-xs"
+                    value={mode}
+                    aria-label={t('How it ends')}
+                    title={t('How it ends')}
+                    onChange={(e) => set(withEndMode(r, e.target.value as EndMode))}
+                  >
+                    <option value="timed">{t('Timed')}</option>
+                    <option value="signal">{t('On signal')}</option>
+                    <option value="signalPlus">{t('On signal + time')}</option>
+                  </select>
+                )}
+                {mode === 'signal' ? (
+                  <span className="text-sm text-textDim">
+                    {t('open, ended by the athlete')} · {t('stops at 11:35')}
+                  </span>
                 ) : (
                   <TimeField
                     value={r.seconds}
                     onChange={(seconds) => set({ ...r, seconds })}
-                    label={t(ROW_LABEL[r.type])}
+                    label={mode === 'signalPlus' ? t('after the signal') : t(ROW_LABEL[r.type])}
                   />
+                )}
+                {mode === 'signalPlus' && <span className="text-xs text-textDim">{t('after the signal')}</span>}
+                {block.reps > 1 && canProgress(r) && (
+                  // Longer or shorter every round after the first: a CO2
+                  // table's rest shrinking, an O2 table's hold growing.
+                  <span className="flex items-center gap-1 text-xs text-textDim">
+                    {t('Each round')}
+                    <button
+                      onClick={() => set(withStep(r, (r.stepSec ?? 0) - STEP_SEC))}
+                      className="pill px-2 py-0.5 text-xs"
+                      aria-label={t('5 s shorter each round')}
+                    >
+                      −
+                    </button>
+                    <span className={`w-12 text-center font-bold ${r.stepSec ? 'text-text' : 'text-textDim'}`}>
+                      {stepLabel(r.stepSec) || t('same')}
+                    </span>
+                    <button
+                      onClick={() => set(withStep(r, (r.stepSec ?? 0) + STEP_SEC))}
+                      className="pill px-2 py-0.5 text-xs"
+                      aria-label={t('5 s longer each round')}
+                    >
+                      +
+                    </button>
+                  </span>
                 )}
                 {x(
                   () => setEx({ ...ex, rows: ex.rows.filter((_, j) => j !== i) }),

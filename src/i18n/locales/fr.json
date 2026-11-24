@@ -1186,5 +1186,14 @@
   "For time": "Chrono",
   "Timed": "Minuté",
   "{n} rounds": "{n} tours",
-  "{n} kg moved": "{n} kg soulevés"
+  "{n} kg moved": "{n} kg soulevés",
+  "On signal": "Au signal",
+  "On signal + time": "Signal + temps",
+  "How it ends": "Comment ça se termine",
+  "after the signal": "après le signal",
+  "stops at 11:35": "s’arrête à 11:35",
+  "Each round": "Chaque tour",
+  "same": "pareil",
+  "5 s shorter each round": "5 s de moins à chaque tour",
+  "5 s longer each round": "5 s de plus à chaque tour"
 }

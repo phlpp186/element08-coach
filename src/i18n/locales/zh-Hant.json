@@ -1186,5 +1186,14 @@
   "For time": "計時",
   "Timed": "定時",
   "{n} rounds": "{n} 輪",
-  "{n} kg moved": "共 {n} 公斤"
+  "{n} kg moved": "共 {n} 公斤",
+  "On signal": "信號結束",
+  "On signal + time": "信號 + 時間",
+  "How it ends": "結束方式",
+  "after the signal": "信號後",
+  "stops at 11:35": "11:35 自動結束",
+  "Each round": "每輪",
+  "same": "不變",
+  "5 s shorter each round": "每輪縮短 5 秒",
+  "5 s longer each round": "每輪延長 5 秒"
 }
