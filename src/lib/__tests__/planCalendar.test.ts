@@ -287,6 +287,22 @@ describe('sessions: move and copy', () => {
   });
 });
 
+describe('the week order the app gets (Entrenamiento Gonzalo, 2026-11-24)', () => {
+  it('is Monday to Sunday, whatever order the sessions were added in', () => {
+    // Monday's session was added last: the app showed it after Friday.
+    const p = training([[sess('tue', 1), sess('wed', 2), sess('thu', 3), sess('fri', 4), sess('mon', 0)]]);
+    const week = buildPlanFile(p).content.phases[0].weeks[0];
+    expect(week.plannedSessions.map((x) => x.dayOfWeek)).toEqual([0, 1, 2, 3, 4]);
+    expect(week.plannedSessions[0].id).toBe('s-mon');
+  });
+
+  it('keeps the coach’s order within a day', () => {
+    const p = training([[sess('b', 2), sess('x', 0), sess('a', 2), sess('c', 2)]]);
+    const ids = buildPlanFile(p).content.phases[0].weeks[0].plannedSessions.map((x) => x.id);
+    expect(ids).toEqual(['s-x', 's-b', 's-a', 's-c']);
+  });
+});
+
 describe('one session on several days (Philipp, 2026-11-22)', () => {
   const rows = () => calWeeks(training([[sess('a', 0)], []]));
   const start = { anchor: 's-a', ids: [] as string[] };

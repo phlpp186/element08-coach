@@ -419,6 +419,17 @@ export function toPlanned(s: BuilderSession, dayOfWeek: number, label: string): 
   };
 }
 
+/** A week's sessions Monday to Sunday, a day's own order kept (a stable
+ *  sort). The app lists a week in the order it is stored, and the calendar
+ *  adds a new or moved session at the end of its week: a coach's Monday
+ *  session showed after Friday (Entrenamiento Gonzalo, 2026-11-24). */
+export function byWeekday<T extends { dayOfWeek: number }>(sessions: T[]): T[] {
+  return sessions
+    .map((s, i) => [s, i] as const)
+    .sort(([a, ia], [b, ib]) => a.dayOfWeek - b.dayOfWeek || ia - ib)
+    .map(([s]) => s);
+}
+
 /** One BuilderWeek → one MicroCycle anchored at the given Monday. */
 function weekToMicro(w: BuilderWeek, weekStart: string): MicroCycle {
   return {
@@ -428,7 +439,7 @@ function weekToMicro(w: BuilderWeek, weekStart: string): MicroCycle {
     targetMix: {},
     intensity: normIntensity(w.intensity) ?? DEFAULT_INTENSITY,
     notes: w.notes.trim(),
-    plannedSessions: w.sessions.map((s) => toPlanned(s, s.dayOfWeek, s.label)),
+    plannedSessions: byWeekday(w.sessions).map((s) => toPlanned(s, s.dayOfWeek, s.label)),
   };
 }
 
@@ -463,7 +474,7 @@ function daysToMicroCycles(plan: BuilderPlan): MicroCycle[] {
       targetMix: {},
       intensity: DEFAULT_INTENSITY,
       notes: '',
-      plannedSessions: buckets.get(weekStart)!,
+      plannedSessions: byWeekday(buckets.get(weekStart)!),
     }));
 }
 
